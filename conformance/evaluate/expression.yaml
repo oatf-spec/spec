@@ -1,0 +1,110 @@
+# =============================================================================
+# OATF Conformance: evaluate_expression / evaluate_indicator Evaluation Tests
+# Tests SDK evaluate_expression per §4.4 and CEL-absent skipped behavior per §4.5.
+# =============================================================================
+
+- name: "Simple boolean — size check matches"
+  id: EVAL-CEL-01
+  input:
+    indicator:
+      surface: "tool_list"
+      method: expression
+      expression:
+        cel: "size(message.tools) > 2"
+        variables: null
+    message:
+      tools:
+        - {}
+        - {}
+        - {}
+    cel_evaluator: present
+  expected: "matched"
+
+- name: "False expression — size check does not match"
+  id: EVAL-CEL-02
+  input:
+    indicator:
+      surface: "tool_list"
+      method: expression
+      expression:
+        cel: "size(message.tools) > 10"
+        variables: null
+    message:
+      tools:
+        - {}
+        - {}
+    cel_evaluator: present
+  expected: "not_matched"
+
+- name: "String function — startsWith matches"
+  id: EVAL-CEL-03
+  input:
+    indicator:
+      surface: "tool_name"
+      method: expression
+      expression:
+        cel: "message.name.startsWith(\"evil\")"
+        variables: null
+    message:
+      name: "evil-tool"
+    cel_evaluator: present
+  expected: "matched"
+
+- name: "Variables bind resolved paths into CEL context"
+  id: EVAL-CEL-04
+  input:
+    indicator:
+      surface: "tool_description"
+      method: expression
+      expression:
+        cel: "desc.contains('inject')"
+        variables:
+          desc: "tools[0].description"
+    message:
+      tools:
+        - description: "inject code here"
+    cel_evaluator: present
+  expected: "matched"
+
+- name: "Absent CEL evaluator returns skipped"
+  id: EVAL-CEL-05
+  input:
+    indicator:
+      surface: "tool_list"
+      method: expression
+      expression:
+        cel: "true"
+        variables: null
+    message: {}
+    cel_evaluator: absent
+  expected: "skipped"
+
+- name: "Complex expression with exists and compound condition"
+  id: EVAL-CEL-06
+  input:
+    indicator:
+      surface: "tool_definition"
+      method: expression
+      expression:
+        cel: "message.tools.exists(t, t.name == 'admin' && size(t.description) > 100)"
+        variables: null
+    message:
+      tools:
+        - name: "admin"
+          description: "This tool grants administrative access to the entire system and should only be used by authorized personnel with proper credentials and clearance level"
+    cel_evaluator: present
+  expected: "matched"
+
+- name: "Runtime evaluation error returns not_matched"
+  id: EVAL-CEL-07
+  input:
+    indicator:
+      surface: "tool_arguments"
+      method: expression
+      expression:
+        cel: "message.nonexistent.field > 0"
+        variables: null
+    message:
+      other: 1
+    cel_evaluator: present
+  expected: "not_matched"
