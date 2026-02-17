@@ -388,7 +388,7 @@ SDKs MUST maintain a registry mapping each `Surface` value to its protocol and d
 | `server_info` | `mcp` | `serverInfo` |
 | `sampling_request` | `mcp` | `params` |
 | `roots_response` | `mcp` | `roots[*]` |
-| `agent_card` | `a2a` | *(root)* |
+| `agent_card` | `a2a` | `""` (root) |
 | `agent_card_name` | `a2a` | `name` |
 | `agent_card_description` | `a2a` | `description` |
 | `skill_description` | `a2a` | `skills[*].description` |
@@ -591,7 +591,7 @@ Evaluates a pattern indicator against a protocol message.
 1. Resolve `pattern.target` against `message` using dot-path resolution (§5.1). This may produce zero, one, or many values (when the path contains wildcards).
 2. For each resolved value, apply the condition (§5.3) according to `pattern.scope`:
    - `value`: evaluate condition against the field's value.
-   - `key`: evaluate condition against the field's key name.
+   - `key`: evaluate condition against the field's key name. For object fields, the key is the property name (e.g., resolving `data.*` over `{secret_key: "abc"}` yields key `"secret_key"`). For array elements reached via `[*]` or `[N]`, the key is the stringified index (e.g., `"0"`, `"1"`). If the resolved value is the root (empty path), `key` scope evaluates to `false`.
    - `any`: evaluate condition against both; match if either matches.
 3. Return `true` if any resolved value matches the condition. Return `false` if no values match or if the target path resolves to nothing.
 
@@ -630,7 +630,7 @@ evaluate_expression(
     expression: ExpressionMatch,
     message: Value,
     cel_evaluator: CelEvaluator
-) → Boolean
+) → Result<Boolean, EvaluationError>
 ```
 
 Evaluates a CEL expression indicator against a protocol message using the provided CEL evaluator.
@@ -643,10 +643,11 @@ Evaluates a CEL expression indicator against a protocol message using the provid
    - Bind `message` as the root variable `message`.
    - If `expression.variables` is present, for each entry `(name, path)`, resolve `path` against `message` using dot-path resolution (§5.1) and bind the result as variable `name`.
 2. Pass the CEL string and context to `cel_evaluator.evaluate()` (§6.1).
-3. If the evaluator returns a boolean, return that value.
-4. If the evaluator returns an error or a non-boolean value, return `false`.
+3. If the evaluator returns a boolean, return `Ok(value)`.
+4. If the evaluator returns a non-boolean value, return `Ok(false)`.
+5. If the evaluator returns an error, propagate it as `Err(EvaluationError)`. This preserves diagnostic information for the calling `evaluate_indicator`, which maps it to `IndicatorVerdict { result: error, evidence }`.
 
-SDKs that do not bundle a CEL evaluator MUST still define this function. When called without a configured evaluator, it MUST return `false` and produce a diagnostic indicating that CEL evaluation is not available.
+SDKs that do not bundle a CEL evaluator MUST still define this function. When called without a configured evaluator, it MUST return `Err(EvaluationError)` indicating that CEL evaluation is not available.
 
 ### 4.5 evaluate_indicator
 
@@ -666,7 +667,7 @@ Top-level indicator evaluation. Dispatches to the appropriate method evaluator a
 1. Dispatch on `indicator.method`:
    - `pattern` → call `evaluate_pattern(indicator.pattern, message)`. Result is boolean.
    - `schema` → call `evaluate_schema(indicator.schema, message)`. Result is boolean.
-   - `expression` → call `evaluate_expression(indicator.expression, message, cel_evaluator)`. If `cel_evaluator` is absent, return verdict with `result: skipped` and evidence indicating CEL support is unavailable. Result is boolean.
+   - `expression` → if `cel_evaluator` is absent, return verdict with `result: skipped` and evidence indicating CEL support is unavailable. Otherwise call `evaluate_expression(indicator.expression, message, cel_evaluator)`. If it returns `Ok(bool)`, the result is that boolean. If it returns `Err(EvaluationError)`, return verdict with `result: error` and the error as evidence.
    - `semantic` → if `semantic_evaluator` is absent, return verdict with `result: skipped` and evidence indicating semantic evaluation is unavailable. Otherwise:
      a. Resolve `indicator.semantic.target` against `message` using dot-path resolution (§5.1). Serialize the first resolved value to string. If the path resolves to nothing, return verdict with `result: not_matched`.
      b. Call `semantic_evaluator.evaluate(text, indicator.semantic.intent, indicator.semantic.category, indicator.semantic.threshold, indicator.semantic.examples)`.
@@ -753,6 +754,8 @@ Resolves a dot-path expression against a dynamically-typed value tree. Returns a
    - For `[*]`: if the current value is an array, fan out to all elements. Each element continues independently through remaining segments. If the current value is not an array, produce no results.
 3. Collect all terminal values reached after processing all segments.
 
+**Empty path:** When `path` is the empty string `""`, `resolve_path` returns the root value itself as a single-element list. This is the canonical representation for targeting the entire message, used by surfaces like `agent_card` whose default target is the root.
+
 **Examples:**
 
 - `resolve_path("tools[*].description", {"tools": [{"description": "A"}, {"description": "B"}]})` → `["A", "B"]`
@@ -811,6 +814,8 @@ Evaluates a single match condition against a resolved value.
 | *(equality)* | Any | `value` equals the operand (deep equality). Used when the MatchEntry is a scalar, not a MatchCondition. |
 
 **Type mismatches:** If the operator requires a specific value type (string operators on non-string, numeric operators on non-number), the condition evaluates to `false`. Type mismatches are not errors.
+
+**Deep equality:** The `any_of` and scalar equality operators use deep equality with the following rules: numeric values compare by mathematical value (integer `42` equals float `42.0`); object key order is irrelevant; NaN is not equal to any value including itself; null equals only null; arrays compare element-wise by position and length.
 
 **Regex:** Patterns MUST be compiled with RE2 semantics (linear-time guarantee). SDKs MUST reject patterns with features outside the RE2 subset during `validate`. The regex is evaluated as a **partial match**: the pattern may match any substring of the value. To require a full-string match, the pattern MUST include `^` and `$` anchors. This matches the default behavior of RE2 libraries across languages (Go's `regexp.MatchString`, Rust's `regex::Regex::is_match`, Python's `re2.search`).
 

@@ -1100,7 +1100,7 @@ The A2A binding covers the Agent-to-Agent protocol as defined in the [A2A specif
 
 | Surface | Description | Default Target | Applicable Context |
 |---------|-------------|----------------|-------------------|
-| `agent_card` | The Agent Card (/.well-known/agent.json) | *(root object)* | Agent discovery |
+| `agent_card` | The Agent Card (/.well-known/agent.json) | `""` (root object) | Agent discovery |
 | `agent_card_name` | The `name` field of the Agent Card | `name` | Agent discovery |
 | `agent_card_description` | The `description` field of the Agent Card | `description` | Agent discovery |
 | `skill_description` | The `description` field of a skill | `skills[*].description` | Agent Card skills array |
