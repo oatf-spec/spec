@@ -158,6 +158,80 @@
         confidence: 75
   expected: "matched"
 
+- name: "format check — valid URI"
+  id: EVAL-SCH-11
+  input:
+    indicator:
+      surface: "resource_uri"
+      method: schema
+      schema:
+        target: "resources[0].uri"
+        checks:
+          - type: "format"
+            format: "uri"
+    message:
+      resources:
+        - uri: "https://example.com/data"
+  expected: "matched"
+
+- name: "max_depth exceeded"
+  id: EVAL-SCH-12
+  input:
+    indicator:
+      surface: "tool_definition"
+      method: schema
+      schema:
+        target: "tools[0].inputSchema"
+        checks:
+          - type: "max_depth"
+            max: 2
+    message:
+      tools:
+        - inputSchema:
+            type: "object"
+            properties:
+              nested:
+                type: "object"
+                properties:
+                  deep:
+                    type: "string"
+  expected: "not_matched"
+
+- name: "max_items exceeded"
+  id: EVAL-SCH-13
+  input:
+    indicator:
+      surface: "tool_list"
+      method: schema
+      schema:
+        target: "tools"
+        checks:
+          - type: "max_items"
+            max: 2
+    message:
+      tools:
+        - {}
+        - {}
+        - {}
+  expected: "not_matched"
+
+- name: "value_range out of range"
+  id: EVAL-SCH-14
+  input:
+    indicator:
+      surface: "tool_arguments"
+      method: schema
+      schema:
+        target: "arguments.count"
+        checks:
+          - type: "value_range"
+            min: 0
+            max_value: 100
+    message:
+      arguments:
+        count: 150
+  expected: "not_matched"
+
 - name: "Multiple checks with AND logic — both pass"
   id: EVAL-SCH-10
   input:

@@ -62,6 +62,35 @@
       - rule: "V-001"
         path: "oatf"
 
+- name: "V-001 invalid: unsupported version string"
+  id: VAL-001c
+  input: |
+    oatf: "9.9"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      description: "A test attack for conformance testing."
+      severity: high
+      execution:
+        protocol: mcp
+        role: server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-001"
+        path: "oatf"
+
 # ---------------------------------------------------------------------------
 # V-002: oatf field is the first field in the document
 # ---------------------------------------------------------------------------
@@ -443,6 +472,154 @@
       - rule: "V-005"
         path: "attack.execution.protocol"
 
+- name: "V-005 invalid: execution.role 'attacker' is not a valid enum value"
+  id: VAL-005d
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      description: "A test attack for conformance testing."
+      severity: high
+      execution:
+        protocol: mcp
+        role: attacker
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-005"
+        path: "attack.execution.role"
+
+- name: "V-005 invalid: status 'published' is not a valid enum value"
+  id: VAL-005e
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      description: "A test attack for conformance testing."
+      severity: high
+      status: published
+      execution:
+        protocol: mcp
+        role: server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-005"
+        path: "attack.status"
+
+- name: "V-005 invalid: indicator surface 'invalid_surface' is not a valid enum value"
+  id: VAL-005f
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      description: "A test attack for conformance testing."
+      severity: high
+      execution:
+        protocol: mcp
+        role: server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+      indicators:
+        - surface: invalid_surface
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-005"
+        path: "attack.indicators[0].surface"
+
+- name: "V-005 invalid: indicator_logic 'majority' is not a valid enum value"
+  id: VAL-005g
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      description: "A test attack for conformance testing."
+      severity: high
+      execution:
+        protocol: mcp
+        role: server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+      indicator_logic: majority
+  expected:
+    errors:
+      - rule: "V-005"
+        path: "attack.indicator_logic"
+
+- name: "V-005 invalid: explicit method 'heuristic' is not a valid enum value"
+  id: VAL-005h
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      description: "A test attack for conformance testing."
+      severity: high
+      execution:
+        protocol: mcp
+        role: server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+      indicators:
+        - surface: tool_description
+          method: heuristic
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-005"
+        path: "attack.indicators[0].method"
+
 # ---------------------------------------------------------------------------
 # V-006: indicators contains at least one entry
 # ---------------------------------------------------------------------------
@@ -600,6 +777,33 @@
     errors:
       - rule: "V-008"
         path: "attack.execution.phases"
+
+- name: "V-008 valid: single phase with no advance (terminal-only document)"
+  id: VAL-008d
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      description: "A test attack for conformance testing."
+      severity: high
+      execution:
+        protocol: mcp
+        role: server
+        phases:
+          - name: only-phase
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
 
 # ---------------------------------------------------------------------------
 # V-009: First phase includes state
@@ -890,6 +1094,33 @@
       - rule: "V-012"
         path: "attack.indicators[0]"
 
+- name: "V-012 invalid: indicator with no method key at all"
+  id: VAL-012d
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      description: "A test attack for conformance testing."
+      severity: high
+      execution:
+        protocol: mcp
+        role: server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+      indicators:
+        - surface: tool_description
+  expected:
+    errors:
+      - rule: "V-012"
+        path: "attack.indicators[0]"
+
 # ---------------------------------------------------------------------------
 # V-013: All regular expressions are syntactically valid RE2
 # ---------------------------------------------------------------------------
@@ -950,9 +1181,72 @@
       - rule: "V-013"
         path: "attack.indicators[0].pattern.regex"
 
+- name: "V-013 invalid: regex in advance.match predicate is also validated"
+  id: VAL-013c
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      description: "A test attack for conformance testing."
+      severity: high
+      execution:
+        protocol: mcp
+        role: server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            advance:
+              event: tools/call
+              match:
+                arguments.command:
+                  regex: "[unclosed"
+          - name: phase-2
+            description: "Terminal phase."
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-013"
+        path: "attack.execution.phases[0].advance.match.arguments.command.regex"
+
 # ---------------------------------------------------------------------------
 # V-014: All CEL expressions are syntactically valid
 # ---------------------------------------------------------------------------
+
+- name: "V-014 valid: well-formed CEL expression"
+  id: VAL-014b
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      description: "A test attack for conformance testing."
+      severity: high
+      execution:
+        protocol: mcp
+        role: server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+      indicators:
+        - surface: tool_description
+          expression:
+            cel: "message.tools.exists(t, size(t.description) > 100)"
+  expected:
+    valid: true
 
 - name: "V-014 invalid: CEL expression with unclosed parenthesis"
   id: VAL-014a
@@ -986,6 +1280,38 @@
 # ---------------------------------------------------------------------------
 # V-015: All JSONPath expressions are syntactically valid
 # ---------------------------------------------------------------------------
+
+- name: "V-015 valid: well-formed JSONPath expression"
+  id: VAL-015b
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      description: "A test attack for conformance testing."
+      severity: high
+      execution:
+        protocol: mcp
+        role: server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            extractors:
+              - name: tool_name
+                source: request
+                type: json_path
+                expression: "$.tools[0].name"
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
 
 - name: "V-015 invalid: JSONPath with unclosed bracket"
   id: VAL-015a
@@ -1352,9 +1678,96 @@
       - rule: "V-019"
         path: "attack.severity.confidence"
 
+- name: "V-019 valid: severity.confidence at lower boundary (0)"
+  id: VAL-019d
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      description: "A test attack for conformance testing."
+      severity:
+        level: low
+        confidence: 0
+      execution:
+        protocol: mcp
+        role: server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-019 valid: severity.confidence at upper boundary (100)"
+  id: VAL-019e
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      description: "A test attack for conformance testing."
+      severity:
+        level: high
+        confidence: 100
+      execution:
+        protocol: mcp
+        role: server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
 # ---------------------------------------------------------------------------
 # V-020: Each SchemaMatch has at least one check
 # ---------------------------------------------------------------------------
+
+- name: "V-020 valid: schema indicator with at least one check"
+  id: VAL-020b
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      description: "A test attack for conformance testing."
+      severity: high
+      execution:
+        protocol: mcp
+        role: server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+      indicators:
+        - surface: tool_input_schema
+          schema:
+            checks:
+              - type: type_check
+                expected_type: object
+  expected:
+    valid: true
 
 - name: "V-020 invalid: schema indicator with empty checks array"
   id: VAL-020a

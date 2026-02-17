@@ -86,6 +86,46 @@
   expected:
     result: error
 
+- name: "None matched — not_detected"
+  id: VERDICT-ORD-06
+  input:
+    indicator_logic: ordered
+    indicator_window: "5m"
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: not_matched
+        timestamp: null
+      - indicator_id: "ind-2"
+        result: not_matched
+        timestamp: null
+    cel_evaluator: absent
+  expected:
+    result: not_detected
+
+- name: "One error — error takes precedence"
+  id: VERDICT-ORD-07
+  input:
+    indicator_logic: ordered
+    indicator_window: "5m"
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: "2026-01-15T12:00:00Z"
+      - indicator_id: "ind-2"
+        result: error
+        timestamp: null
+    cel_evaluator: absent
+  expected:
+    result: error
+
 - name: "Partial match — some indicators not matched"
   id: VERDICT-ORD-05
   input:

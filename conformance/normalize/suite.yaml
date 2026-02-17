@@ -530,6 +530,85 @@
             scope: value
       indicator_logic: any
 
+- name: "N-003 mixed explicit and auto-generated IDs do not collide"
+  id: NORM-003c
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      description: "A test attack."
+      severity: high
+      execution:
+        protocol: mcp
+        role: server
+        phases:
+          - name: phase-1
+            state:
+              tools: []
+      indicators:
+        - id: OATF-TEST-001-01
+          surface: tool_description
+          pattern:
+            contains: "test"
+        - surface: tool_name
+          pattern:
+            contains: "evil"
+        - id: OATF-TEST-001-03
+          surface: tool_response
+          pattern:
+            contains: "exfil"
+  expected: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      version: "1.0.0"
+      status: draft
+      description: "A test attack."
+      severity:
+        level: high
+        confidence: 50
+      classification:
+        protocols:
+          - mcp
+      execution:
+        protocol: mcp
+        role: server
+        phases:
+          - name: phase-1
+            state:
+              tools: []
+      indicators:
+        - id: OATF-TEST-001-01
+          protocol: mcp
+          surface: tool_description
+          method: pattern
+          pattern:
+            target: "tools[*].description"
+            condition:
+              contains: "test"
+            scope: value
+        - id: OATF-TEST-001-02
+          protocol: mcp
+          surface: tool_name
+          method: pattern
+          pattern:
+            target: "tools[*].name"
+            condition:
+              contains: "evil"
+            scope: value
+        - id: OATF-TEST-001-03
+          protocol: mcp
+          surface: tool_response
+          method: pattern
+          pattern:
+            target: "content[*]"
+            condition:
+              contains: "exfil"
+            scope: value
+      indicator_logic: any
+
 # ---------------------------------------------------------------------------
 # N-004: Protocol inference for classification.protocols
 # ---------------------------------------------------------------------------

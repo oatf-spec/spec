@@ -74,3 +74,9 @@
   input: "abc"
   expected:
     error: true
+
+- name: "Invalid fractional value"
+  id: DUR-013
+  input: "1.5h"
+  expected:
+    error: true

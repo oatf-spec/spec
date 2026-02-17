@@ -80,6 +80,36 @@
       Content-Type: "application/json"
   expected: "application/json"
 
+- name: "JSONPath match on non-scalar serializes to compact JSON"
+  id: EXTR-008
+  input:
+    extractor:
+      name: "schema"
+      source: "request"
+      type: "json_path"
+      expression: "$.tools[0].inputSchema"
+    message:
+      tools:
+        - inputSchema:
+            type: "object"
+            properties:
+              a:
+                type: "string"
+    headers: null
+  expected: '{"type":"object","properties":{"a":{"type":"string"}}}'
+
+- name: "Regex match without capture group returns null"
+  id: EXTR-009
+  input:
+    extractor:
+      name: "has_key"
+      source: "response"
+      type: "regex"
+      expression: "key=[a-zA-Z0-9]+"
+    message: "api key=abc123 here"
+    headers: null
+  expected: null
+
 - name: "Header with null headers returns null"
   id: EXTR-007
   input:
