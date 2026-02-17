@@ -1,0 +1,136 @@
+# =============================================================================
+# OATF Conformance: evaluate_condition Primitive Tests
+# Tests SDK evaluate_condition(condition, value) per SDK spec §5.3.
+# =============================================================================
+
+- name: "contains: substring match"
+  id: COND-001
+  input:
+    condition:
+      contains: "malicious"
+    value: "this is malicious text"
+  expected: true
+
+- name: "contains: no match"
+  id: COND-002
+  input:
+    condition:
+      contains: "evil"
+    value: "benign text"
+  expected: false
+
+- name: "contains: case sensitive — wrong case does not match"
+  id: COND-003
+  input:
+    condition:
+      contains: "Malicious"
+    value: "malicious"
+  expected: false
+
+- name: "starts_with: prefix match"
+  id: COND-004
+  input:
+    condition:
+      starts_with: "attack"
+    value: "attack vector"
+  expected: true
+
+- name: "starts_with: substring present but not at start"
+  id: COND-005
+  input:
+    condition:
+      starts_with: "attack"
+    value: "the attack"
+  expected: false
+
+- name: "ends_with: suffix match"
+  id: COND-006
+  input:
+    condition:
+      ends_with: ".exe"
+    value: "payload.exe"
+  expected: true
+
+- name: "regex: partial match (default behavior)"
+  id: COND-007
+  input:
+    condition:
+      regex: "id_rsa|passwd"
+    value: "read /etc/passwd"
+  expected: true
+
+- name: "regex: anchored pattern does not match interior substring"
+  id: COND-008
+  input:
+    condition:
+      regex: "^admin$"
+    value: "not admin here"
+  expected: false
+
+- name: "regex: unanchored pattern matches interior substring"
+  id: COND-009
+  input:
+    condition:
+      regex: "admin"
+    value: "the admin panel"
+  expected: true
+
+- name: "any_of: value in list"
+  id: COND-010
+  input:
+    condition:
+      any_of:
+        - "red"
+        - "blue"
+        - "green"
+    value: "blue"
+  expected: true
+
+- name: "any_of: value not in list"
+  id: COND-011
+  input:
+    condition:
+      any_of:
+        - "red"
+        - "blue"
+    value: "yellow"
+  expected: false
+
+- name: "gt: strictly greater"
+  id: COND-012
+  input:
+    condition:
+      gt: 10
+    value: 15
+  expected: true
+
+- name: "gt: equal is not strictly greater"
+  id: COND-013
+  input:
+    condition:
+      gt: 10
+    value: 10
+  expected: false
+
+- name: "lte: equal satisfies less-than-or-equal"
+  id: COND-014
+  input:
+    condition:
+      lte: 100
+    value: 100
+  expected: true
+
+- name: "type mismatch: string operator on number returns false"
+  id: COND-015
+  input:
+    condition:
+      contains: "x"
+    value: 42
+  expected: false
+
+- name: "equality: scalar condition matches via deep equality"
+  id: COND-016
+  input:
+    condition: "expected_value"
+    value: "expected_value"
+  expected: true

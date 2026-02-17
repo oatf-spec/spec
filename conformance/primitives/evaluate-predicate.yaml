@@ -1,0 +1,90 @@
+# =============================================================================
+# OATF Conformance: evaluate_predicate Primitive Tests
+# Tests SDK evaluate_predicate(predicate, value) per SDK spec §5.4.
+#
+# A predicate is a map of dot-path → condition entries combined with AND.
+# Each entry resolves its path via resolve_path, then evaluates the
+# condition against each resolved value — true if any resolved value
+# satisfies the condition.
+# =============================================================================
+
+- name: "Single entry equality match"
+  id: PRED-001
+  input:
+    predicate:
+      name: "calc"
+    value:
+      name: "calc"
+      description: "calculator"
+  expected: true
+
+- name: "Single entry equality no match"
+  id: PRED-002
+  input:
+    predicate:
+      name: "evil"
+    value:
+      name: "calc"
+  expected: false
+
+- name: "Multiple entries all match (AND satisfied)"
+  id: PRED-003
+  input:
+    predicate:
+      name: "calc"
+      description:
+        contains: "math"
+    value:
+      name: "calc"
+      description: "does math"
+  expected: true
+
+- name: "Multiple entries partial match (AND fails)"
+  id: PRED-004
+  input:
+    predicate:
+      name: "calc"
+      description:
+        contains: "evil"
+    value:
+      name: "calc"
+      description: "does math"
+  expected: false
+
+- name: "Nested dot-path resolves correctly"
+  id: PRED-005
+  input:
+    predicate:
+      args.target: "/etc/passwd"
+    value:
+      args:
+        target: "/etc/passwd"
+  expected: true
+
+- name: "Path resolves to nothing returns false"
+  id: PRED-006
+  input:
+    predicate:
+      missing.field: "value"
+    value:
+      other: "data"
+  expected: false
+
+- name: "Wildcard path — true if any resolved value satisfies condition"
+  id: PRED-007
+  input:
+    predicate:
+      "items[*].type": "secret"
+    value:
+      items:
+        - type: "normal"
+        - type: "secret"
+  expected: true
+
+- name: "Empty predicate is vacuously true"
+  id: PRED-008
+  input:
+    predicate: {}
+    value:
+      anything: "here"
+  expected: true
