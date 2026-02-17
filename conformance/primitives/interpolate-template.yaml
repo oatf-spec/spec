@@ -1,0 +1,97 @@
+# =============================================================================
+# OATF Conformance: interpolate_template Primitive Tests
+# Tests SDK interpolate_template(template, extractors, request) per SDK spec §5.5.
+# =============================================================================
+
+- name: "Simple extractor substitution"
+  id: TMPL-001
+  input:
+    template: "Hello {{name}}"
+    extractors:
+      name: "world"
+    request: null
+  expected: "Hello world"
+
+- name: "Request path substitution"
+  id: TMPL-002
+  input:
+    template: "Tool: {{request.name}}"
+    extractors: {}
+    request:
+      name: "calculator"
+  expected: "Tool: calculator"
+
+- name: "Missing extractor resolves to empty string"
+  id: TMPL-003
+  input:
+    template: "Hello {{missing}}"
+    extractors: {}
+    request: null
+  expected: "Hello "
+
+- name: "Missing request path resolves to empty string"
+  id: TMPL-004
+  input:
+    template: "{{request.x.y}}"
+    extractors: {}
+    request:
+      x:
+        z: 1
+  expected: ""
+
+- name: "Multiple expressions in one template"
+  id: TMPL-005
+  input:
+    template: "{{a}} and {{b}}"
+    extractors:
+      a: "foo"
+      b: "bar"
+    request: null
+  expected: "foo and bar"
+
+- name: "No expressions returns template unchanged"
+  id: TMPL-006
+  input:
+    template: "plain text"
+    extractors: {}
+    request: null
+  expected: "plain text"
+
+- name: "Escaped template is not interpolated"
+  id: TMPL-007
+  input:
+    template: "use \\{{name}} syntax"
+    extractors:
+      name: "should not appear"
+    request: null
+  expected: "use {{name}} syntax"
+
+- name: "Mixed escaped and real expressions"
+  id: TMPL-008
+  input:
+    template: "\\{{literal}} and {{real}}"
+    extractors:
+      real: "value"
+    request: null
+  expected: "{{literal}} and value"
+
+- name: "Request with nested path including array index"
+  id: TMPL-009
+  input:
+    template: "{{request.a.b[0]}}"
+    extractors: {}
+    request:
+      a:
+        b:
+          - "deep"
+  expected: "deep"
+
+- name: "Extractor takes priority over request path"
+  id: TMPL-010
+  input:
+    template: "{{name}}"
+    extractors:
+      name: "from_extractor"
+    request:
+      name: "from_request"
+  expected: "from_extractor"

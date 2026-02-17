@@ -1,0 +1,81 @@
+# =============================================================================
+# OATF Conformance: compute_effective_state Primitive Tests
+# Tests SDK compute_effective_state(phases, phase_index) per SDK spec §5.7.
+# =============================================================================
+
+- name: "Single phase returns its own state"
+  id: STATE-001
+  input:
+    phases:
+      - name: "p1"
+        state:
+          tools: []
+    phase_index: 0
+  expected:
+    tools: []
+
+- name: "Omitted state inherits from previous phase"
+  id: STATE-002
+  input:
+    phases:
+      - name: "p1"
+        state:
+          tools:
+            - name: "a"
+      - name: "p2"
+        state: null
+    phase_index: 1
+  expected:
+    tools:
+      - name: "a"
+
+- name: "Explicit state fully replaces inherited state"
+  id: STATE-003
+  input:
+    phases:
+      - name: "p1"
+        state:
+          tools:
+            - name: "a"
+      - name: "p2"
+        state:
+          tools:
+            - name: "b"
+    phase_index: 1
+  expected:
+    tools:
+      - name: "b"
+
+- name: "Inheritance chains through multiple phases"
+  id: STATE-004
+  input:
+    phases:
+      - name: "p1"
+        state:
+          tools:
+            - name: "a"
+      - name: "p2"
+        state: null
+      - name: "p3"
+        state: null
+    phase_index: 2
+  expected:
+    tools:
+      - name: "a"
+
+- name: "Override after inheritance chain replaces everything"
+  id: STATE-005
+  input:
+    phases:
+      - name: "p1"
+        state:
+          tools:
+            - name: "a"
+      - name: "p2"
+        state: null
+      - name: "p3"
+        state:
+          tools: []
+    phase_index: 2
+  expected:
+    tools: []

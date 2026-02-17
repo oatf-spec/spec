@@ -1,0 +1,93 @@
+# =============================================================================
+# OATF Conformance: evaluate_extractor Primitive Tests
+# Tests SDK evaluate_extractor(extractor, message, headers) per SDK spec §5.6.
+# =============================================================================
+
+- name: "JSONPath match returns first result"
+  id: EXTR-001
+  input:
+    extractor:
+      name: "tool_name"
+      source: "request"
+      type: "json_path"
+      expression: "$.tools[0].name"
+    message:
+      tools:
+        - name: "calc"
+    headers: null
+  expected: "calc"
+
+- name: "JSONPath no match returns null"
+  id: EXTR-002
+  input:
+    extractor:
+      name: "missing"
+      source: "request"
+      type: "json_path"
+      expression: "$.missing"
+    message:
+      other: 1
+    headers: null
+  expected: null
+
+- name: "Regex with capture group returns first group"
+  id: EXTR-003
+  input:
+    extractor:
+      name: "api_key"
+      source: "response"
+      type: "regex"
+      expression: "key=([a-zA-Z0-9]+)"
+    message: "api key=abc123 here"
+    headers: null
+  expected: "abc123"
+
+- name: "Regex no match returns null"
+  id: EXTR-004
+  input:
+    extractor:
+      name: "secret"
+      source: "response"
+      type: "regex"
+      expression: "secret=(\\w+)"
+    message: "no secrets"
+    headers: null
+  expected: null
+
+- name: "Header extraction by name"
+  id: EXTR-005
+  input:
+    extractor:
+      name: "auth"
+      source: "request"
+      type: "header"
+      expression: "Authorization"
+    message: {}
+    headers:
+      Authorization: "Bearer token123"
+  expected: "Bearer token123"
+
+- name: "Header lookup is case insensitive"
+  id: EXTR-006
+  input:
+    extractor:
+      name: "content_type"
+      source: "response"
+      type: "header"
+      expression: "content-type"
+    message: {}
+    headers:
+      Content-Type: "application/json"
+  expected: "application/json"
+
+- name: "Header with null headers returns null"
+  id: EXTR-007
+  input:
+    extractor:
+      name: "custom"
+      source: "request"
+      type: "header"
+      expression: "X-Custom"
+    message: {}
+    headers: null
+  expected: null
