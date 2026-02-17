@@ -1,0 +1,910 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oatf.io/schemas/v0.1.json",
+  "title": "Open Agent Threat Format (OATF) v0.1",
+  "description": "Schema for validating OATF documents that describe security threats against AI agent communication protocols (MCP, A2A, AG-UI).",
+  "type": "object",
+  "required": ["oatf", "attack"],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^x-": {}
+  },
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL pointing to this JSON Schema for IDE validation and autocompletion."
+    },
+    "oatf": {
+      "type": "string",
+      "const": "0.1",
+      "description": "The OATF specification version. Must be \"0.1\" for this schema."
+    },
+    "attack": {
+      "$ref": "#/$defs/Attack",
+      "description": "The attack definition. Exactly one per document."
+    }
+  },
+
+  "$defs": {
+
+    "SeverityLevel": {
+      "type": "string",
+      "enum": ["informational", "low", "medium", "high", "critical"],
+      "description": "Severity classification from informational (observation only) to critical (full compromise)."
+    },
+
+    "Protocol": {
+      "type": "string",
+      "enum": ["mcp", "a2a", "ag_ui"],
+      "description": "Agent communication protocol identifier."
+    },
+
+    "Role": {
+      "type": "string",
+      "enum": ["server", "client", "peer"],
+      "description": "Role the adversarial tool assumes. server: malicious server. client: malicious client. peer: malicious peer agent."
+    },
+
+    "Impact": {
+      "type": "string",
+      "enum": [
+        "data_exfiltration",
+        "unauthorized_actions",
+        "service_disruption",
+        "privilege_escalation",
+        "information_disclosure",
+        "credential_theft"
+      ],
+      "description": "Category of harm: what happens when the attack succeeds."
+    },
+
+    "Duration": {
+      "type": "string",
+      "pattern": "^([0-9]+[smhd]|P[0-9]+D(T([0-9]+H([0-9]+M)?([0-9]+S)?|[0-9]+M([0-9]+S)?|[0-9]+S))?|PT([0-9]+H([0-9]+M)?([0-9]+S)?|[0-9]+M([0-9]+S)?|[0-9]+S))$",
+      "description": "Time duration. Shorthand (30s, 5m, 1h, 2d) or ISO 8601 (PT30S, PT5M30S, P1DT12H).",
+      "examples": ["30s", "5m", "1h", "PT30S", "PT5M30S", "P1DT12H"]
+    },
+
+    "Surface": {
+      "type": "string",
+      "description": "Protocol-specific attack surface being examined. Valid values are defined in the protocol binding sections (spec §7).",
+      "enum": [
+        "tool_description",
+        "tool_input_schema",
+        "tool_name",
+        "tool_response",
+        "tool_arguments",
+        "resource_content",
+        "resource_uri",
+        "resource_description",
+        "prompt_template",
+        "prompt_arguments",
+        "prompt_description",
+        "notification",
+        "capability",
+        "server_info",
+        "sampling_request",
+        "roots_response",
+        "agent_card",
+        "agent_card_name",
+        "agent_card_description",
+        "skill_description",
+        "skill_name",
+        "task_message",
+        "task_artifact",
+        "task_status",
+        "message_history",
+        "tool_definitions",
+        "tool_result",
+        "state",
+        "forwarded_props",
+        "agent_event",
+        "agent_tool_call"
+      ]
+    },
+
+    "MatchCondition": {
+      "type": "object",
+      "description": "Condition operator applied to a field value. All string operators are case-sensitive; use regex with (?i) for case-insensitive matching.",
+      "properties": {
+        "contains": { "type": "string", "description": "Substring match (case-sensitive)." },
+        "starts_with": { "type": "string", "description": "Prefix match (case-sensitive)." },
+        "ends_with": { "type": "string", "description": "Suffix match (case-sensitive)." },
+        "regex": { "type": "string", "description": "RE2-compatible regular expression. No lookarounds, no backreferences." },
+        "any_of": { "type": "array", "description": "Match any of the listed values (OR logic)." },
+        "gt": { "type": "number", "description": "Greater than." },
+        "lt": { "type": "number", "description": "Less than." },
+        "gte": { "type": "number", "description": "Greater than or equal." },
+        "lte": { "type": "number", "description": "Less than or equal." }
+      },
+      "additionalProperties": false
+    },
+
+    "Attack": {
+      "type": "object",
+      "description": "A single attack definition containing metadata, execution profile, and detection indicators.",
+      "required": ["id", "name", "description", "severity", "execution", "indicators"],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^OATF-[0-9]{3,}$",
+          "description": "Unique stable identifier. Assigned sequentially, never reused.",
+          "examples": ["OATF-001", "OATF-027", "OATF-1042"]
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Human-readable name for the attack. Should be concise and descriptive.",
+          "examples": ["Tool Description Prompt Injection", "Tool Definition Rug Pull"]
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$",
+          "default": "1.0.0",
+          "description": "SemVer version. MAJOR for breaking changes, MINOR for additions, PATCH for fixes.",
+          "examples": ["1.0.0", "1.2.0", "2.0.0"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "experimental", "stable", "deprecated"],
+          "default": "draft",
+          "description": "Lifecycle status: draft -> experimental -> stable -> deprecated."
+        },
+        "created": {
+          "type": "string",
+          "format": "date",
+          "description": "Date first published (YYYY-MM-DD). May be populated from version control.",
+          "examples": ["2026-01-15"]
+        },
+        "modified": {
+          "type": "string",
+          "format": "date",
+          "description": "Date last modified (YYYY-MM-DD). May be populated from version control.",
+          "examples": ["2026-02-15"]
+        },
+        "author": {
+          "type": "string",
+          "description": "Author or organization that created this document.",
+          "examples": ["ThoughtJack Project"]
+        },
+        "description": {
+          "type": "string",
+          "description": "Prose description of the attack: what it does, why it matters, what conditions enable it."
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity",
+          "description": "Threat level. Accepts scalar string (\"high\") or full object with level, confidence, and CVSS."
+        },
+        "impact": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Impact" },
+          "uniqueItems": true,
+          "description": "Categories of harm this attack can cause."
+        },
+        "classification": {
+          "$ref": "#/$defs/Classification"
+        },
+        "references": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Reference" },
+          "description": "External references: research papers, blog posts, CVE entries, related OATF documents."
+        },
+        "execution": {
+          "$ref": "#/$defs/ExecutionProfile"
+        },
+        "indicators": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Indicator" },
+          "description": "Detection patterns for identifying this attack in observed protocol traffic."
+        },
+        "indicator_logic": {
+          "type": "string",
+          "enum": ["any", "all", "ordered", "custom"],
+          "default": "any",
+          "description": "How indicator verdicts combine. any: at least one. all: every indicator. ordered: in sequence within window. custom: CEL expression."
+        },
+        "indicator_window": {
+          "$ref": "#/$defs/Duration",
+          "description": "Maximum time span for correlated indicators (first to last matched timestamp)."
+        },
+        "indicator_expression": {
+          "type": "string",
+          "description": "CEL expression for custom indicator logic. Required when indicator_logic is 'custom'."
+        }
+      },
+      "if": {
+        "properties": {
+          "indicator_logic": { "const": "custom" }
+        },
+        "required": ["indicator_logic"]
+      },
+      "then": {
+        "required": ["indicator_expression"]
+      }
+    },
+
+    "Severity": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/SeverityLevel",
+          "description": "Scalar shorthand. Expands to {level: <value>, confidence: 50}."
+        },
+        {
+          "type": "object",
+          "description": "Full severity specification with confidence and optional CVSS vector.",
+          "required": ["level"],
+          "additionalProperties": false,
+          "properties": {
+            "level": {
+              "$ref": "#/$defs/SeverityLevel"
+            },
+            "confidence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "default": 50,
+              "description": "Confidence this attack represents a real threat (0-100, STIX scale). 0 = no confidence, 100 = certain."
+            },
+            "cvss": {
+              "type": "string",
+              "pattern": "^CVSS:3\\.1/",
+              "description": "CVSS 3.1 vector string.",
+              "examples": ["CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:N"]
+            }
+          }
+        }
+      ]
+    },
+
+    "Classification": {
+      "type": "object",
+      "description": "Maps the attack to external security frameworks and the OATF category taxonomy.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "category": {
+          "type": "string",
+          "enum": [
+            "capability_poisoning",
+            "response_fabrication",
+            "context_manipulation",
+            "discovery_exploitation",
+            "oversight_bypass",
+            "temporal_manipulation",
+            "availability_disruption",
+            "cross_protocol_chain"
+          ],
+          "description": "Cross-protocol attack category. Describes type of attack independent of which protocol it targets."
+        },
+        "protocols": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Protocol" },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Targeted protocols. Inferred from execution profile and indicators when omitted."
+        },
+        "atlas": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ATLASMapping" },
+          "description": "MITRE ATLAS technique mappings for AI-specific threat classification."
+        },
+        "mitre_attack": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ATTACKMapping" },
+          "description": "MITRE ATT&CK tactic and technique mappings."
+        },
+        "owasp_mcp": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "OWASP MCP Top 10 identifiers.",
+          "examples": [["MCP-03", "MCP-06"]]
+        },
+        "owasp_agentic": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "OWASP Agentic AI Top 10 identifiers."
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Free-form tags for filtering and discovery.",
+          "examples": [["injection", "rug-pull", "multi-phase"]]
+        }
+      }
+    },
+
+    "ATLASMapping": {
+      "type": "object",
+      "description": "Mapping to a MITRE ATLAS technique.",
+      "required": ["technique"],
+      "additionalProperties": false,
+      "properties": {
+        "technique": {
+          "type": "string",
+          "pattern": "^AML\\.T[0-9]{4}$",
+          "description": "ATLAS technique identifier.",
+          "examples": ["AML.T0051"]
+        },
+        "sub_technique": {
+          "type": "string",
+          "pattern": "^AML\\.T[0-9]{4}\\.[0-9]{3}$",
+          "description": "ATLAS sub-technique identifier.",
+          "examples": ["AML.T0051.001", "AML.T0051.002"]
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable technique name.",
+          "examples": ["Direct Prompt Injection", "Indirect Prompt Injection"]
+        }
+      }
+    },
+
+    "ATTACKMapping": {
+      "type": "object",
+      "description": "Mapping to a MITRE ATT&CK tactic and technique.",
+      "required": ["tactic", "technique"],
+      "additionalProperties": false,
+      "properties": {
+        "tactic": {
+          "type": "string",
+          "pattern": "^TA[0-9]{4}$",
+          "description": "ATT&CK tactic identifier.",
+          "examples": ["TA0001"]
+        },
+        "tactic_name": {
+          "type": "string",
+          "description": "Human-readable tactic name.",
+          "examples": ["Initial Access", "Execution", "Persistence"]
+        },
+        "technique": {
+          "type": "string",
+          "pattern": "^T[0-9]{4}(\\.[0-9]{3})?$",
+          "description": "ATT&CK technique identifier, optionally with sub-technique.",
+          "examples": ["T1195", "T1195.002"]
+        },
+        "technique_name": {
+          "type": "string",
+          "description": "Human-readable technique name.",
+          "examples": ["Supply Chain Compromise"]
+        }
+      }
+    },
+
+    "Reference": {
+      "type": "object",
+      "description": "External reference providing context for the attack.",
+      "required": ["url"],
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the reference."
+        },
+        "title": {
+          "type": "string",
+          "description": "Human-readable title of the reference."
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief description of the reference's relevance."
+        }
+      }
+    },
+
+    "ExecutionProfile": {
+      "type": "object",
+      "description": "Specifies the protocol messages an adversarial tool must produce to simulate the attack.",
+      "required": ["protocol", "role", "phases"],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "protocol": {
+          "$ref": "#/$defs/Protocol",
+          "description": "Primary protocol targeted. Cross-protocol attacks set per-phase overrides."
+        },
+        "role": {
+          "$ref": "#/$defs/Role",
+          "description": "Default role the adversarial tool assumes. Individual phases may override."
+        },
+        "setup": {
+          "$ref": "#/$defs/Setup"
+        },
+        "phases": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Phase" },
+          "description": "Ordered sequence of attack phases. The last phase without an advance trigger is the terminal phase."
+        }
+      }
+    },
+
+    "Setup": {
+      "type": "object",
+      "description": "One-time initialization before the first phase. Declares capabilities sent during protocol handshake.",
+      "additionalProperties": false,
+      "properties": {
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mcp": { "$ref": "#/$defs/MCPCapabilities" },
+            "a2a": {
+              "type": "object",
+              "description": "A2A setup capabilities (provisional binding)."
+            },
+            "ag_ui": {
+              "type": "object",
+              "description": "AG-UI setup capabilities (provisional binding)."
+            }
+          }
+        }
+      }
+    },
+
+    "MCPCapabilities": {
+      "type": "object",
+      "description": "MCP server capabilities declared during initialize handshake.",
+      "additionalProperties": false,
+      "properties": {
+        "tools": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "listChanged": {
+              "type": "boolean",
+              "description": "Server supports tools/list_changed notifications."
+            }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "subscribe": {
+              "type": "boolean",
+              "description": "Server supports resource subscriptions."
+            },
+            "listChanged": {
+              "type": "boolean",
+              "description": "Server supports resources/list_changed notifications."
+            }
+          }
+        },
+        "prompts": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "listChanged": {
+              "type": "boolean",
+              "description": "Server supports prompts/list_changed notifications."
+            }
+          }
+        }
+      }
+    },
+
+    "Phase": {
+      "type": "object",
+      "description": "A distinct stage of the attack. Phases execute in declared order.",
+      "required": ["name"],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human-readable label for this phase. Must be unique within the document.",
+          "examples": ["trust_building", "payload_delivery", "exploit", "exfiltration"]
+        },
+        "description": {
+          "type": "string",
+          "description": "Prose describing the purpose of this phase."
+        },
+        "protocol": {
+          "$ref": "#/$defs/Protocol",
+          "description": "Protocol targeted in this phase. Defaults to execution.protocol. Set explicitly for cross-protocol attacks."
+        },
+        "role": {
+          "$ref": "#/$defs/Role",
+          "description": "Role assumed during this phase. Defaults to execution.role."
+        },
+        "state": {
+          "type": "object",
+          "description": "Protocol-specific state presented during this phase. Structure varies by protocol (spec §7.1.4 MCP, §7.2.4 A2A, §7.3.4 AG-UI). First phase must include state; subsequent phases inherit when omitted."
+        },
+        "extractors": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Extractor" },
+          "description": "Capture values from protocol messages for use in subsequent phases via {{name}} template syntax."
+        },
+        "on_enter": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Action" },
+          "description": "Actions executed when this phase begins, before any client interaction."
+        },
+        "advance": {
+          "$ref": "#/$defs/Trigger",
+          "description": "Condition that triggers advancement to the next phase. Omit for terminal phase (persists indefinitely)."
+        }
+      }
+    },
+
+    "Extractor": {
+      "type": "object",
+      "description": "Captures a value from a protocol message for use in subsequent phases and response templates.",
+      "required": ["name", "source", "type", "expression"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Variable name. Referenced as {{name}} in templates. Last-write-wins if redefined in a later phase.",
+          "examples": ["admin_tool_name", "session_id"]
+        },
+        "source": {
+          "type": "string",
+          "enum": ["request", "response"],
+          "description": "Extract from incoming requests or outgoing responses."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["json_path", "regex", "header"],
+          "description": "Extraction method. json_path: JSONPath expression. regex: first capture group. header: HTTP header value."
+        },
+        "expression": {
+          "type": "string",
+          "description": "Extraction expression, interpreted according to type.",
+          "examples": ["$.tools[0].name", "\"name\":\\s*\"([^\"]+)\"", "Authorization"]
+        }
+      }
+    },
+
+    "Action": {
+      "type": "object",
+      "description": "An action executed on phase entry.",
+      "additionalProperties": false,
+      "properties": {
+        "send_notification": {
+          "type": "object",
+          "description": "Send a protocol notification.",
+          "required": ["method"],
+          "additionalProperties": false,
+          "properties": {
+            "method": {
+              "type": "string",
+              "description": "Notification method name.",
+              "examples": ["notifications/tools/list_changed", "notifications/resources/updated"]
+            },
+            "params": {
+              "type": "object",
+              "description": "Notification parameters."
+            }
+          }
+        },
+        "log": {
+          "type": "object",
+          "description": "Emit a log message.",
+          "required": ["message"],
+          "additionalProperties": false,
+          "properties": {
+            "message": {
+              "type": "string",
+              "description": "Log message text. Supports {{template}} interpolation."
+            },
+            "level": {
+              "type": "string",
+              "enum": ["info", "warn", "error"],
+              "description": "Log severity level."
+            }
+          }
+        }
+      }
+    },
+
+    "Trigger": {
+      "type": "object",
+      "description": "Condition for phase advancement. Combines event matching, counting, content predicates, and timeouts.",
+      "additionalProperties": false,
+      "dependentRequired": {
+        "count": ["event"],
+        "match": ["event"]
+      },
+      "properties": {
+        "event": {
+          "type": "string",
+          "description": "Protocol event type to match. Supports name qualifiers via colon syntax. Values are protocol-specific (spec §7).",
+          "examples": ["tools/call", "tools/list", "task/send", "run_agent", "tools/call:calculator"]
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Number of matching events required before advancing. Defaults to 1 when event is specified."
+        },
+        "match": {
+          "$ref": "#/$defs/MatchPredicate",
+          "description": "Content predicate. Phase advances only when both event type and predicate match."
+        },
+        "after": {
+          "$ref": "#/$defs/Duration",
+          "description": "Advance unconditionally after this duration from phase entry."
+        },
+        "timeout": {
+          "$ref": "#/$defs/Duration",
+          "description": "Maximum wait for a matching event. Measured from last match or phase entry. Differs from 'after' which always measures from phase entry."
+        }
+      }
+    },
+
+    "MatchPredicate": {
+      "type": "object",
+      "description": "Structured conditions against protocol message content. Keys are dot-path field references (e.g., arguments.command). All conditions combine with AND. String operators are case-sensitive.",
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string" },
+          { "type": "number" },
+          { "type": "boolean" },
+          { "type": "array" },
+          { "$ref": "#/$defs/MatchCondition" }
+        ]
+      }
+    },
+
+    "Indicator": {
+      "type": "object",
+      "description": "Detection pattern for identifying the attack in observed protocol traffic. Targets a specific protocol surface using exactly one detection method.",
+      "required": ["surface"],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^OATF-[0-9]{3,}-[0-9]{2,}$",
+          "description": "Unique identifier within this document. Auto-generated as {attack.id}-{NN} when omitted.",
+          "examples": ["OATF-003-01", "OATF-027-03"]
+        },
+        "protocol": {
+          "$ref": "#/$defs/Protocol",
+          "description": "Protocol this indicator applies to. Defaults to execution.protocol. Set explicitly when targeting a different protocol."
+        },
+        "surface": {
+          "$ref": "#/$defs/Surface"
+        },
+        "description": {
+          "type": "string",
+          "description": "Prose describing what this indicator detects and why it is significant."
+        },
+        "method": {
+          "type": "string",
+          "enum": ["pattern", "schema", "expression", "semantic"],
+          "description": "Detection method. Inferred from present method-specific key when omitted."
+        },
+        "pattern": {
+          "$ref": "#/$defs/PatternMatch"
+        },
+        "schema": {
+          "$ref": "#/$defs/SchemaMatch"
+        },
+        "expression": {
+          "$ref": "#/$defs/ExpressionMatch"
+        },
+        "semantic": {
+          "$ref": "#/$defs/SemanticMatch"
+        },
+        "confidence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Indicator-level confidence (0-100), overrides attack-level severity.confidence."
+        },
+        "severity": {
+          "$ref": "#/$defs/SeverityLevel",
+          "description": "Indicator-level severity, overrides attack-level severity.level."
+        },
+        "false_positives": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Known benign scenarios that may trigger this indicator. Helps tool operators tune alerting."
+        }
+      },
+      "oneOf": [
+        { "required": ["pattern"] },
+        { "required": ["schema"] },
+        { "required": ["expression"] },
+        { "required": ["semantic"] }
+      ]
+    },
+
+    "PatternMatch": {
+      "type": "object",
+      "description": "String and structural pattern matching against parsed protocol messages. Standard form uses target + condition. Shorthand places a single condition operator directly on the pattern object.",
+      "properties": {
+        "target": {
+          "type": "string",
+          "description": "Dot-path to the field to inspect. Supports wildcards (tools[*].description). Defaults to surface's canonical target (spec §7).",
+          "examples": ["tools[*].description", "content[*]", "messages[*].content"]
+        },
+        "condition": {
+          "$ref": "#/$defs/MatchPredicate",
+          "description": "Matching condition (spec §5.4). Required in standard form."
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["value", "key", "any"],
+          "default": "value",
+          "description": "Where to apply the match. value: field value. key: field name. any: both."
+        },
+        "contains": { "type": "string", "description": "Shorthand: substring match on surface default target." },
+        "starts_with": { "type": "string", "description": "Shorthand: prefix match on surface default target." },
+        "ends_with": { "type": "string", "description": "Shorthand: suffix match on surface default target." },
+        "regex": { "type": "string", "description": "Shorthand: RE2 regex on surface default target." },
+        "any_of": { "type": "array", "description": "Shorthand: match any listed value on surface default target." },
+        "gt": { "type": "number", "description": "Shorthand: greater than on surface default target." },
+        "lt": { "type": "number", "description": "Shorthand: less than on surface default target." },
+        "gte": { "type": "number", "description": "Shorthand: greater than or equal on surface default target." },
+        "lte": { "type": "number", "description": "Shorthand: less than or equal on surface default target." }
+      },
+      "additionalProperties": false
+    },
+
+    "SchemaMatch": {
+      "type": "object",
+      "description": "Structural validation rules applied to parsed protocol messages.",
+      "required": ["checks"],
+      "additionalProperties": false,
+      "properties": {
+        "target": {
+          "type": "string",
+          "description": "Dot-path to the field to validate. Defaults to surface's canonical target (spec §7).",
+          "examples": ["tools[*].inputSchema", "arguments"]
+        },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/SchemaCheck" },
+          "description": "Structural checks combined with AND logic."
+        }
+      }
+    },
+
+    "SchemaCheck": {
+      "type": "object",
+      "description": "A single structural validation check.",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "type_check",
+            "required_fields",
+            "max_length",
+            "max_depth",
+            "max_items",
+            "value_range",
+            "format"
+          ],
+          "description": "The kind of structural check to perform."
+        },
+        "expected_type": {
+          "type": "string",
+          "description": "For type_check: the expected JSON type.",
+          "examples": ["string", "object", "array"]
+        },
+        "fields": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "For required_fields: field names that must be present.",
+          "examples": [["name", "description", "inputSchema"]]
+        },
+        "max": {
+          "type": "integer",
+          "description": "For max_length (string length), max_depth (nesting), or max_items (array size)."
+        },
+        "min": {
+          "type": "number",
+          "description": "For value_range: minimum allowed value."
+        },
+        "max_value": {
+          "type": "number",
+          "description": "For value_range: maximum allowed value."
+        },
+        "format": {
+          "type": "string",
+          "description": "For format: expected string format.",
+          "examples": ["uri", "email", "date"]
+        }
+      }
+    },
+
+    "ExpressionMatch": {
+      "type": "object",
+      "description": "CEL expression evaluated against the full message context. No target field; the expression itself navigates to relevant fields.",
+      "required": ["cel"],
+      "additionalProperties": false,
+      "properties": {
+        "cel": {
+          "type": "string",
+          "description": "Common Expression Language expression evaluating to boolean. Must be side-effect-free. Available context is protocol-specific (spec §7.1.3, §7.2.3, §7.3.3).",
+          "examples": [
+            "message.tools.exists(t, size(t.description) > 500 && t.description.contains(\"IMPORTANT:\"))",
+            "message.method == \"notifications/tools/list_changed\""
+          ]
+        },
+        "variables": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Named variables pre-extracted via dot-path, available to the CEL expression beyond the root message context."
+        }
+      }
+    },
+
+    "SemanticMatch": {
+      "type": "object",
+      "description": "Intent-based detection requiring an inference engine (LLM, embedding model, or classifier). Threshold is tool-relative; cross-tool interoperability depends on the examples field.",
+      "required": ["intent", "category"],
+      "additionalProperties": false,
+      "properties": {
+        "target": {
+          "type": "string",
+          "description": "Dot-path to the field to analyze. Defaults to surface's canonical target (spec §7).",
+          "examples": ["tools[*].description", "skills[*].description"]
+        },
+        "intent": {
+          "type": "string",
+          "description": "Natural-language description of the malicious intent to detect. Used as reference for similarity or classification.",
+          "examples": ["Override agent behavior by impersonating system instructions within a tool description"]
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "prompt_injection",
+            "data_exfiltration",
+            "privilege_escalation",
+            "social_engineering",
+            "instruction_override",
+            "benign"
+          ],
+          "description": "Category of malicious intent for classification-based engines."
+        },
+        "threshold": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.7,
+          "description": "Tool-relative confidence threshold (0.0-1.0). Not comparable across tools using different models. Calibrate using the examples field."
+        },
+        "examples": {
+          "type": "object",
+          "description": "Ground truth for calibrating inference engines. Documents should include at least 2 positive and 2 negative examples.",
+          "additionalProperties": false,
+          "properties": {
+            "positive": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Strings that should trigger this indicator."
+            },
+            "negative": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Strings that should not trigger this indicator."
+            }
+          }
+        }
+      }
+    }
+  }
+}
