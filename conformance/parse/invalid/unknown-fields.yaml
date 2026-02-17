@@ -1,0 +1,26 @@
+oatf: "0.1"
+unknown_top_level: true
+
+attack:
+  id: OATF-994
+  name: "Unknown Fields Test"
+  description: "Contains unrecognized fields at various levels."
+  severity: low
+  unknown_attack_field: "should not be here"
+
+  execution:
+    protocol: mcp
+    role: server
+    unknown_execution_field: 42
+    phases:
+      - name: deliver
+        unknown_phase_field: [1, 2, 3]
+        state:
+          tools: []
+
+  indicators:
+    - surface: tool_description
+      unknown_indicator_field: true
+      pattern:
+        contains: "test"
+        unknown_pattern_field: "extra"

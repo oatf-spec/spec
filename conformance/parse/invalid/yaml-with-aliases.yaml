@@ -1,0 +1,22 @@
+oatf: "0.1"
+
+_shared_pattern: &shared
+  contains: "malicious"
+
+attack:
+  id: OATF-991
+  name: "Alias Test"
+  description: "Uses YAML aliases which are prohibited."
+  severity: low
+
+  execution:
+    protocol: mcp
+    role: server
+    phases:
+      - name: deliver
+        state:
+          tools: []
+
+  indicators:
+    - surface: tool_description
+      pattern: *shared

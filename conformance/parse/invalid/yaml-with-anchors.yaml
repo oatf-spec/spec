@@ -1,0 +1,24 @@
+oatf: "0.1"
+
+attack:
+  id: OATF-990
+  name: "Anchor Test"
+  description: "Uses YAML anchors which are prohibited."
+  severity: low
+
+  execution:
+    protocol: mcp
+    role: server
+    phases:
+      - name: deliver
+        state:
+          tools:
+            - name: &tool_name "calculator"
+              description: "A calculator tool."
+              inputSchema:
+                type: object
+
+  indicators:
+    - surface: tool_description
+      pattern:
+        contains: *tool_name

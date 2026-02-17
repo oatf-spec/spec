@@ -1,0 +1,25 @@
+oatf: "0.1"
+
+_base_indicator: &base
+  protocol: mcp
+  surface: tool_description
+  method: pattern
+
+attack:
+  id: OATF-992
+  name: "Merge Key Test"
+  description: "Uses YAML merge keys which are prohibited."
+  severity: low
+
+  execution:
+    protocol: mcp
+    role: server
+    phases:
+      - name: deliver
+        state:
+          tools: []
+
+  indicators:
+    - <<: *base
+      pattern:
+        contains: "inject"

@@ -1,0 +1,5 @@
+%not valid yaml {{{
+  unclosed: [bracket
+  "missing: end quote
+  \x00\xff binary garbage
+: : : : stacked colons

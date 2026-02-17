@@ -1,0 +1,20 @@
+oatf: "0.1"
+
+attack:
+  id: OATF-900
+  name: "Minimal Parse Test"
+  description: "The absolute minimum valid OATF document."
+  severity: low
+
+  execution:
+    protocol: mcp
+    role: server
+    phases:
+      - name: deliver
+        state:
+          tools: []
+
+  indicators:
+    - surface: tool_description
+      pattern:
+        contains: "test"
