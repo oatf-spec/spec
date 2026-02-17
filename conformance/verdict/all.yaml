@@ -1,0 +1,127 @@
+# =============================================================================
+# OATF Conformance: compute_verdict — "all" Logic Mode
+# Tests SDK compute_verdict with indicator_logic: all per SDK spec §4.6.
+#
+# all: error takes precedence, then all matched → detected,
+#      mixed matched/not_matched → partial, all not_matched/skipped → not_detected.
+# =============================================================================
+
+- name: "All matched — detected"
+  id: VERDICT-ALL-01
+  input:
+    indicator_logic: all
+    indicator_window: null
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: null
+      - indicator_id: "ind-2"
+        result: matched
+        timestamp: null
+    cel_evaluator: absent
+  expected:
+    result: detected
+
+- name: "One matched one not — partial"
+  id: VERDICT-ALL-02
+  input:
+    indicator_logic: all
+    indicator_window: null
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: null
+      - indicator_id: "ind-2"
+        result: not_matched
+        timestamp: null
+    cel_evaluator: absent
+  expected:
+    result: partial
+
+- name: "None matched — not_detected"
+  id: VERDICT-ALL-03
+  input:
+    indicator_logic: all
+    indicator_window: null
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: not_matched
+        timestamp: null
+      - indicator_id: "ind-2"
+        result: not_matched
+        timestamp: null
+    cel_evaluator: absent
+  expected:
+    result: not_detected
+
+- name: "One error — error takes precedence"
+  id: VERDICT-ALL-04
+  input:
+    indicator_logic: all
+    indicator_window: null
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: null
+      - indicator_id: "ind-2"
+        result: error
+        timestamp: null
+    cel_evaluator: absent
+  expected:
+    result: error
+
+- name: "All skipped — not_detected"
+  id: VERDICT-ALL-05
+  input:
+    indicator_logic: all
+    indicator_window: null
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: skipped
+        timestamp: null
+      - indicator_id: "ind-2"
+        result: skipped
+        timestamp: null
+    cel_evaluator: absent
+  expected:
+    result: not_detected
+
+- name: "One matched one skipped — partial"
+  id: VERDICT-ALL-06
+  input:
+    indicator_logic: all
+    indicator_window: null
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: null
+      - indicator_id: "ind-2"
+        result: skipped
+        timestamp: null
+    cel_evaluator: absent
+  expected:
+    result: partial

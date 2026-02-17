@@ -1,0 +1,111 @@
+# =============================================================================
+# OATF Conformance: compute_verdict — "ordered" Logic Mode
+# Tests SDK compute_verdict with indicator_logic: ordered per SDK spec §4.6.
+#
+# ordered: error takes precedence, then check matched indicators appear in
+# document order within indicator_window. Missing timestamps on matched → error.
+# =============================================================================
+
+- name: "In order within window — detected"
+  id: VERDICT-ORD-01
+  input:
+    indicator_logic: ordered
+    indicator_window: "5m"
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: "2026-01-15T12:00:00Z"
+      - indicator_id: "ind-2"
+        result: matched
+        timestamp: "2026-01-15T12:04:00Z"
+    cel_evaluator: absent
+  expected:
+    result: detected
+
+- name: "In order outside window — partial"
+  id: VERDICT-ORD-02
+  input:
+    indicator_logic: ordered
+    indicator_window: "5m"
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: "2026-01-15T12:00:00Z"
+      - indicator_id: "ind-2"
+        result: matched
+        timestamp: "2026-01-15T12:06:00Z"
+    cel_evaluator: absent
+  expected:
+    result: partial
+
+- name: "Out of order — partial"
+  id: VERDICT-ORD-03
+  input:
+    indicator_logic: ordered
+    indicator_window: "5m"
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: "2026-01-15T12:04:00Z"
+      - indicator_id: "ind-2"
+        result: matched
+        timestamp: "2026-01-15T12:00:00Z"
+    cel_evaluator: absent
+  expected:
+    result: partial
+
+- name: "Missing timestamp on matched verdict — error"
+  id: VERDICT-ORD-04
+  input:
+    indicator_logic: ordered
+    indicator_window: "5m"
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: "2026-01-15T12:00:00Z"
+      - indicator_id: "ind-2"
+        result: matched
+        timestamp: null
+    cel_evaluator: absent
+  expected:
+    result: error
+
+- name: "Partial match — some indicators not matched"
+  id: VERDICT-ORD-05
+  input:
+    indicator_logic: ordered
+    indicator_window: "5m"
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+      - id: "ind-3"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: "2026-01-15T12:00:00Z"
+      - indicator_id: "ind-2"
+        result: not_matched
+        timestamp: null
+      - indicator_id: "ind-3"
+        result: matched
+        timestamp: "2026-01-15T12:02:00Z"
+    cel_evaluator: absent
+  expected:
+    result: partial

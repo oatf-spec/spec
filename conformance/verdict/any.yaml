@@ -1,0 +1,106 @@
+# =============================================================================
+# OATF Conformance: compute_verdict — "any" Logic Mode
+# Tests SDK compute_verdict with indicator_logic: any per SDK spec §4.6.
+#
+# any: error takes precedence, then any matched → detected, else not_detected.
+# =============================================================================
+
+- name: "One matched indicator — detected"
+  id: VERDICT-ANY-01
+  input:
+    indicator_logic: any
+    indicator_window: null
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: null
+      - indicator_id: "ind-2"
+        result: not_matched
+        timestamp: null
+    cel_evaluator: absent
+  expected:
+    result: detected
+
+- name: "None matched — not_detected"
+  id: VERDICT-ANY-02
+  input:
+    indicator_logic: any
+    indicator_window: null
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: not_matched
+        timestamp: null
+      - indicator_id: "ind-2"
+        result: not_matched
+        timestamp: null
+    cel_evaluator: absent
+  expected:
+    result: not_detected
+
+- name: "One error — error takes precedence"
+  id: VERDICT-ANY-03
+  input:
+    indicator_logic: any
+    indicator_window: null
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: null
+      - indicator_id: "ind-2"
+        result: error
+        timestamp: null
+    cel_evaluator: absent
+  expected:
+    result: error
+
+- name: "All skipped — not_detected"
+  id: VERDICT-ANY-04
+  input:
+    indicator_logic: any
+    indicator_window: null
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: skipped
+        timestamp: null
+      - indicator_id: "ind-2"
+        result: skipped
+        timestamp: null
+    cel_evaluator: absent
+  expected:
+    result: not_detected
+
+- name: "Mixed skipped and matched — detected"
+  id: VERDICT-ANY-05
+  input:
+    indicator_logic: any
+    indicator_window: null
+    indicator_expression: null
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: skipped
+        timestamp: null
+      - indicator_id: "ind-2"
+        result: matched
+        timestamp: null
+    cel_evaluator: absent
+  expected:
+    result: detected

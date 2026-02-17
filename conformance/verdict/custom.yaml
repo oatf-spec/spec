@@ -1,0 +1,79 @@
+# =============================================================================
+# OATF Conformance: compute_verdict — "custom" Logic Mode
+# Tests SDK compute_verdict with indicator_logic: custom per SDK spec §4.6.
+#
+# custom: CEL expression evaluated against indicator verdicts map.
+# Context binds `indicators` as map from ID → {matched, timestamp, result}.
+# =============================================================================
+
+- name: "Expression returns true — detected"
+  id: VERDICT-CUST-01
+  input:
+    indicator_logic: custom
+    indicator_window: null
+    indicator_expression: "indicators['ind-1'].matched && indicators['ind-2'].matched"
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: null
+      - indicator_id: "ind-2"
+        result: matched
+        timestamp: null
+    cel_evaluator: present
+  expected:
+    result: detected
+
+- name: "Expression returns false — not_detected"
+  id: VERDICT-CUST-02
+  input:
+    indicator_logic: custom
+    indicator_window: null
+    indicator_expression: "indicators['ind-1'].matched && indicators['ind-2'].matched"
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: null
+      - indicator_id: "ind-2"
+        result: not_matched
+        timestamp: null
+    cel_evaluator: present
+  expected:
+    result: not_detected
+
+- name: "No CEL evaluator — error"
+  id: VERDICT-CUST-03
+  input:
+    indicator_logic: custom
+    indicator_window: null
+    indicator_expression: "indicators['ind-1'].matched"
+    indicators:
+      - id: "ind-1"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: null
+    cel_evaluator: absent
+  expected:
+    result: error
+
+- name: "Expression runtime error — error"
+  id: VERDICT-CUST-04
+  input:
+    indicator_logic: custom
+    indicator_window: null
+    indicator_expression: "indicators['nonexistent'].matched"
+    indicators:
+      - id: "ind-1"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: null
+    cel_evaluator: present
+  expected:
+    result: error
