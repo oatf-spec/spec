@@ -1,0 +1,185 @@
+# =============================================================================
+# OATF Conformance: resolve_path Primitive Tests
+# Tests SDK resolve_path(path, value) per SDK spec §5.1.
+# =============================================================================
+
+- name: "Simple field access"
+  id: PATH-001
+  input:
+    path: "name"
+    value:
+      name: "test"
+  expected:
+    values:
+      - "test"
+
+- name: "Nested field access"
+  id: PATH-002
+  input:
+    path: "a.b.c"
+    value:
+      a:
+        b:
+          c: 42
+  expected:
+    values:
+      - 42
+
+- name: "Missing field returns empty"
+  id: PATH-003
+  input:
+    path: "a.b"
+    value:
+      a:
+        x: 1
+  expected:
+    values: []
+
+- name: "Non-object intermediate returns empty"
+  id: PATH-004
+  input:
+    path: "a.b"
+    value:
+      a: "string"
+  expected:
+    values: []
+
+- name: "Array index access"
+  id: PATH-005
+  input:
+    path: "items[0]"
+    value:
+      items:
+        - "a"
+        - "b"
+  expected:
+    values:
+      - "a"
+
+- name: "Array index out of bounds returns empty"
+  id: PATH-006
+  input:
+    path: "items[5]"
+    value:
+      items:
+        - "a"
+  expected:
+    values: []
+
+- name: "Array wildcard fans out to all elements"
+  id: PATH-007
+  input:
+    path: "tools[*].name"
+    value:
+      tools:
+        - name: "a"
+        - name: "b"
+  expected:
+    values:
+      - "a"
+      - "b"
+
+- name: "Wildcard on non-array returns empty"
+  id: PATH-008
+  input:
+    path: "tools[*]"
+    value:
+      tools: "string"
+  expected:
+    values: []
+
+- name: "Nested wildcards fan out at each level"
+  id: PATH-009
+  input:
+    path: "a[*].b[*].c"
+    value:
+      a:
+        - b:
+            - c: 1
+            - c: 2
+        - b:
+            - c: 3
+  expected:
+    values:
+      - 1
+      - 2
+      - 3
+
+- name: "Root-level field with null value"
+  id: PATH-010
+  input:
+    path: "x"
+    value:
+      x: null
+  expected:
+    values:
+      - null
+
+- name: "Array at leaf is returned as the value itself, not its elements"
+  id: PATH-011
+  input:
+    path: "tags"
+    value:
+      tags:
+        - 1
+        - 2
+        - 3
+  expected:
+    values:
+      - [1, 2, 3]
+
+- name: "Empty path returns root value"
+  id: PATH-012
+  input:
+    path: ""
+    value:
+      a: 1
+  expected:
+    values:
+      - a: 1
+
+- name: "Wildcard on empty array returns empty"
+  id: PATH-013
+  input:
+    path: "items[*].name"
+    value:
+      items: []
+  expected:
+    values: []
+
+- name: "Mixed object and array traversal"
+  id: PATH-014
+  input:
+    path: "data.items[0].value"
+    value:
+      data:
+        items:
+          - value: "found"
+  expected:
+    values:
+      - "found"
+
+- name: "Numeric string key on object"
+  id: PATH-015
+  input:
+    path: "0"
+    value:
+      "0": "zero"
+  expected:
+    values:
+      - "zero"
+
+- name: "Deeply nested field access"
+  id: PATH-016
+  input:
+    path: "a.b.c.d.e.f"
+    value:
+      a:
+        b:
+          c:
+            d:
+              e:
+                f: "deep"
+  expected:
+    values:
+      - "deep"

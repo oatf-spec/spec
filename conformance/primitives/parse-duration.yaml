@@ -1,0 +1,76 @@
+# =============================================================================
+# OATF Conformance: parse_duration Primitive Tests
+# Tests SDK parse_duration(input) per SDK spec §5.2.
+# =============================================================================
+
+- name: "Shorthand seconds"
+  id: DUR-001
+  input: "30s"
+  expected:
+    seconds: 30
+
+- name: "Shorthand minutes"
+  id: DUR-002
+  input: "5m"
+  expected:
+    seconds: 300
+
+- name: "Shorthand hours"
+  id: DUR-003
+  input: "1h"
+  expected:
+    seconds: 3600
+
+- name: "Shorthand days"
+  id: DUR-004
+  input: "2d"
+  expected:
+    seconds: 172800
+
+- name: "ISO 8601 seconds"
+  id: DUR-005
+  input: "PT30S"
+  expected:
+    seconds: 30
+
+- name: "ISO 8601 minutes"
+  id: DUR-006
+  input: "PT5M"
+  expected:
+    seconds: 300
+
+- name: "ISO 8601 hours"
+  id: DUR-007
+  input: "PT1H"
+  expected:
+    seconds: 3600
+
+- name: "ISO 8601 days"
+  id: DUR-008
+  input: "P2D"
+  expected:
+    seconds: 172800
+
+- name: "ISO 8601 composite minutes and seconds"
+  id: DUR-009
+  input: "PT5M30S"
+  expected:
+    seconds: 330
+
+- name: "ISO 8601 composite days, hours, minutes, and seconds"
+  id: DUR-010
+  input: "P1DT12H30M15S"
+  expected:
+    seconds: 131415
+
+- name: "Invalid empty string"
+  id: DUR-011
+  input: ""
+  expected:
+    error: true
+
+- name: "Invalid non-duration string"
+  id: DUR-012
+  input: "abc"
+  expected:
+    error: true
