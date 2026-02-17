@@ -1,0 +1,178 @@
+# =============================================================================
+# OATF Conformance: evaluate_schema Evaluation Tests
+# Tests SDK evaluate_schema(schema, message) per SDK spec §4.3.
+# =============================================================================
+
+- name: "type_check string match"
+  id: EVAL-SCH-01
+  input:
+    indicator:
+      surface: "tool_name"
+      method: schema
+      schema:
+        target: "tools[0].name"
+        checks:
+          - type: "type_check"
+            expected_type: "string"
+    message:
+      tools:
+        - name: "calc"
+  expected: "matched"
+
+- name: "type_check mismatch — number is not string"
+  id: EVAL-SCH-02
+  input:
+    indicator:
+      surface: "tool_name"
+      method: schema
+      schema:
+        target: "tools[0].name"
+        checks:
+          - type: "type_check"
+            expected_type: "string"
+    message:
+      tools:
+        - name: 42
+  expected: "not_matched"
+
+- name: "required_fields all present"
+  id: EVAL-SCH-03
+  input:
+    indicator:
+      surface: "tool_definition"
+      method: schema
+      schema:
+        target: "tools[0]"
+        checks:
+          - type: "required_fields"
+            fields:
+              - "name"
+              - "description"
+    message:
+      tools:
+        - name: "a"
+          description: "b"
+  expected: "matched"
+
+- name: "required_fields missing one"
+  id: EVAL-SCH-04
+  input:
+    indicator:
+      surface: "tool_definition"
+      method: schema
+      schema:
+        target: "tools[0]"
+        checks:
+          - type: "required_fields"
+            fields:
+              - "name"
+              - "description"
+              - "version"
+    message:
+      tools:
+        - name: "a"
+          description: "b"
+  expected: "not_matched"
+
+- name: "max_length within limit"
+  id: EVAL-SCH-05
+  input:
+    indicator:
+      surface: "tool_description"
+      method: schema
+      schema:
+        target: "tools[0].description"
+        checks:
+          - type: "max_length"
+            max: 100
+    message:
+      tools:
+        - description: "short"
+  expected: "matched"
+
+- name: "max_length exceeded"
+  id: EVAL-SCH-06
+  input:
+    indicator:
+      surface: "tool_description"
+      method: schema
+      schema:
+        target: "tools[0].description"
+        checks:
+          - type: "max_length"
+            max: 5
+    message:
+      tools:
+        - description: "too long string"
+  expected: "not_matched"
+
+- name: "max_depth within limit"
+  id: EVAL-SCH-07
+  input:
+    indicator:
+      surface: "tool_definition"
+      method: schema
+      schema:
+        target: "tools[0].inputSchema"
+        checks:
+          - type: "max_depth"
+            max: 3
+    message:
+      tools:
+        - inputSchema:
+            type: "object"
+  expected: "matched"
+
+- name: "max_items within limit"
+  id: EVAL-SCH-08
+  input:
+    indicator:
+      surface: "tool_list"
+      method: schema
+      schema:
+        target: "tools"
+        checks:
+          - type: "max_items"
+            max: 5
+    message:
+      tools:
+        - {}
+        - {}
+        - {}
+  expected: "matched"
+
+- name: "value_range in range"
+  id: EVAL-SCH-09
+  input:
+    indicator:
+      surface: "tool_arguments"
+      method: schema
+      schema:
+        target: "severity.confidence"
+        checks:
+          - type: "value_range"
+            min: 0
+            max_value: 100
+    message:
+      severity:
+        confidence: 75
+  expected: "matched"
+
+- name: "Multiple checks with AND logic — both pass"
+  id: EVAL-SCH-10
+  input:
+    indicator:
+      surface: "tool_definition"
+      method: schema
+      schema:
+        target: "tools[0]"
+        checks:
+          - type: "type_check"
+            expected_type: "object"
+          - type: "required_fields"
+            fields:
+              - "name"
+    message:
+      tools:
+        - name: "a"
+  expected: "matched"

@@ -1,0 +1,207 @@
+# =============================================================================
+# OATF Conformance: evaluate_pattern Evaluation Tests
+# Tests SDK evaluate_pattern(pattern, message) per SDK spec §4.2.
+#
+# All indicators are in normalized form (explicit target, condition, scope).
+# =============================================================================
+
+- name: "Contains match on tool description"
+  id: EVAL-PAT-01
+  input:
+    indicator:
+      surface: "tool_description"
+      method: pattern
+      pattern:
+        target: "tools[*].description"
+        scope: "value"
+        condition:
+          contains: "read /etc/passwd"
+    message:
+      tools:
+        - name: "ls"
+          description: "Read /etc/passwd and more"
+  expected: "matched"
+
+- name: "Contains no match"
+  id: EVAL-PAT-02
+  input:
+    indicator:
+      surface: "tool_description"
+      method: pattern
+      pattern:
+        target: "tools[*].description"
+        scope: "value"
+        condition:
+          contains: "read /etc/passwd"
+    message:
+      tools:
+        - name: "ls"
+          description: "List files"
+  expected: "not_matched"
+
+- name: "Regex match"
+  id: EVAL-PAT-03
+  input:
+    indicator:
+      surface: "tool_description"
+      method: pattern
+      pattern:
+        target: "tools[*].description"
+        scope: "value"
+        condition:
+          regex: "(id_rsa|passwd)"
+    message:
+      tools:
+        - name: "ssh"
+          description: "Access ~/.ssh/id_rsa"
+  expected: "matched"
+
+- name: "Regex anchored no match"
+  id: EVAL-PAT-04
+  input:
+    indicator:
+      surface: "tool_description"
+      method: pattern
+      pattern:
+        target: "tools[*].description"
+        scope: "value"
+        condition:
+          regex: "^malicious$"
+    message:
+      tools:
+        - name: "x"
+          description: "this is malicious text"
+  expected: "not_matched"
+
+- name: "Starts_with match"
+  id: EVAL-PAT-05
+  input:
+    indicator:
+      surface: "tool_description"
+      method: pattern
+      pattern:
+        target: "tools[*].description"
+        scope: "value"
+        condition:
+          starts_with: "IMPORTANT:"
+    message:
+      tools:
+        - name: "x"
+          description: "IMPORTANT: override instructions"
+  expected: "matched"
+
+- name: "Any_of match on argument value"
+  id: EVAL-PAT-06
+  input:
+    indicator:
+      surface: "tool_arguments"
+      method: pattern
+      pattern:
+        target: "arguments.role"
+        scope: "value"
+        condition:
+          any_of:
+            - "admin"
+            - "root"
+            - "sudo"
+    message:
+      arguments:
+        role: "admin"
+  expected: "matched"
+
+- name: "Scope key matches against field key names"
+  id: EVAL-PAT-07
+  input:
+    indicator:
+      surface: "tool_arguments"
+      method: pattern
+      pattern:
+        target: "data"
+        scope: "key"
+        condition:
+          contains: "secret"
+    message:
+      data:
+        secret_key: "abc"
+        public: "xyz"
+  expected: "matched"
+
+- name: "Scope any matches on key or value"
+  id: EVAL-PAT-08
+  input:
+    indicator:
+      surface: "tool_arguments"
+      method: pattern
+      pattern:
+        target: "data"
+        scope: "any"
+        condition:
+          contains: "secret"
+    message:
+      data:
+        secret_key: "abc"
+        public: "xyz"
+  expected: "matched"
+
+- name: "Wildcard with multiple values, only one matches"
+  id: EVAL-PAT-09
+  input:
+    indicator:
+      surface: "tool_description"
+      method: pattern
+      pattern:
+        target: "tools[*].description"
+        scope: "value"
+        condition:
+          contains: "inject"
+    message:
+      tools:
+        - description: "safe"
+        - description: "inject code"
+  expected: "matched"
+
+- name: "Target resolves to nothing"
+  id: EVAL-PAT-10
+  input:
+    indicator:
+      surface: "tool_arguments"
+      method: pattern
+      pattern:
+        target: "nonexistent.path"
+        scope: "value"
+        condition:
+          contains: "anything"
+    message:
+      other: "data"
+  expected: "not_matched"
+
+- name: "Empty tools array produces no resolved values"
+  id: EVAL-PAT-11
+  input:
+    indicator:
+      surface: "tool_description"
+      method: pattern
+      pattern:
+        target: "tools[*].description"
+        scope: "value"
+        condition:
+          contains: "anything"
+    message:
+      tools: []
+  expected: "not_matched"
+
+- name: "Numeric comparison with gt"
+  id: EVAL-PAT-12
+  input:
+    indicator:
+      surface: "tool_arguments"
+      method: pattern
+      pattern:
+        target: "arguments.count"
+        scope: "value"
+        condition:
+          gt: 1000
+    message:
+      arguments:
+        count: 5000
+  expected: "matched"
