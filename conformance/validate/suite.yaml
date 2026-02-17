@@ -254,8 +254,36 @@
       - rule: "V-004"
         path: "attack.name"
 
-- name: "V-004 invalid: missing attack.severity"
+- name: "V-004 invalid: missing attack.description"
   id: VAL-004d
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      severity: high
+      execution:
+        protocol: mcp
+        role: server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-004"
+        path: "attack.description"
+
+- name: "V-004 invalid: missing attack.severity"
+  id: VAL-004e
   input: |
     oatf: "0.1"
     attack:
@@ -283,7 +311,7 @@
         path: "attack.severity"
 
 - name: "V-004 invalid: missing execution"
-  id: VAL-004e
+  id: VAL-004f
   input: |
     oatf: "0.1"
     attack:
@@ -301,7 +329,7 @@
         path: "attack.execution"
 
 - name: "V-004 invalid: missing indicators"
-  id: VAL-004f
+  id: VAL-004g
   input: |
     oatf: "0.1"
     attack:
