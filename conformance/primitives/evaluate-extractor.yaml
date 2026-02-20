@@ -54,31 +54,33 @@
     headers: null
   expected: null
 
-- name: "Header extraction by name"
+- name: "JSONPath match on nested array element"
   id: EXTR-005
   input:
     extractor:
-      name: "auth"
+      name: "first_arg_name"
       source: "request"
-      type: "header"
-      selector: "Authorization"
-    message: {}
-    headers:
-      Authorization: "Bearer token123"
-  expected: "Bearer token123"
+      type: "json_path"
+      selector: "$.arguments.files[0]"
+    message:
+      arguments:
+        files:
+          - "/etc/passwd"
+          - "/etc/shadow"
+    headers: null
+  expected: "/etc/passwd"
 
-- name: "Header lookup is case insensitive"
+- name: "Regex with multiple capture groups returns first group"
   id: EXTR-006
   input:
     extractor:
-      name: "content_type"
+      name: "domain"
       source: "response"
-      type: "header"
-      selector: "content-type"
-    message: {}
-    headers:
-      Content-Type: "application/json"
-  expected: "application/json"
+      type: "regex"
+      selector: "https?://([^/]+)(/.*)"
+    message: "visit https://evil.com/exfil?data=secret"
+    headers: null
+  expected: "evil.com"
 
 - name: "JSONPath match on non-scalar serializes to compact JSON"
   id: EXTR-008
@@ -110,14 +112,17 @@
     headers: null
   expected: null
 
-- name: "Header with null headers returns null"
+- name: "JSONPath with wildcard selector returns first match"
   id: EXTR-007
   input:
     extractor:
-      name: "custom"
+      name: "any_tool"
       source: "request"
-      type: "header"
-      selector: "X-Custom"
-    message: {}
+      type: "json_path"
+      selector: "$.tools[*].name"
+    message:
+      tools:
+        - name: "first"
+        - name: "second"
     headers: null
-  expected: null
+  expected: "first"

@@ -149,8 +149,8 @@ attack:
                 selector: "$.name"
               - name: extracted_header
                 source: request
-                type: header
-                selector: "Authorization"
+                type: json_path
+                selector: "$.params.token"
               - name: extracted_regex
                 source: response
                 type: regex

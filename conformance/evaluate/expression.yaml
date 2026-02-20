@@ -101,3 +101,33 @@
       other: 1
     cel_evaluator: present
   expected: "not_matched"
+
+- name: "Non-boolean CEL result returns error (type_error)"
+  id: EVAL-CEL-08
+  input:
+    indicator:
+      surface: "tool_arguments"
+      expression:
+        cel: "size(message.tools)"
+        variables: null
+    message:
+      tools:
+        - {}
+        - {}
+    cel_evaluator: present
+  expected: "error"
+  expected_error_kind: "type_error"
+
+- name: "Variable with missing path evaluates with null binding"
+  id: EVAL-CEL-09
+  input:
+    indicator:
+      surface: "tool_description"
+      expression:
+        cel: "desc == null || desc.contains('inject')"
+        variables:
+          desc: "nonexistent.path"
+    message:
+      other: "data"
+    cel_evaluator: present
+  expected: "matched"

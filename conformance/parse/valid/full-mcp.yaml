@@ -111,8 +111,8 @@ attack:
             selector: "$.name"
           - name: session_id
             source: request
-            type: header
-            selector: "X-Session-Id"
+            type: json_path
+            selector: "$.meta.sessionId"
           - name: first_arg
             source: request
             type: regex

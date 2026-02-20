@@ -88,3 +88,26 @@
     value:
       anything: "here"
   expected: true
+
+- name: "Predicate with MatchCondition value using gt operator"
+  id: PRED-009
+  input:
+    predicate:
+      count:
+        gt: 10
+    value:
+      count: 25
+  expected: true
+
+- name: "Predicate with mixed equality and condition entries"
+  id: PRED-010
+  input:
+    predicate:
+      name: "calc"
+      args.count:
+        gte: 5
+    value:
+      name: "calc"
+      args:
+        count: 5
+  expected: true

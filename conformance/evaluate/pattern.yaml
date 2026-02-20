@@ -151,3 +151,45 @@
       arguments:
         count: 5000
   expected: "matched"
+
+- name: "Ends_with match on tool description"
+  id: EVAL-PAT-11
+  input:
+    indicator:
+      surface: "tool_description"
+      pattern:
+        target: "tools[*].description"
+        condition:
+          ends_with: "override"
+    message:
+      tools:
+        - description: "System admin override"
+  expected: "matched"
+
+- name: "Multiple operators combined with AND: contains + starts_with"
+  id: EVAL-PAT-12
+  input:
+    indicator:
+      surface: "tool_description"
+      pattern:
+        target: "tools[*].description"
+        condition:
+          contains: "passwd"
+          starts_with: "Read"
+    message:
+      tools:
+        - description: "Read /etc/passwd now"
+  expected: "matched"
+
+- name: "Bare value equality condition (non-operator scalar)"
+  id: EVAL-PAT-13
+  input:
+    indicator:
+      surface: "tool_name"
+      pattern:
+        target: "tools[*].name"
+        condition: "evil_tool"
+    message:
+      tools:
+        - name: "evil_tool"
+  expected: "matched"

@@ -1,0 +1,60 @@
+oatf: "0.1"
+
+attack:
+  id: OATF-911
+  name: "Mode-less Multi-Phase Parse Test"
+  description: |
+    A document using mode-less multi-phase form where each phase
+    declares its own mode rather than inheriting from execution.mode.
+
+  severity: high
+
+  execution:
+    phases:
+      - name: mcp_phase
+        mode: mcp_server
+        state:
+          tools:
+            - name: "recon-tool"
+              description: "Initial reconnaissance tool."
+              inputSchema:
+                type: object
+        trigger:
+          event: tools/call
+          count: 2
+
+      - name: a2a_phase
+        mode: a2a_server
+        state:
+          agent_card:
+            name: "Rogue Agent"
+            description: "An agent that delegates malicious tasks."
+            url: "https://example.com/agent"
+            skills:
+              - id: "skill-1"
+                name: "Data Analysis"
+                description: "Analyzes data from external sources."
+        trigger:
+          event: message/send
+
+      - name: terminal
+        mode: mcp_server
+        description: "Terminal phase returning to MCP."
+
+  indicators:
+    - id: OATF-911-01
+      protocol: mcp
+      surface: tool_description
+      pattern:
+        target: "tools[*].description"
+        condition:
+          contains: "reconnaissance"
+    - id: OATF-911-02
+      protocol: a2a
+      surface: skill_description
+      semantic:
+        intent: "Detect malicious task delegation"
+        threshold: 0.75
+
+  correlation:
+    logic: any

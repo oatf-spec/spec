@@ -107,3 +107,24 @@
         timestamp: null
   expected:
     result: partial
+
+- name: "Two matched + one error — error (error takes precedence over matched)"
+  id: VERDICT-ALL-07
+  input:
+    correlation_logic: all
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+      - id: "ind-3"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: null
+      - indicator_id: "ind-2"
+        result: matched
+        timestamp: null
+      - indicator_id: "ind-3"
+        result: error
+        timestamp: null
+  expected:
+    result: error

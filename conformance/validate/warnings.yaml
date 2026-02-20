@@ -1,0 +1,182 @@
+# =============================================================================
+# OATF Conformance: Validation Warning Test Suite
+# Tests SDK validate() warning diagnostics per SDK spec §2.23.
+#
+# Only deterministic, validate-time warnings are tested here.
+# Runtime-dependent warnings (W-004b: unresolvable request/response paths,
+# W-005: runtime protocol mismatch) belong in SDK unit tests.
+#
+# Test format: each case specifies expected errors (empty for valid docs)
+# and expected warnings (matched on rule ID only, not message text).
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# W-001: oatf key not first in document
+# ---------------------------------------------------------------------------
+
+- name: "W-001 warning: oatf key not first in document"
+  id: WARN-001a
+  input: |
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test
+              description: "A test tool"
+              inputSchema:
+                type: object
+    oatf: "0.1"
+  expected:
+    errors: []
+    warnings:
+      - rule: W-001
+
+- name: "W-001 absent: oatf key IS first — no W-001 warning"
+  id: WARN-001b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test
+              description: "A test tool"
+              inputSchema:
+                type: object
+  expected:
+    errors: []
+    warnings: []
+
+# ---------------------------------------------------------------------------
+# W-002: Unrecognized mode (passes pattern but not in known registry)
+# ---------------------------------------------------------------------------
+
+- name: "W-002 warning: unrecognized mode voice_server"
+  id: WARN-002a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: voice_server
+        state:
+          tools: []
+  expected:
+    errors: []
+    warnings:
+      - rule: W-002
+
+- name: "W-002 absent: known mode mcp_server — no W-002 warning"
+  id: WARN-002b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+  expected:
+    errors: []
+    warnings: []
+
+# ---------------------------------------------------------------------------
+# W-003: Unrecognized protocol on indicator
+# ---------------------------------------------------------------------------
+
+- name: "W-003 warning: unrecognized protocol voice on indicator"
+  id: WARN-003a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - protocol: voice
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors: []
+    warnings:
+      - rule: W-003
+
+- name: "W-003 absent: known protocol mcp — no W-003 warning"
+  id: WARN-003b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - protocol: mcp
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors: []
+    warnings: []
+
+# ---------------------------------------------------------------------------
+# W-004a: Template references undefined extractor (validate-time)
+# ---------------------------------------------------------------------------
+
+- name: "W-004 warning: template references undeclared extractor"
+  id: WARN-004a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: "test"
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+                  response:
+                    content:
+                      - type: text
+                        text: "Value: {{nonexistent}}"
+            on_enter:
+              - log:
+                  message: "Phase entered with {{also_missing}}"
+                  level: info
+  expected:
+    errors: []
+    warnings:
+      - rule: W-004
+
+- name: "W-004 absent: template references declared extractor — no W-004 warning"
+  id: WARN-004b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: "test"
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+                  response:
+                    content:
+                      - type: text
+                        text: "Value: {{defined_var}}"
+            extractors:
+              - name: defined_var
+                source: request
+                type: json_path
+                selector: "$.name"
+  expected:
+    errors: []
+    warnings: []

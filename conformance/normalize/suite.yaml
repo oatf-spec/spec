@@ -276,6 +276,103 @@
                 state:
                   tools: []
 
+- name: "N-001 multiple unnamed phases get names phase-1, phase-2, phase-3"
+  id: NORM-001g
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      severity: high
+      execution:
+        mode: mcp_server
+        phases:
+          - state:
+              tools:
+                - name: "tool-a"
+                  description: "Tool A"
+            trigger:
+              event: tools/call
+          - state:
+              tools:
+                - name: "tool-b"
+                  description: "Tool B"
+            trigger:
+              event: tools/call
+          - description: "Terminal phase."
+  expected: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Untitled"
+      version: 1
+      status: draft
+      severity:
+        level: high
+        confidence: 50
+      execution:
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: "tool-a"
+                      description: "Tool A"
+                trigger:
+                  event: tools/call
+                  count: 1
+              - name: phase-2
+                state:
+                  tools:
+                    - name: "tool-b"
+                      description: "Tool B"
+                trigger:
+                  event: tools/call
+                  count: 1
+              - name: phase-3
+                description: "Terminal phase."
+
+- name: "N-001 phase.mode inherited from execution.mode when omitted"
+  id: NORM-001h
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      severity: high
+      execution:
+        mode: a2a_server
+        phases:
+          - name: observe
+            state:
+              agent_card:
+                name: "Agent"
+                description: "An agent"
+                url: "https://example.com"
+                skills: []
+  expected: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Untitled"
+      version: 1
+      status: draft
+      severity:
+        level: high
+        confidence: 50
+      execution:
+        actors:
+          - name: default
+            mode: a2a_server
+            phases:
+              - name: observe
+                state:
+                  agent_card:
+                    name: "Agent"
+                    description: "An agent"
+                    url: "https://example.com"
+                    skills: []
+
 # ---------------------------------------------------------------------------
 # N-002: Severity scalar expansion
 # ---------------------------------------------------------------------------
@@ -551,6 +648,59 @@
       correlation:
         logic: any
 
+- name: "N-003 indicator IDs when attack.id absent use indicator-NN format"
+  id: NORM-003d
+  input: |
+    oatf: "0.1"
+    attack:
+      name: "No ID Attack"
+      severity: high
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+        - surface: tool_name
+          pattern:
+            contains: "evil"
+  expected: |
+    oatf: "0.1"
+    attack:
+      name: "No ID Attack"
+      version: 1
+      status: draft
+      severity:
+        level: high
+        confidence: 50
+      execution:
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
+      indicators:
+        - id: indicator-01
+          protocol: mcp
+          surface: tool_description
+          pattern:
+            target: "tools[*].description"
+            condition:
+              contains: "test"
+        - id: indicator-02
+          protocol: mcp
+          surface: tool_name
+          pattern:
+            target: "tools[*].name"
+            condition:
+              contains: "evil"
+      correlation:
+        logic: any
+
 # ---------------------------------------------------------------------------
 # N-004: Target resolution from surface registry
 # ---------------------------------------------------------------------------
@@ -796,10 +946,11 @@
                       description: "Malicious tool."
 
 # ---------------------------------------------------------------------------
-# N-008: Trigger count default
+# N-001 (continued): Trigger count default
+# (Trigger count is part of N-001 default values, not N-008.)
 # ---------------------------------------------------------------------------
 
-- name: "N-008 trigger with event but no count gets count: 1"
+- name: "N-001 trigger with event but no count gets count: 1"
   id: NORM-008a
   input: |
     oatf: "0.1"
@@ -855,7 +1006,7 @@
       correlation:
         logic: any
 
-- name: "N-008 trigger with event and explicit count: 3 is preserved"
+- name: "N-001 trigger with event and explicit count: 3 is preserved"
   id: NORM-008b
   input: |
     oatf: "0.1"
@@ -911,3 +1062,80 @@
               contains: "test"
       correlation:
         logic: any
+
+# ---------------------------------------------------------------------------
+# N-008: MCP tool field defaults
+# ---------------------------------------------------------------------------
+
+- name: "N-008 MCP tool without inputSchema gets default {type: object}"
+  id: NORM-008c
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      severity: high
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: "bare-tool"
+              description: "A tool with no inputSchema"
+  expected: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Untitled"
+      version: 1
+      status: draft
+      severity:
+        level: high
+        confidence: 50
+      execution:
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: "bare-tool"
+                      description: "A tool with no inputSchema"
+                      inputSchema:
+                        type: object
+
+- name: "N-008 MCP tool without description gets default empty string"
+  id: NORM-008d
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      severity: high
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: "no-desc-tool"
+              inputSchema:
+                type: object
+  expected: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Untitled"
+      version: 1
+      status: draft
+      severity:
+        level: high
+        confidence: 50
+      execution:
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: "no-desc-tool"
+                      description: ""
+                      inputSchema:
+                        type: object

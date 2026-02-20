@@ -89,3 +89,24 @@
         timestamp: null
   expected:
     result: exploited
+
+- name: "All three indicators matched — exploited"
+  id: VERDICT-ANY-06
+  input:
+    correlation_logic: any
+    indicators:
+      - id: "ind-1"
+      - id: "ind-2"
+      - id: "ind-3"
+    verdicts:
+      - indicator_id: "ind-1"
+        result: matched
+        timestamp: null
+      - indicator_id: "ind-2"
+        result: matched
+        timestamp: null
+      - indicator_id: "ind-3"
+        result: matched
+        timestamp: null
+  expected:
+    result: exploited

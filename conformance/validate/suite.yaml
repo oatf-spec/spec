@@ -1366,6 +1366,825 @@
     valid: true
 
 # ---------------------------------------------------------------------------
+# V-023: No YAML anchors, aliases, or merge keys
+# ---------------------------------------------------------------------------
+
+- name: "V-023 invalid: document uses YAML alias"
+  id: VAL-023a
+  # NOTE: Test runner must parse this as raw text and detect the alias &anchor/*anchor
+  # before YAML resolution. SDKs whose parsers expose anchor info SHOULD flag this.
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state: &anchor
+          tools: []
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+    extra: *anchor
+  expected:
+    errors:
+      - rule: "V-023"
+
+# ---------------------------------------------------------------------------
+# V-024: Explicit target fields are valid wildcard dot-path syntax
+# ---------------------------------------------------------------------------
+
+- name: "V-024 valid: wildcard target tools[*].description"
+  id: VAL-024a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          pattern:
+            target: "tools[*].description"
+            condition:
+              contains: "test"
+  expected:
+    valid: true
+
+- name: "V-024 invalid: target with numeric index tools[0].description"
+  id: VAL-024b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          pattern:
+            target: "tools[0].description"
+            condition:
+              contains: "test"
+  expected:
+    errors:
+      - rule: "V-024"
+        path: "attack.indicators[0].pattern.target"
+
+- name: "V-024 invalid: target with invalid characters"
+  id: VAL-024c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          pattern:
+            target: "tools[*].desc!!ion"
+            condition:
+              contains: "test"
+  expected:
+    errors:
+      - rule: "V-024"
+        path: "attack.indicators[0].pattern.target"
+
+# ---------------------------------------------------------------------------
+# V-025: semantic.threshold in range [0.0, 1.0]
+# ---------------------------------------------------------------------------
+
+- name: "V-025 valid: semantic.threshold 0.5"
+  id: VAL-025a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          semantic:
+            intent: "Detect injection"
+            threshold: 0.5
+  expected:
+    valid: true
+
+- name: "V-025 invalid: semantic.threshold -0.1"
+  id: VAL-025b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          semantic:
+            intent: "Detect injection"
+            threshold: -0.1
+  expected:
+    errors:
+      - rule: "V-025"
+        path: "attack.indicators[0].semantic.threshold"
+
+- name: "V-025 invalid: semantic.threshold 1.1"
+  id: VAL-025c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          semantic:
+            intent: "Detect injection"
+            threshold: 1.1
+  expected:
+    errors:
+      - rule: "V-025"
+        path: "attack.indicators[0].semantic.threshold"
+
+- name: "V-025 valid: semantic.threshold 0.0 (lower boundary)"
+  id: VAL-025d
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          semantic:
+            intent: "Detect injection"
+            threshold: 0.0
+  expected:
+    valid: true
+
+- name: "V-025 valid: semantic.threshold 1.0 (upper boundary)"
+  id: VAL-025e
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          semantic:
+            intent: "Detect injection"
+            threshold: 1.0
+  expected:
+    valid: true
+
+# ---------------------------------------------------------------------------
+# V-026: attack.id matches pattern ^[A-Z][A-Z0-9-]*-[0-9]{3,}$
+# ---------------------------------------------------------------------------
+
+- name: "V-026 valid: attack.id OATF-001"
+  id: VAL-026a
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-001
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+  expected:
+    valid: true
+
+- name: "V-026 invalid: attack.id lowercase-001"
+  id: VAL-026b
+  input: |
+    oatf: "0.1"
+    attack:
+      id: lowercase-001
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+  expected:
+    errors:
+      - rule: "V-026"
+        path: "attack.id"
+
+- name: "V-026 invalid: attack.id OATF (missing numeric suffix)"
+  id: VAL-026c
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+  expected:
+    errors:
+      - rule: "V-026"
+        path: "attack.id"
+
+# ---------------------------------------------------------------------------
+# V-027: indicator.id matches pattern AND prefix equals attack.id
+# ---------------------------------------------------------------------------
+
+- name: "V-027 valid: indicator.id OATF-001-01 matching attack.id OATF-001"
+  id: VAL-027a
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-001
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - id: OATF-001-01
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-027 invalid: indicator.id OTHER-001-01 not matching attack.id OATF-001"
+  id: VAL-027b
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-001
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - id: OTHER-001-01
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-027"
+        path: "attack.indicators[0].id"
+
+- name: "V-027 invalid: indicator.id OATF-001 missing indicator suffix"
+  id: VAL-027c
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-001
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - id: OATF-001
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-027"
+        path: "attack.indicators[0].id"
+
+# ---------------------------------------------------------------------------
+# V-028: indicator.confidence in range 0–100
+# ---------------------------------------------------------------------------
+
+- name: "V-028 valid: indicator.confidence 50"
+  id: VAL-028a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          confidence: 50
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-028 invalid: indicator.confidence -1"
+  id: VAL-028b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          confidence: -1
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-028"
+        path: "attack.indicators[0].confidence"
+
+- name: "V-028 invalid: indicator.confidence 101"
+  id: VAL-028c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          confidence: 101
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-028"
+        path: "attack.indicators[0].confidence"
+
+# ---------------------------------------------------------------------------
+# V-029: expression.variables values are valid simple dot-paths
+# ---------------------------------------------------------------------------
+
+- name: "V-029 valid: expression variable value tools.name (simple dot-path)"
+  id: VAL-029a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          expression:
+            cel: "desc.contains('inject')"
+            variables:
+              desc: "tools.name"
+  expected:
+    valid: true
+
+- name: "V-029 invalid: expression variable value with wildcard"
+  id: VAL-029b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          expression:
+            cel: "desc.contains('inject')"
+            variables:
+              desc: "tools[*].name"
+  expected:
+    errors:
+      - rule: "V-029"
+        path: "attack.indicators[0].expression.variables.desc"
+
+# ---------------------------------------------------------------------------
+# V-030: MatchPredicate keys are valid simple dot-paths
+# ---------------------------------------------------------------------------
+
+- name: "V-030 valid: predicate key arguments.command (simple dot-path)"
+  id: VAL-030a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools: []
+            trigger:
+              event: tools/call
+              match:
+                arguments.command: "run"
+          - name: phase-2
+            description: "Terminal phase."
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-030 invalid: predicate key with wildcard"
+  id: VAL-030b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools: []
+            trigger:
+              event: tools/call
+              match:
+                "args[*].cmd": "run"
+          - name: phase-2
+            description: "Terminal phase."
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-030"
+        path: "attack.execution.phases[0].trigger.match.args[*].cmd"
+
+# ---------------------------------------------------------------------------
+# V-031: Mode-less multi-phase: every phase specifies mode, every indicator specifies protocol
+# ---------------------------------------------------------------------------
+
+- name: "V-031 valid: mode-less multi-phase, all phases have mode, all indicators have protocol"
+  id: VAL-031a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        phases:
+          - name: phase-1
+            mode: mcp_server
+            state:
+              tools: []
+            trigger:
+              event: tools/call
+          - name: phase-2
+            mode: a2a_server
+            state:
+              agent_card:
+                name: "Agent"
+                description: "An agent"
+                url: "https://example.com"
+                skills: []
+      indicators:
+        - protocol: mcp
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-031 invalid: mode-less multi-phase, one phase missing mode"
+  id: VAL-031b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        phases:
+          - name: phase-1
+            mode: mcp_server
+            state:
+              tools: []
+            trigger:
+              event: tools/call
+          - name: phase-2
+            state:
+              tools: []
+      indicators:
+        - protocol: mcp
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-031"
+        path: "attack.execution.phases[1].mode"
+
+- name: "V-031 invalid: execution.mode absent, indicator missing protocol"
+  id: VAL-031c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        phases:
+          - name: phase-1
+            mode: mcp_server
+            state:
+              tools: []
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-031"
+        path: "attack.indicators[0].protocol"
+
+# ---------------------------------------------------------------------------
+# V-032: Trigger event types valid per Event-Mode Validity Matrix
+# ---------------------------------------------------------------------------
+
+- name: "V-032 valid: mcp_server trigger event tools/call"
+  id: VAL-032a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools: []
+            trigger:
+              event: tools/call
+          - name: phase-2
+            description: "Terminal phase."
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-032 invalid: mcp_server trigger event message/send (a2a event)"
+  id: VAL-032b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools: []
+            trigger:
+              event: message/send
+          - name: phase-2
+            description: "Terminal phase."
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-032"
+        path: "attack.execution.phases[0].trigger.event"
+
+- name: "V-032 valid: unknown mode skips event validation"
+  id: VAL-032c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: custom_proto_server
+        phases:
+          - name: phase-1
+            state:
+              tools: []
+            trigger:
+              event: custom/event
+          - name: phase-2
+            description: "Terminal phase."
+  expected:
+    valid: true
+
+# ---------------------------------------------------------------------------
+# V-035: Cross-actor template references resolve
+# ---------------------------------------------------------------------------
+
+- name: "V-035 valid: template references existing actor name"
+  id: VAL-035a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        actors:
+          - name: actor_a
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: "test"
+                      description: "A test tool"
+                      inputSchema:
+                        type: object
+                      response:
+                        content:
+                          - type: text
+                            text: "Result: {{actor_b.extracted_val}}"
+                extractors:
+                  - name: local_var
+                    source: request
+                    type: json_path
+                    selector: "$.name"
+          - name: actor_b
+            mode: a2a_server
+            phases:
+              - name: phase-1
+                state:
+                  agent_card:
+                    name: "Agent"
+                    description: "An agent"
+                    url: "https://example.com"
+                    skills: []
+                extractors:
+                  - name: extracted_val
+                    source: request
+                    type: json_path
+                    selector: "$.task_id"
+      indicators:
+        - protocol: mcp
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-035 invalid: template references nonexistent actor"
+  id: VAL-035b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        actors:
+          - name: actor_a
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: "test"
+                      description: "A test tool"
+                      inputSchema:
+                        type: object
+                      response:
+                        content:
+                          - type: text
+                            text: "Result: {{nonexistent.var}}"
+      indicators:
+        - protocol: mcp
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-035"
+        path: "attack.execution.actors[0].phases[0].state.tools[0].response.content[0].text"
+
+# ---------------------------------------------------------------------------
+# V-036: content/messages and synthesize mutually exclusive
+# ---------------------------------------------------------------------------
+
+- name: "V-036 valid: MCP tool response with synthesize only"
+  id: VAL-036a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: "test"
+              description: "A test tool"
+              inputSchema:
+                type: object
+              response:
+                synthesize:
+                  prompt: "Generate a plausible response"
+  expected:
+    valid: true
+
+- name: "V-036 invalid: MCP tool response with content and synthesize"
+  id: VAL-036b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: "test"
+              description: "A test tool"
+              inputSchema:
+                type: object
+              response:
+                content:
+                  - type: text
+                    text: "static"
+                synthesize:
+                  prompt: "Generate a plausible response"
+  expected:
+    errors:
+      - rule: "V-036"
+        path: "attack.execution.state.tools[0].response"
+
+# ---------------------------------------------------------------------------
+# V-037: At most one catch-all response entry (omitting when)
+# ---------------------------------------------------------------------------
+
+- name: "V-037 valid: responses with one catch-all at end"
+  id: VAL-037a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: "test"
+              description: "A test tool"
+              inputSchema:
+                type: object
+              responses:
+                - when:
+                    arguments.command: "safe"
+                  content:
+                    - type: text
+                      text: "safe response"
+                - content:
+                    - type: text
+                      text: "default response"
+  expected:
+    valid: true
+
+- name: "V-037 invalid: responses with two entries both omitting when"
+  id: VAL-037b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: "test"
+              description: "A test tool"
+              inputSchema:
+                type: object
+              responses:
+                - content:
+                    - type: text
+                      text: "first default"
+                - content:
+                    - type: text
+                      text: "second default"
+  expected:
+    errors:
+      - rule: "V-037"
+        path: "attack.execution.state.tools[0].responses"
+
+# ---------------------------------------------------------------------------
+# V-038: synthesize.prompt non-empty string
+# ---------------------------------------------------------------------------
+
+- name: "V-038 valid: synthesize with non-empty prompt"
+  id: VAL-038a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: "test"
+              description: "A test tool"
+              inputSchema:
+                type: object
+              response:
+                synthesize:
+                  prompt: "Generate a convincing response"
+  expected:
+    valid: true
+
+- name: "V-038 invalid: synthesize with empty prompt"
+  id: VAL-038b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: "test"
+              description: "A test tool"
+              inputSchema:
+                type: object
+              response:
+                synthesize:
+                  prompt: ""
+  expected:
+    errors:
+      - rule: "V-038"
+        path: "attack.execution.state.tools[0].response.synthesize.prompt"
+
+# ---------------------------------------------------------------------------
 # Multi-error: document violating multiple rules simultaneously
 # ---------------------------------------------------------------------------
 
