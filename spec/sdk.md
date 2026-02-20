@@ -1,13 +1,13 @@
 # OATF SDK Specification
 
-**Version:** 0.1.0-draft
-**Status:** Draft
-**Date:** 2026-02-16
+**Version:** 0.1.0-draft  
+**Status:** Draft  
+**Date:** 2026-02-16  
 **License:** Apache 2.0
 
 ## Abstract
 
-This specification defines the language-agnostic API contract for OATF SDK implementations. An OATF SDK is a library that parses, validates, normalizes, evaluates, and serializes OATF documents. Any tool that consumes or produces OATF documents — adversarial simulation tools, evaluation scanners, CI pipeline integrations, IDE plugins — builds on an SDK rather than reimplementing the format's semantics.
+This specification defines the language-agnostic API contract for OATF SDK implementations. An OATF SDK is a library that parses, validates, normalizes, evaluates, and serializes OATF documents. Any tool that consumes or produces OATF documents (adversarial simulation tools, evaluation scanners, CI pipeline integrations, IDE plugins) builds on an SDK rather than reimplementing the format's semantics.
 
 This specification defines the abstract types, entry points, evaluation interfaces, execution primitives, extension points, and error taxonomy that every conforming SDK MUST expose. Language-specific idioms (error signaling mechanisms, collection types, concurrency models, naming conventions) are left to individual SDK implementations. The behavioral contracts are language-agnostic and testable via the OATF conformance test suite.
 
@@ -48,8 +48,8 @@ A conforming OATF SDK:
 
 1. MUST implement all entry points defined in §3.
 2. MUST implement all core types defined in §2.
-3. MUST implement pattern and schema indicator evaluation (§4.2, §4.3).
-4. MUST implement all verdict computation modes (§4.6).
+3. MUST implement pattern indicator evaluation (§4.2).
+4. MUST implement all verdict computation modes (§4.5).
 5. MUST implement all execution primitives defined in §5.
 6. MUST define extension point interfaces for CEL evaluation and semantic evaluation (§6).
 7. MUST use the error taxonomy defined in §7.
@@ -88,6 +88,7 @@ The top-level container for a parsed OATF document.
 | Field | Type | Description |
 |---|---|---|
 | `oatf` | `String` | Specification version declared by this document. |
+| `schema` | `Optional<String>` | JSON Schema URL (`$schema` in YAML). Preserved through round-trips but ignored during processing. |
 | `attack` | `Attack` | The attack definition. |
 
 ### 2.3 Attack
@@ -96,23 +97,30 @@ The attack envelope and all contained structures.
 
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `id` | `String` | Yes | — | Unique identifier (for example, `OATF-003`). |
-| `name` | `String` | Yes | — | Human-readable attack name. |
-| `version` | `String` | No | `"1.0.0"` | Document version (SemVer). |
-| `status` | `Status` | No | `draft` | Lifecycle status. |
-| `created` | `Optional<Date>` | No | — | First published date. |
-| `modified` | `Optional<Date>` | No | — | Last modified date. |
+| `id` | `Optional<String>` | No | — | Unique identifier (for example, `OATF-003`, `ACME-001`). Required for publication. |
+| `name` | `Optional<String>` | No | `"Untitled"` | Human-readable attack name. |
+| `version` | `Optional<Integer>` | No | `1` | Document version (positive integer, higher is newer). |
+| `status` | `Optional<Status>` | No | `draft` | Lifecycle status. |
+| `created` | `Optional<DateTime>` | No | — | First published date/time. Bare dates accepted (interpreted as midnight UTC). |
+| `modified` | `Optional<DateTime>` | No | — | Last modified date/time. Bare dates accepted. |
 | `author` | `Optional<String>` | No | — | Author or organization. |
-| `description` | `String` | Yes | — | Prose description of the attack. |
-| `severity` | `Severity` | Yes | — | Always in object form after normalization. |
+| `description` | `Optional<String>` | No | — | Prose description of the attack. |
+| `severity` | `Optional<Severity>` | No | — | Absent when not assessed. Always in object form after normalization when present. |
 | `impact` | `Optional<List<Impact>>` | No | — | Categories of harm. |
 | `classification` | `Optional<Classification>` | No | — | Framework mappings and taxonomy. |
 | `references` | `Optional<List<Reference>>` | No | — | External references. |
 | `execution` | `Execution` | Yes | — | Execution profile. |
-| `indicators` | `List<Indicator>` | Yes | — | Detection patterns. At least one required. |
-| `indicator_logic` | `IndicatorLogic` | No | `any` | How indicator verdicts combine. |
-| `indicator_window` | `Optional<Duration>` | No | — | Time window for `ordered` logic. |
-| `indicator_expression` | `Optional<String>` | No | — | CEL expression for `custom` logic. |
+| `indicators` | `Optional<List<Indicator>>` | No | — | Patterns for determining agent compliance. When absent, document is simulation-only. |
+| `correlation` | `Optional<Correlation>` | No | — | How indicator verdicts combine. See §2.3a. |
+| `extensions` | `Optional<Map<String, Value>>` | No | — | Extension fields (`x-` prefixed). Preserved through round-trips. |
+
+**Post-normalization guarantee:** After `normalize` (§3.3), `name`, `version`, and `status` are always present with their default values applied. Code that operates on normalized documents MAY assert their presence.
+
+### 2.3a Correlation
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `logic` | `CorrelationLogic` | No | `any` | How indicator verdicts combine to produce the attack-level verdict. |
 
 ### 2.4 Severity
 
@@ -121,42 +129,72 @@ Always represented in object form. SDKs MUST expand scalar input during normaliz
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `level` | `SeverityLevel` | Yes | — | One of: `informational`, `low`, `medium`, `high`, `critical`. |
-| `confidence` | `Integer` | No | `50` | Author confidence, 0–100. |
-| `cvss` | `Optional<String>` | No | — | CVSS 3.1 vector string. |
+| `confidence` | `Integer` | No | `50` | Author confidence in the assigned severity level, 0–100. |
 
 ### 2.5 Classification
 
 | Field | Type | Description |
 |---|---|---|
 | `category` | `Optional<Category>` | OATF taxonomy category. |
-| `protocols` | `Optional<List<Protocol>>` | Targeted protocols. Inferred during normalization when absent. |
-| `atlas` | `Optional<List<ATLASMapping>>` | MITRE ATLAS mappings. |
-| `mitre_attack` | `Optional<List<ATTACKMapping>>` | MITRE ATT&CK mappings. |
-| `owasp_mcp` | `Optional<List<String>>` | OWASP MCP Top 10 identifiers. |
-| `owasp_agentic` | `Optional<List<String>>` | OWASP Agentic AI Top 10 identifiers. |
-| `tags` | `Optional<List<String>>` | Free-form tags. |
+| `mappings` | `Optional<List<FrameworkMapping>>` | External security framework mappings. |
+| `tags` | `Optional<List<String>>` | Free-form tags. Lowercase, hyphenated. |
 
 ### 2.6 Execution
 
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `protocol` | `Protocol` | Yes | — | Primary protocol: `mcp`, `a2a`, `ag_ui`. |
-| `role` | `Role` | Yes | — | Default role: `server`, `client`, `peer`. |
-| `setup` | `Optional<Setup>` | No | — | One-time initialization before first phase. |
+| `mode` | `Optional<String>` | No | — | Attacker posture. Must match `{protocol}_{role}` convention. Required when `state` is present. |
+| `state` | `Optional<Value>` | No | — | Protocol-specific state (single-phase form only). |
+| `phases` | `Optional<List<Phase>>` | No | — | Ordered phase sequence (multi-phase form only). |
+| `actors` | `Optional<List<Actor>>` | No | — | Named concurrent actors (multi-actor form only). |
+
+Three forms are mutually exclusive: `state`, `phases`, and `actors` MUST NOT coexist. The single-phase form (`state`) normalizes to multi-actor form via N-006. The multi-phase form (`phases`) normalizes to multi-actor form via N-007.
+
+Extension fields (`x-` prefixed) on `Execution` are stored in an `extensions: Optional<Map<String, Value>>` and preserved through round-trips.
+
+### 2.6a Actor
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `name` | `String` | Yes | — | Unique identifier. Must match `[a-z][a-z0-9_]*`. |
+| `mode` | `String` | Yes | — | Attacker posture for this actor. Must match `{protocol}_{role}` convention. |
 | `phases` | `List<Phase>` | Yes | — | Ordered phase sequence. At least one required. |
 
 ### 2.7 Phase
 
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `name` | `String` | Yes | — | Unique phase label. |
+| `name` | `Optional<String>` | No | `"phase-{N}"` (1-based index) | Human-readable phase label. Auto-generated when omitted. |
 | `description` | `Optional<String>` | No | — | Phase purpose. |
-| `protocol` | `Optional<Protocol>` | No | Inherited from `execution.protocol` | Protocol for this phase. |
-| `role` | `Optional<Role>` | No | Inherited from `execution.role` | Role for this phase. |
+| `mode` | `Optional<String>` | No | Inherited from `execution.mode` | Attacker posture for this phase. Required when `execution.mode` is absent. |
 | `state` | `Optional<Value>` | No | Inherited from preceding phase | Protocol-specific state. Required on first phase. |
 | `extractors` | `Optional<List<Extractor>>` | No | — | Value extractors for this phase. |
-| `on_enter` | `Optional<List<Value>>` | No | — | Entry actions. Protocol-specific. |
-| `advance` | `Optional<Trigger>` | No | — | Advancement condition. Absent on terminal phase. |
+| `on_enter` | `Optional<List<Action>>` | No | — | Entry actions executed when this phase begins. See §2.7a. |
+| `trigger` | `Optional<Trigger>` | No | — | Trigger condition. Absent on terminal phase. |
+| `extensions` | `Optional<Map<String, Value>>` | No | — | Extension fields (`x-` prefixed). Preserved through round-trips. |
+
+### 2.7a Action
+
+An entry action executed when a phase begins. Exactly one action key MUST be present per action object. The v0.1 specification defines three known actions; protocol bindings MAY define additional actions.
+
+**Known actions (v0.1):**
+
+| Key | Required Fields | Description |
+|---|---|---|
+| `send_notification` | `method: String` | Send a protocol notification. Optional `params: Value` for notification parameters. |
+| `log` | `message: String` | Emit a log message. `message` supports `{{template}}` interpolation. Optional `level: LogLevel`. |
+| `send_elicitation` | `message: String` | Send an elicitation request to the client (MCP server-mode only). Optional `mode: ElicitationMode` (default: `form`), `requestedSchema: Value` (for form mode), `url: String` (for url mode). |
+
+**Associated enums:**
+
+| Enumeration | Values |
+|---|---|
+| `LogLevel` | `info`, `warn`, `error` |
+| `ElicitationMode` | `form`, `url` |
+
+**Binding-specific actions:** Action objects MAY contain a single key not in the known set above (e.g., `delay_ms: 500`, `send_ui_event: {...}`). The value type is unconstrained — it may be an object, string, number, or any JSON value. SDKs MUST preserve unrecognized action keys through parse → normalize → serialize round-trips. When evaluating, SDKs SHOULD skip actions they do not recognize and emit a warning diagnostic.
+
+**Extension fields:** Each action object MAY include `x-` prefixed keys alongside the action key. Extension fields are preserved but do not affect action execution.
 
 ### 2.8 Trigger
 
@@ -166,7 +204,6 @@ Always represented in object form. SDKs MUST expand scalar input during normaliz
 | `count` | `Optional<Integer>` | No | `1` (when `event` present) | Number of matching events required. |
 | `match` | `Optional<MatchPredicate>` | No | — | Content predicate on matching events. |
 | `after` | `Optional<Duration>` | No | — | Unconditional time-based advancement. |
-| `timeout` | `Optional<Duration>` | No | — | Maximum wait for matching event. |
 
 ### 2.9 Extractor
 
@@ -174,24 +211,26 @@ Always represented in object form. SDKs MUST expand scalar input during normaliz
 |---|---|---|---|
 | `name` | `String` | Yes | Variable name for interpolation. |
 | `source` | `ExtractorSource` | Yes | `request` or `response`. |
-| `type` | `ExtractorType` | Yes | `json_path`, `regex`, or `header`. |
-| `expression` | `String` | Yes | The extraction expression. |
+| `type` | `ExtractorType` | Yes | `json_path` or `regex`. |
+| `selector` | `String` | Yes | The extraction selector. |
 
 ### 2.10 MatchPredicate
 
-A match predicate is a map from dot-path field references to conditions. All entries are combined with AND logic. Each entry maps a dot-path string to either a scalar value (equality check) or a `MatchCondition` object.
+A match predicate is a map from dot-path field references to conditions. All entries are combined with AND logic. Each entry maps a simple dot-path string (§5.1.1) to either a scalar value (equality check) or a `MatchCondition` object.
 
-| Field | Type | Description |
-|---|---|---|
-| `entries` | `Map<String, MatchEntry>` | Dot-path → condition mappings. |
+```
+type MatchPredicate = Map<String, MatchEntry>
+```
 
 Where `MatchEntry` is either:
 - A scalar `Value` (equality comparison), or
 - A `MatchCondition` object.
 
+This is a type alias, not a struct. In YAML, predicates are written as flat mappings (e.g., `{arguments.command: "ls", headers.x-api-key: "secret"}`). The SDK MUST parse them directly as maps without introducing an intermediate `entries` key. Languages without algebraic types may represent `MatchEntry` as a tagged union or untyped `Value` with runtime type checking.
+
 ### 2.11 MatchCondition
 
-A single condition applied to a resolved field value. Exactly one operator MUST be present.
+A condition applied to a resolved field value. At least one operator MUST be present. When multiple operators are present, they are combined with AND logic — the value must satisfy every operator for the condition to match. For example, `{contains: "secret", regex: "key_[0-9]+"}` matches only if both conditions are satisfied.
 
 | Field | Type | Description |
 |---|---|---|
@@ -209,77 +248,65 @@ A single condition applied to a resolved field value. Exactly one operator MUST 
 
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `id` | `String` | No | Auto-generated `{attack.id}-{NN}` | Unique indicator identifier. |
-| `protocol` | `Protocol` | No | Inherited from `execution.protocol` | Protocol this indicator targets. |
+| `id` | `Optional<String>` | No | Auto-generated (see N-003) | Unique indicator identifier. Always present after normalization. |
+| `protocol` | `Optional<String>` | No | Protocol component of `execution.mode` | Protocol this indicator targets. Required when `execution.mode` is absent. |
 | `surface` | `Surface` | Yes | — | Protocol surface being examined. |
-| `description` | `Optional<String>` | No | — | What this indicator detects. |
-| `method` | `IndicatorMethod` | No | Inferred from present key | Detection method used. |
-| `pattern` | `Optional<PatternMatch>` | No | — | Pattern detection definition. |
-| `schema` | `Optional<SchemaMatch>` | No | — | Schema detection definition. |
-| `expression` | `Optional<ExpressionMatch>` | No | — | CEL detection definition. |
-| `semantic` | `Optional<SemanticMatch>` | No | — | Semantic detection definition. |
+| `description` | `Optional<String>` | No | — | What this indicator evaluates. |
+| `pattern` | `Optional<PatternMatch>` | No | — | Pattern evaluation definition. Exactly one of `pattern`, `expression`, `semantic` required. |
+| `expression` | `Optional<ExpressionMatch>` | No | — | CEL evaluation definition. |
+| `semantic` | `Optional<SemanticMatch>` | No | — | Semantic evaluation definition. |
 | `confidence` | `Optional<Integer>` | No | — | Indicator-specific confidence override. |
 | `severity` | `Optional<SeverityLevel>` | No | — | Indicator-specific severity override. |
 | `false_positives` | `Optional<List<String>>` | No | — | Known false positive scenarios. |
+| `extensions` | `Optional<Map<String, Value>>` | No | — | Extension fields (`x-` prefixed). Preserved through round-trips. |
 
 ### 2.13 PatternMatch
 
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `target` | `Optional<String>` | No | Surface default target | Dot-path to field to inspect. |
-| `condition` | `MatchCondition` | Yes | — | Always present after normalization. |
-| `scope` | `PatternScope` | No | `value` | One of: `value`, `key`, `any`. |
+| `target` | `Optional<String>` | No | Surface default target | Wildcard dot-path to field to inspect (§5.1.2). |
+| `condition` | `Optional<Condition>` | No | — | Absent in shorthand form. Always present after normalization. |
 
-Normalization: When a `PatternMatch` is parsed in shorthand form (condition operator as direct key without `condition` wrapper), the SDK MUST expand it to standard form with an explicit `condition` field and `target` defaulted from the surface.
+A `Condition` is either:
+- A bare `Value` (string, number, boolean, array) for equality matching, or
+- A `MatchCondition` object containing one or more operator keys.
 
-### 2.14 SchemaMatch
+Languages without algebraic types may represent `Condition` as an untyped `Value` with runtime type checking: if it's an object with operator keys, treat as `MatchCondition`; otherwise treat as equality.
 
-| Field | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `target` | `Optional<String>` | No | Surface default target | Dot-path to field to validate. |
-| `checks` | `List<SchemaCheck>` | Yes | — | Structural checks. At least one required. |
+The YAML representation supports two forms:
 
-### 2.15 SchemaCheck
+- **Standard form:** `target` + `condition` (both explicit). `condition` may be a bare value (e.g., `condition: "ls"`) or an operator object (e.g., `condition: {contains: "ls"}`).
+- **Shorthand form:** a single condition operator as a direct key (e.g., `contains: "foo"`). No `condition` wrapper.
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `type` | `SchemaCheckType` | Yes | One of: `type_check`, `required_fields`, `max_length`, `max_depth`, `max_items`, `value_range`, `format`. |
-| `expected_type` | `Optional<String>` | No | For `type_check`. |
-| `fields` | `Optional<List<String>>` | No | For `required_fields`. |
-| `max` | `Optional<Integer>` | No | For `max_length`, `max_depth`, `max_items`. |
-| `min` | `Optional<Float>` | No | For `value_range`: minimum allowed value. |
-| `max_value` | `Optional<Float>` | No | For `value_range`: maximum allowed value. |
-| `format` | `Optional<String>` | No | For `format`. |
+Normalization (N-004): When a `PatternMatch` is parsed in shorthand form, the SDK MUST expand it to standard form with an explicit `condition` field (as a `MatchCondition` object) and `target` defaulted from the surface. Bare-value conditions in standard form are preserved as-is (not wrapped in an operator object).
 
-The `max` field (Integer) is used for count-based checks (`max_length`, `max_depth`, `max_items`). The `min` and `max_value` fields (Float) are used for `value_range` checks against numeric values that may be fractional. This distinction prevents type confusion between integer counts and float-valued numeric ranges.
-
-### 2.16 ExpressionMatch
+### 2.14 ExpressionMatch
 
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `cel` | `String` | Yes | CEL expression evaluating to boolean. |
 | `variables` | `Optional<Map<String, String>>` | No | Named variables as dot-paths into message. |
 
-### 2.17 SemanticMatch
+### 2.15 SemanticMatch
 
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `target` | `Optional<String>` | No | Surface default target | Dot-path to field to analyze. |
 | `intent` | `String` | Yes | — | Natural-language intent description. |
-| `category` | `SemanticCategory` | Yes | — | Intent category. |
+| `intent_class` | `Optional<SemanticIntentClass>` | No | — | Intent category hint for classification engines. |
 | `threshold` | `Optional<Float>` | No | — | Similarity/confidence threshold, 0.0–1.0. |
 | `examples` | `Optional<SemanticExamples>` | No | — | Positive and negative examples. |
 
-### 2.18 SemanticExamples
+### 2.16 SemanticExamples
 
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `positive` | `Optional<List<String>>` | No | Strings that SHOULD trigger the indicator. |
 | `negative` | `Optional<List<String>>` | No | Strings that SHOULD NOT trigger the indicator. |
 
-Documents with `semantic` indicators SHOULD include at least two positive and two negative examples to enable cross-tool calibration (format specification §6.5).
+Documents with `semantic` indicators SHOULD include at least two positive and two negative examples to enable cross-tool calibration (format specification §6.4).
 
-### 2.19 Reference
+### 2.17 Reference
 
 | Field | Type | Required | Description |
 |---|---|---|---|
@@ -287,42 +314,17 @@ Documents with `semantic` indicators SHOULD include at least two positive and tw
 | `title` | `Optional<String>` | No | Human-readable title. |
 | `description` | `Optional<String>` | No | Brief description of the reference. |
 
-### 2.20 Setup
-
-One-time initialization performed before the first phase begins. Declares static capabilities the adversarial tool exposes.
+### 2.18 FrameworkMapping
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `capabilities` | `Optional<SetupCapabilities>` | No | Protocol-specific capability declarations. |
+| `framework` | `Framework` | Yes | The external framework being referenced. |
+| `id` | `String` | Yes | Identifier of the specific entry within the framework. |
+| `name` | `Optional<String>` | No | Human-readable name of the referenced entry. |
+| `url` | `Optional<String>` | No | Permalink to the referenced entry. |
+| `relationship` | `Optional<Relationship>` | No | `primary` (default) or `related`. |
 
-#### SetupCapabilities
-
-| Field | Type | Description |
-|---|---|---|
-| `mcp` | `Optional<Value>` | MCP capabilities. Structure defined in format specification §7.1. |
-| `a2a` | `Optional<Value>` | A2A capabilities. Structure defined in format specification §7.2. |
-| `ag_ui` | `Optional<Value>` | AG-UI capabilities. Structure defined in format specification §7.3. |
-
-Capability structures are protocol-specific and vary as protocol bindings mature. The SDK represents them as `Value` to avoid coupling to a specific protocol binding version. Consuming tools that need typed access to capability fields use `resolve_path` against the `Value` tree.
-
-### 2.21 ATLASMapping
-
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `technique` | `String` | Yes | MITRE ATLAS technique identifier (for example, `AML.T0051`). |
-| `sub_technique` | `Optional<String>` | No | Sub-technique identifier (for example, `AML.T0051.001`). |
-| `name` | `Optional<String>` | No | Human-readable technique name. |
-
-### 2.22 ATTACKMapping
-
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `tactic` | `String` | Yes | MITRE ATT&CK tactic identifier (for example, `TA0001`). |
-| `tactic_name` | `Optional<String>` | No | Human-readable tactic name. |
-| `technique` | `String` | Yes | Technique identifier (for example, `T1195.002`). |
-| `technique_name` | `Optional<String>` | No | Human-readable technique name. |
-
-### 2.23 Verdict Types
+### 2.19 Verdict Types
 
 #### IndicatorVerdict
 
@@ -338,71 +340,111 @@ Capability structures are protocol-specific and vary as protocol bindings mature
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `attack_id` | `String` | Yes | The attack that was evaluated. |
-| `result` | `AttackResult` | Yes | One of: `detected`, `not_detected`, `partial`, `error`. |
+| `attack_id` | `Optional<String>` | No | The attack that was evaluated. Absent when the document has no `attack.id`. |
+| `result` | `AttackResult` | Yes | One of: `exploited`, `not_exploited`, `partial`, `error`. |
 | `indicator_verdicts` | `List<IndicatorVerdict>` | Yes | All individual indicator results. |
+| `evaluation_summary` | `EvaluationSummary` | Yes | Counts of each indicator result. Prevents `skipped → not_matched` aggregation from masking evaluation gaps. |
 | `timestamp` | `Optional<DateTime>` | No | When the verdict was produced. |
 | `source` | `Optional<String>` | No | The tool that produced the verdict. |
 
-### 2.24 Enumerations
+#### EvaluationSummary
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `matched` | `Integer` | Yes | Number of indicators that produced `matched`. |
+| `not_matched` | `Integer` | Yes | Number of indicators that produced `not_matched`. |
+| `error` | `Integer` | Yes | Number of indicators that produced `error`. |
+| `skipped` | `Integer` | Yes | Number of indicators that produced `skipped`. |
+
+### 2.20 Enumerations
 
 SDKs MUST define named types for the following enumerations. The canonical string values listed here are the serialization form in YAML documents.
 
 | Enumeration | Values |
 |---|---|
 | `SeverityLevel` | `informational`, `low`, `medium`, `high`, `critical` |
-| `Impact` | `data_exfiltration`, `unauthorized_actions`, `service_disruption`, `privilege_escalation`, `information_disclosure`, `credential_theft` |
-| `Category` | `capability_poisoning`, `response_fabrication`, `context_manipulation`, `discovery_exploitation`, `oversight_bypass`, `temporal_manipulation`, `availability_disruption`, `cross_protocol_chain` |
-| `Protocol` | `mcp`, `a2a`, `ag_ui` |
-| `Role` | `server`, `client`, `peer` |
+| `Impact` | `behavior_manipulation`, `data_exfiltration`, `data_tampering`, `unauthorized_actions`, `information_disclosure`, `credential_theft`, `service_disruption`, `privilege_escalation` |
+| `Category` | `capability_poisoning`, `response_fabrication`, `context_manipulation`, `oversight_bypass`, `temporal_manipulation`, `availability_disruption`, `cross_protocol_chain` |
+| `Protocol` | Open string. v0.1 values: `mcp`, `a2a`, `ag_ui`. Must match `[a-z][a-z0-9_]*`. |
+| `Mode` | Open string. v0.1 values: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`. Must match `[a-z][a-z0-9_]*_(server\|client)`. |
 | `Status` | `draft`, `experimental`, `stable`, `deprecated` |
-| `IndicatorMethod` | `pattern`, `schema`, `expression`, `semantic` |
-| `IndicatorLogic` | `any`, `all`, `ordered`, `custom` |
+| `CorrelationLogic` | `any`, `all` |
 | `IndicatorResult` | `matched`, `not_matched`, `error`, `skipped` |
-| `AttackResult` | `detected`, `not_detected`, `partial`, `error` |
+| `AttackResult` | `exploited`, `not_exploited`, `partial`, `error` |
 | `ExtractorSource` | `request`, `response` |
-| `ExtractorType` | `json_path`, `regex`, `header` |
-| `PatternScope` | `value`, `key`, `any` |
-| `SchemaCheckType` | `type_check`, `required_fields`, `max_length`, `max_depth`, `max_items`, `value_range`, `format` |
-| `SemanticCategory` | `prompt_injection`, `data_exfiltration`, `privilege_escalation`, `social_engineering`, `instruction_override`, `benign` |
+| `ExtractorType` | `json_path`, `regex` |
+| `SemanticIntentClass` | `prompt_injection`, `data_exfiltration`, `privilege_escalation`, `social_engineering`, `instruction_override` |
+| `Framework` | Open string. v0.1 values: `atlas`, `mitre_attack`, `owasp_llm`, `owasp_mcp`, `owasp_agentic`, `cwe`, `other`. Tools MUST accept unrecognized values and treat them as equivalent to `other`. |
+| `Relationship` | `primary`, `related` |
+| `GenerationErrorKind` | `provider_unavailable`, `model_error`, `validation_failure`, `timeout`, `content_policy` |
+| `EvaluationErrorKind` | `path_resolution`, `regex_timeout`, `cel_error`, `type_error`, `semantic_error`, `unsupported_method` |
+| `ParseErrorKind` | `syntax`, `type_mismatch`, `unknown_variant` |
+| `DiagnosticSeverity` | `error`, `warning` |
+| `LogLevel` | `info`, `warn`, `error` |
+| `ElicitationMode` | `form`, `url` |
 
-### 2.25 Surface Registry
+**Open vs closed enums:** `Protocol`, `Mode`, `Surface` (§2.21), and `Framework` are open strings — unknown values are accepted (with optional warnings for unrecognized bindings, per §3.2). All other enumerations in this table are closed: unknown values MUST be rejected during parsing (`ParseError` with `kind: unknown_variant`). This distinction ensures extensibility for protocol bindings and framework mappings while maintaining strict validation for lifecycle, verdict, and structural enums.
 
-SDKs MUST maintain a registry mapping each `Surface` value to its protocol and default target path. This registry is used during normalization to resolve omitted `target` fields and during validation to verify that surfaces match their indicator's protocol.
+### 2.21 Surface Registry
+
+SDKs MUST maintain a registry mapping each `Surface` value to its protocol and default target path. This registry is used during normalization to resolve omitted `target` fields and during validation to verify that surfaces match their indicator's protocol. The registry is a compile-time constant populated with the v0.1 binding data (MCP, A2A, AG-UI). For indicators targeting unrecognized protocols (not in the registry), SDKs MUST skip surface validation and require explicit `target` fields.
 
 | Surface | Protocol | Default Target |
 |---|---|---|
 | `tool_description` | `mcp` | `tools[*].description` |
 | `tool_input_schema` | `mcp` | `tools[*].inputSchema` |
 | `tool_name` | `mcp` | `tools[*].name` |
+| `tool_annotations` | `mcp` | `tools[*].annotations` |
+| `tool_output_schema` | `mcp` | `tools[*].outputSchema` |
 | `tool_response` | `mcp` | `content[*]` |
+| `tool_structured_response` | `mcp` | `structuredContent` |
 | `tool_arguments` | `mcp` | `arguments` |
 | `resource_content` | `mcp` | `contents[*]` |
 | `resource_uri` | `mcp` | `resources[*].uri` |
 | `resource_description` | `mcp` | `resources[*].description` |
-| `prompt_template` | `mcp` | `messages[*].content` |
+| `prompt_content` | `mcp` | `messages[*].content` |
 | `prompt_arguments` | `mcp` | `arguments` |
 | `prompt_description` | `mcp` | `prompts[*].description` |
-| `notification` | `mcp` | `params` |
-| `capability` | `mcp` | `capabilities` |
+| `server_notification` | `mcp` | `params` |
+| `server_capability` | `mcp` | `capabilities` |
 | `server_info` | `mcp` | `serverInfo` |
 | `sampling_request` | `mcp` | `params` |
+| `elicitation_request` | `mcp` | `params` |
+| `elicitation_response` | `mcp` | `result` |
+| `mcp_task_status` | `mcp` | `task` |
+| `mcp_task_result` | `mcp` | `result` |
 | `roots_response` | `mcp` | `roots[*]` |
 | `agent_card` | `a2a` | `""` (root) |
-| `agent_card_name` | `a2a` | `name` |
-| `agent_card_description` | `a2a` | `description` |
+| `card_name` | `a2a` | `name` |
+| `card_description` | `a2a` | `description` |
 | `skill_description` | `a2a` | `skills[*].description` |
 | `skill_name` | `a2a` | `skills[*].name` |
 | `task_message` | `a2a` | `messages[*]` |
 | `task_artifact` | `a2a` | `artifacts[*]` |
 | `task_status` | `a2a` | `status.state` |
 | `message_history` | `ag_ui` | `messages[*]` |
-| `tool_definitions` | `ag_ui` | `tools[*]` |
-| `tool_result` | `ag_ui` | `result` |
-| `state` | `ag_ui` | `state` |
+| `tool_definition` | `ag_ui` | `tools[*]` |
+| `tool_result` | `ag_ui` | `messages[*]` |
+| `agent_state` | `ag_ui` | `state` |
 | `forwarded_props` | `ag_ui` | `forwardedProps` |
-| `agent_event` | `ag_ui` | `event` |
-| `agent_tool_call` | `ag_ui` | `toolCall` |
+| `agent_event` | `ag_ui` | `data` |
+| `agent_tool_call` | `ag_ui` | `data` |
+
+### 2.22 Event-Mode Validity Registry
+
+SDKs MUST maintain a registry mapping each event type to the set of modes for which it is valid. This registry is used during validation (V-032) to reject trigger events that are invalid for the actor's resolved mode. Events are identified by their base name (without qualifier).
+
+SDKs MUST define this as a compile-time constant data structure. The complete mapping for v0.1 bindings is defined in the Event-Mode Validity Matrix (format specification §7). Event types with qualifiers are validated by stripping the qualifier (everything after the first `:`) and looking up the base event name. For modes not present in the registry (from unrecognized protocol bindings), SDKs MUST skip event type validation.
+
+### 2.23 SynthesizeBlock
+
+Defines an LLM-powered response generation request. See format specification §7.4.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `prompt` | `String` | Yes | Free-text prompt for the LLM. Supports `{{template}}` interpolation from extractors and request fields. |
+
+`SynthesizeBlock` appears within response entries (MCP tool `responses`, MCP prompt `responses`, A2A `task_responses`) as a mutually exclusive alternative to static content, and within AG-UI `run_agent_input` as a mutually exclusive alternative to static `messages`. The SDK parses and validates `SynthesizeBlock` but does not execute LLM generation — that is a runtime concern handled by the consuming tool's `GenerationProvider` (§6.3).
 
 ---
 
@@ -441,10 +483,19 @@ Most language deserialization frameworks (serde in Rust, Jackson in Java, encodi
 ### 3.2 validate
 
 ```
-validate(document: Document) → Result<void, List<ValidationError>>
+validate(document: Document) → ValidationResult
 ```
 
-Validates a parsed document against the conformance rules of OATF format specification §11.1. Returns success if the document is conforming. Returns a list of all violations found if not.
+Validates a parsed document against the conformance rules of OATF format specification §11.1. Returns a `ValidationResult` containing all errors and warnings found.
+
+**Return type:**
+
+| Field | Type | Description |
+|---|---|---|
+| `errors` | `List<ValidationError>` | Conformance violations. Non-empty means the document is non-conforming. |
+| `warnings` | `List<Diagnostic>` | Non-fatal diagnostics (e.g., unrecognized mode, `oatf` not first key, deprecated patterns). |
+
+A document is conforming when `errors` is empty, regardless of warnings. SDKs MUST expose both lists so consuming tools can surface warnings without failing validation.
 
 **Preconditions:** `document` is a value returned by `parse`.
 
@@ -455,28 +506,43 @@ The following rules are checked. Each rule references the normative requirement 
 | Rule | Spec Ref | Check |
 |---|---|---|
 | V-001 | §11.1.1 | `oatf` field is present and is a supported version string. |
-| V-002 | §11.1.2 | `oatf` field is the first field in the document. This check requires access to YAML key ordering, which is lost after deserialization into typed structs. SDKs SHOULD check this during `parse` (before constructing the typed document model) or by pre-scanning the raw YAML input. SDKs that cannot preserve key ordering MAY skip this check, provided they document the omission. |
+| V-002 | §11.1.2 | `oatf` SHOULD be the first key in the document. This is a canonical form recommendation, not a validity requirement. SDKs that can detect key ordering SHOULD emit a warning (not an error) when `oatf` is not first. SDKs that cannot preserve key ordering MAY skip this check. SDKs that serialize OATF documents MUST emit `oatf` as the first key. |
 | V-003 | §11.1.3 | Exactly one `attack` object is present. |
-| V-004 | §11.1.4 | Required fields present: `attack.id`, `attack.name`, `attack.description`, `attack.severity`, `execution`, `indicators`. |
+| V-004 | §11.1.4 | Required fields present: `execution`. |
 | V-005 | §11.1.5 | All enumeration values are valid members of their respective types. |
-| V-006 | §11.1.6 | `indicators` contains at least one entry. |
-| V-007 | §11.1.7 | `execution.phases` contains at least one entry. |
-| V-008 | §11.1.8 | At most one terminal phase (no `advance`), and it is the last phase. |
-| V-009 | §11.1.9 | First phase includes `state`. |
+| V-006 | §11.1.6 | `indicators`, when present, contains at least one entry. |
+| V-007 | §11.1.8 | In multi-phase form: `execution.phases` contains at least one entry. In multi-actor form: each actor's `phases` contains at least one entry. (Single-phase form always has exactly one implicit phase.) |
+| V-008 | §11.1.8 | At most one terminal phase per actor (no `trigger`), and it is the last phase in the actor's list. |
+| V-009 | §11.1.8 | First phase in each actor includes `state` (after normalization — single-phase form always satisfies this). |
 | V-010 | §11.1.10 | All explicitly specified `indicator.id` values are unique. |
-| V-011 | §11.1.11 | All `phase.name` values are unique. |
-| V-012 | §11.1.12 | Each indicator has exactly one method key. When `method` is explicit, it matches the present key. |
+| V-011 | §11.1.8 | In multi-phase form: all explicitly specified `phase.name` values are unique. In multi-actor form: explicitly specified phase names are unique within each actor (but MAY duplicate across actors). Omitted names (auto-generated) are guaranteed unique by their positional generation. |
+| V-012 | §11.1.11 | Each indicator has exactly one detection key (`pattern`, `expression`, or `semantic`). |
 | V-013 | §5.7 | All regular expressions are syntactically valid RE2. |
 | V-014 | §5.7 | All CEL expressions are syntactically valid (parse without error). |
 | V-015 | §5.7 | All JSONPath expressions are syntactically valid. |
 | V-016 | §5.7 | All template references use valid syntax (no unclosed `{{`). Escaped sequences (`\{{`) are not template references and MUST NOT be flagged. |
-| V-017 | §5.3 | `indicator_window` is present when `indicator_logic` is `ordered`. |
-| V-018 | §8.3 | `indicator_expression` is present when `indicator_logic` is `custom`. |
 | V-019 | §4.3 | `severity.confidence` is in range 0–100 when present. |
-| V-020 | §6.3 | Each `SchemaMatch` has at least one check. |
 | V-021 | §7 | Indicator `surface` is valid for the indicator's resolved protocol. |
 | V-022 | §5.3 | Trigger `count` and `match` are only present when `event` is also present. |
 | V-023 | §11.1.1 | Document does not contain YAML anchors, aliases, or merge keys. SDKs that parse via a YAML library exposing anchor/alias information SHOULD check this; SDKs whose parsers silently resolve aliases MAY skip this check. |
+| V-024 | §6.2, §6.4 | All explicit `target` fields on `PatternMatch` and `SemanticMatch` are syntactically valid wildcard dot-path expressions per the grammar in SDK spec §5.1.2. Valid paths consist of identifiers (alphanumeric, underscores, hyphens) separated by `.`, with optional `[*]` (wildcard) suffix on any segment. The empty string `""` is valid (targets root). Numeric indices (`[0]`, `[1]`) are not valid in target paths. Invalid examples: `tools[*.description` (unclosed bracket), `tools..name` (empty segment), `tools[0]` (numeric index). |
+| V-025 | §6.4 | `semantic.threshold`, when explicitly present, is in range [0.0, 1.0] inclusive. The default threshold (0.7, applied at evaluation time per SDK spec §4.4) is not subject to this check. |
+| V-026 | §4.2 | `attack.id`, when present, matches the pattern `^[A-Z][A-Z0-9-]*-[0-9]{3,}$`. |
+| V-027 | §6.1 | Each explicitly specified `indicator.id`, when `attack.id` is present, matches the pattern `^[A-Z][A-Z0-9-]*-[0-9]{3,}-[0-9]{2,}$` AND its prefix (the portion before the final `-NN` segment) equals `attack.id`. For example, indicator `ACME-003-02` is valid in attack `ACME-003` but invalid in attack `ACME-007`. When `attack.id` is absent, explicitly specified indicator IDs are accepted without pattern constraints but MUST still be unique (V-010). |
+| V-028 | §6.1 | `indicator.confidence`, when explicitly present, is in range 0–100 inclusive. |
+| V-029 | §6.3 | All `expression.variables` values are syntactically valid simple dot-path expressions per the grammar in §5.1.1. No wildcards or indices. These values are resolved via `resolve_simple_path` at evaluation time (§4.3) and malformed paths should be caught early. |
+| V-030 | §5.4 | All dot-path keys in `MatchPredicate` entries are syntactically valid simple dot-path expressions per the grammar in SDK spec §5.1.1. No wildcards or indices. This applies to match predicates in `trigger.match` (phase advancement conditions) and in response entry `when` predicates within execution state (MCP tool/prompt `responses`, A2A `task_responses`). A typo in a predicate key (e.g., `argumens.command` instead of `arguments.command`) causes the predicate to silently never match; this rule catches such errors at validation time. |
+| V-031 | §5.1 | When `execution.mode` is absent and `execution.actors` is absent (mode-less multi-phase form), every phase MUST specify `phase.mode`. When `execution.mode` is absent — regardless of whether `execution.actors` is present — every indicator (when `indicators` is present) MUST specify `indicator.protocol`. In multi-actor form, `actor.mode` provides phase-level inheritance (so `phase.mode` is typically omitted), but indicators are document-level and `indicator.protocol` remains required. |
+| V-032 | §7 | For recognized modes (v0.1: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`), all trigger event types (after stripping qualifier) MUST be valid per the Event-Mode Validity Registry (§2.22). For unrecognized modes, skip event validation. |
+| V-033 | §5.1 | Exactly one of `execution.state`, `execution.phases`, or `execution.actors` MUST be present. A document with more than one is invalid. When `execution.state` is present, `execution.mode` MUST also be present. |
+| V-034 | §5.1 | In multi-actor form: all `actor.name` values MUST be unique. Each name MUST match `[a-z][a-z0-9_]*`. Each actor MUST declare `mode`. Each actor MUST have at least one phase. Phase names MUST be unique within each actor. |
+| V-035 | §5.5 | Cross-actor extractor references (`{{actor_name.extractor_name}}`) MUST reference an `actor.name` that exists in the document. |
+| V-036 | §11.1.14 | In MCP tool and prompt `responses` entries: `content` (or `messages` for prompts) and `synthesize` are mutually exclusive — each entry MUST specify at most one. In A2A `task_responses` entries: `messages`/`artifacts` and `synthesize` are mutually exclusive. In AG-UI `run_agent_input`: `messages` and `synthesize` are mutually exclusive. |
+| V-037 | §11.1.15 | In any `responses` or `task_responses` list, at most one entry MAY omit `when`. An entry without `when` following another entry without `when` is invalid. |
+| V-038 | §11.1.16 | `synthesize.prompt` MUST be a non-empty string when `synthesize` is present. |
+| V-039 | §5.1 | All mode values (`execution.mode`, `actor.mode`, `phase.mode`) MUST match the pattern `[a-z][a-z0-9_]*_(server\|client)`. All `indicator.protocol` values MUST match `[a-z][a-z0-9_]*`. |
+
+**Unrecognized binding diagnostics:** SDKs SHOULD expose a `known_modes()` function returning the set of modes defined by included protocol bindings (v0.1: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`) and a `known_protocols()` function returning the corresponding protocols (v0.1: `mcp`, `a2a`, `ag_ui`). When a mode or protocol passes V-039 pattern validation but is not in the known set, `validate` SHOULD emit a warning (not an error) indicating the value is unrecognized. This catches typos like `mpc_server` while allowing intentional use of custom bindings. Tools MAY provide a mechanism to suppress these warnings.
 
 **Error conditions:** Each failed rule produces a `ValidationError` (§7.2).
 
@@ -496,14 +562,14 @@ The following transformations are applied in order. Each references the normativ
 
 | Step | Spec Ref | Transformation |
 |---|---|---|
-| N-001 | §11.2.1 | Apply default values: `version` → `"1.0.0"`, `status` → `draft`, `severity.confidence` → `50`, `indicator.protocol` → `execution.protocol`, `indicator_logic` → `any`. |
-| N-002 | §11.2.2 | Expand severity scalar form to object form: `"high"` → `{level: "high", confidence: 50}`. |
-| N-003 | §11.2.3 | Auto-generate `indicator.id` for indicators that omit it, as `{attack.id}-{NN}` where `NN` is the 1-based zero-padded indicator index. |
-| N-004 | §11.2.4 | Infer `classification.protocols` as the union of `execution.protocol`, all `phase.protocol` values, and all `indicator.protocol` values. |
-| N-005 | §11.2.5 | Resolve `pattern.target`, `schema.target`, and `semantic.target` from the surface registry (§2.25) when omitted. |
-| N-006 | §11.2.6 | Expand pattern shorthand form to standard form: move condition operator into explicit `condition` field. |
-| N-007 | §11.2.1 | Infer `indicator.method` from the present method key (`pattern` → `pattern`, etc.). |
-| N-008 | §5.3 | Set `trigger.count` to `1` when `trigger.event` is present and `count` is omitted. |
+| N-001 | §11.2.1 | Apply default values: `name` → `"Untitled"`, `version` → `1`, `status` → `draft`, `severity.confidence` → `50` (when `severity` is present), `phase.name` → `"phase-{N}"` (1-based index within actor, when omitted), `phase.mode` → `execution.mode` (when present), `trigger.count` → `1` (when `trigger.event` is present and `trigger.count` is absent), `indicator.protocol` → protocol component of `execution.mode` (when both `indicators` and `execution.mode` are present), `correlation.logic` → `any` (when `indicators` is present). |
+| N-002 | §11.2.2 | When `severity` is present, expand scalar form to object form: `"high"` → `{level: "high", confidence: 50}`. When `severity` is absent, leave it absent. |
+| N-003 | §11.2.3 | Auto-generate `indicator.id` for indicators that omit it. When `attack.id` is present, format as `{attack.id}-{NN}`. When `attack.id` is absent, format as `indicator-{NN}`. `NN` is the 1-based zero-padded indicator index. |
+| N-004 | §11.2.4 | Resolve `pattern.target` and `semantic.target` from the surface registry (§2.21) when omitted. |
+| N-005 | §11.2.5 | Expand pattern shorthand form to standard form: move condition operator into explicit `condition` field. |
+| N-006 | §5.1 | Normalize single-phase form to multi-actor form: when `execution.state` is present (and `execution.phases` and `execution.actors` are absent), wrap it in `actors: [{name: "default", mode: <execution.mode>, phases: [{name: "phase-1", state: <execution.state>}]}]`. Remove the top-level `mode` and `state` from `execution`. |
+| N-007 | §5.1 | Normalize multi-phase form to multi-actor form: when `execution.phases` is present (and `execution.actors` is absent), wrap it in `actors: [{name: "default", mode: <execution.mode>, phases: <execution.phases>}]`. When `execution.mode` is absent (mode-less multi-phase form), set `actor.mode` from `phases[0].mode`. Remove the top-level `mode` and `phases` from `execution`. All subsequent normalization steps and all runtime processing operate on the `actors` array. |
+| N-008 | §7.1.4 | Apply MCP tool field defaults: `inputSchema` → `{"type": "object"}` when omitted, `description` → `""` when omitted. Applied to all tool definitions in all phases of `mcp_server` actors. |
 
 `normalize` MUST be idempotent: `normalize(normalize(doc))` produces the same result as `normalize(doc)`.
 
@@ -516,13 +582,27 @@ SDKs that offer consuming semantics SHOULD also offer a copy variant (or documen
 
 After normalization, the following guarantees hold and consuming code MAY rely on them:
 
-- `attack.severity` is always in object form with `level` and `confidence` present.
+- `attack.name` is present (default `"Untitled"`).
+- `attack.version` is present (default `1`).
+- `attack.status` is present (default `draft`).
+- `attack.severity`, when present, is always in object form with `level` and `confidence` present.
+- `execution.actors` is always present (all forms have been normalized to multi-actor form with at least a `"default"` actor).
+- Every actor has a `name` and `mode`.
+- Every phase has a `name` (auto-generated when omitted, e.g. `"phase-1"`).
+- Every phase has a resolved `mode` (inherited from its actor's `mode`).
+- For `mcp_server` actors, every tool has `inputSchema` (default `{"type": "object"}`) and `description` (default `""`).
+
+When `indicators` is present:
+
+- `attack.correlation.logic` is present (default `any`).
 - Every indicator has an `id`.
-- Every indicator has a `protocol`.
-- Every indicator has a `method`.
+- Every indicator has a resolved `protocol`.
+- Every indicator has a detection method determined by which method-specific key is present.
 - Every `PatternMatch` is in standard form with an explicit `condition` field.
-- Every `PatternMatch`, `SchemaMatch`, and `SemanticMatch` has a resolved `target` (or validation would have rejected the document if the surface has no default and target was omitted).
-- `classification.protocols` is present and non-empty.
+- Every `PatternMatch` and `SemanticMatch` has a resolved `target` (or validation would have rejected the document if the surface has no default and target was omitted).
+
+Always:
+
 - Every trigger with an `event` has a `count`.
 
 ### 3.4 serialize
@@ -546,19 +626,28 @@ Serializes a document to YAML. SDKs SHOULD emit the fully-expanded normalized fo
 ### 3.5 load
 
 ```
-load(input: String) → Result<Document, List<OATFError>>
+load(input: String) → Result<LoadResult, List<OATFError>>
 ```
 
-Convenience entry point that composes `parse`, `validate`, and `normalize` into a single operation. Returns a fully-normalized, valid document or the combined errors from parsing and validation.
+Convenience entry point that composes `parse`, `validate`, and `normalize` into a single operation. Returns a fully-normalized, valid document (with any warnings) or the combined errors from parsing and validation.
+
+**Return type:**
+
+| Field | Type | Description |
+|---|---|---|
+| `document` | `Document` | The normalized, valid document. |
+| `warnings` | `List<Diagnostic>` | Non-fatal diagnostics from validation. |
 
 **Behavior:** Equivalent to:
 ```
 document = parse(input)?
-validate(document)?
-return normalize(document)
+result = validate(document)
+if result.errors is non-empty, return Err(result.errors)
+normalize(document)
+return Ok(LoadResult { document, warnings: result.warnings })
 ```
 
-If `parse` fails, return parse errors. If `validate` fails, return validation errors. If both succeed, return the normalized document.
+If `parse` fails, return parse errors. If `validate` finds errors, return validation errors. If both succeed, return the normalized document with any warnings.
 
 Most tool integrations will call `load` rather than the individual steps. The separate entry points exist for tools that need partial processing (IDE plugins that parse for syntax highlighting without requiring validity, linters that validate without normalizing).
 
@@ -570,9 +659,9 @@ The evaluation interface allows tools to assess whether observed protocol traffi
 
 ### 4.1 Message Abstraction
 
-Indicator evaluation operates on protocol messages represented as `Value` — a dynamically-typed JSON-like tree. The SDK does not define message types for specific protocols. The consuming tool is responsible for constructing the `Value` from whatever wire format it captures.
+Indicator evaluation operates on protocol messages represented as `Value`, a dynamically-typed JSON-like tree. The SDK does not define message types for specific protocols. The consuming tool is responsible for constructing the `Value` from whatever wire format it captures.
 
-The `Value` passed to indicator evaluation corresponds to the `result` (for responses) or `params` (for requests/notifications) field of the JSON-RPC message, not the full JSON-RPC envelope. This is the convention defined in the format specification §7.1.3.
+The `Value` passed to indicator evaluation corresponds to the `result` (for responses) or `params` (for requests/notifications) field of the JSON-RPC message, not the full JSON-RPC envelope. This is the convention defined in the format specification §7.1.3. For non-JSON-RPC bindings (e.g., AG-UI, or future protocols that do not use JSON-RPC framing), tools SHOULD pass the protocol-specific message payload — the semantic equivalent of "the content the agent produced or received." Indicators evaluate whatever structure is present; the dot-path and CEL machinery is format-agnostic.
 
 SDKs MUST NOT require messages to conform to any particular protocol schema. Indicators evaluate against whatever structure is present. Missing fields produce `not_matched` verdicts, not errors.
 
@@ -588,42 +677,11 @@ Evaluates a pattern indicator against a protocol message.
 
 **Behavior:**
 
-1. Resolve `pattern.target` against `message` using dot-path resolution (§5.1). This may produce zero, one, or many values (when the path contains wildcards).
-2. For each resolved value, apply the condition (§5.3) according to `pattern.scope`:
-   - `value`: evaluate condition against the field's value.
-   - `key`: evaluate condition against the field's key name. For object fields, the key is the property name (e.g., resolving `data.*` over `{secret_key: "abc"}` yields key `"secret_key"`). For array elements reached via `[*]` or `[N]`, the key is the stringified index (e.g., `"0"`, `"1"`). If the resolved value is the root (empty path), `key` scope evaluates to `false`.
-   - `any`: evaluate condition against both; match if either matches.
+1. Resolve `pattern.target` against `message` using `resolve_wildcard_path` (§5.1.2). This may produce zero, one, or many values (when the path contains wildcards).
+2. For each resolved value, evaluate the condition (§5.3) against the value.
 3. Return `true` if any resolved value matches the condition. Return `false` if no values match or if the target path resolves to nothing.
 
-### 4.3 evaluate_schema
-
-```
-evaluate_schema(schema: SchemaMatch, message: Value) → Boolean
-```
-
-Evaluates a schema indicator against a protocol message.
-
-**Preconditions:** `schema` has a resolved `target` and at least one check.
-
-**Behavior:**
-
-1. Resolve `schema.target` against `message` using dot-path resolution (§5.1).
-2. For each resolved value, evaluate all checks. All checks are combined with AND logic.
-3. Return `true` if any resolved value passes all checks. Return `false` otherwise.
-
-**Check evaluation:**
-
-| Check Type | Evaluates To True When |
-|---|---|
-| `type_check` | The value's runtime type matches `expected_type` (one of: `string`, `number`, `integer`, `boolean`, `array`, `object`, `null`). |
-| `required_fields` | The value is an object containing all fields listed in `fields`. |
-| `max_length` | The value is a string with length ≤ `max`, or an array with item count ≤ `max`. |
-| `max_depth` | The value's nesting depth ≤ `max`. Nesting depth of a scalar is 0; of an array or object, 1 + max depth of children. |
-| `max_items` | The value is an array with item count ≤ `max`. |
-| `value_range` | The value is a number ≥ `min` (when present) and ≤ `max_value` (when present). |
-| `format` | The value is a string matching the named format (`uri`, `email`, `date`, `ipv4`, `ipv6`, `hostname`). Format validation uses the same semantics as JSON Schema format validation. |
-
-### 4.4 evaluate_expression
+### 4.3 evaluate_expression
 
 ```
 evaluate_expression(
@@ -641,15 +699,15 @@ Evaluates a CEL expression indicator against a protocol message using the provid
 
 1. Construct the CEL evaluation context:
    - Bind `message` as the root variable `message`.
-   - If `expression.variables` is present, for each entry `(name, path)`, resolve `path` against `message` using dot-path resolution (§5.1) and bind the result as variable `name`.
+   - If `expression.variables` is present, for each entry `(name, path)`, resolve `path` against `message` using `resolve_simple_path` (§5.1.1) and bind the result as variable `name`.
 2. Pass the CEL string and context to `cel_evaluator.evaluate()` (§6.1).
 3. If the evaluator returns a boolean, return `Ok(value)`.
-4. If the evaluator returns a non-boolean value, return `Ok(false)`.
+4. If the evaluator returns a non-boolean value, propagate it as `Err(EvaluationError)` with `kind: type_error`. The `CelEvaluator` contract (§6.1) requires the evaluator to return a type error for non-boolean results; `evaluate_expression` does not silently coerce non-booleans.
 5. If the evaluator returns an error, propagate it as `Err(EvaluationError)`. This preserves diagnostic information for the calling `evaluate_indicator`, which maps it to `IndicatorVerdict { result: error, evidence }`.
 
 SDKs that do not bundle a CEL evaluator MUST still define this function. When called without a configured evaluator, it MUST return `Err(EvaluationError)` indicating that CEL evaluation is not available.
 
-### 4.5 evaluate_indicator
+### 4.4 evaluate_indicator
 
 ```
 evaluate_indicator(
@@ -664,63 +722,47 @@ Top-level indicator evaluation. Dispatches to the appropriate method evaluator a
 
 **Behavior:**
 
-1. Dispatch on `indicator.method`:
+1. Dispatch on the present detection key:
    - `pattern` → call `evaluate_pattern(indicator.pattern, message)`. Result is boolean.
-   - `schema` → call `evaluate_schema(indicator.schema, message)`. Result is boolean.
    - `expression` → if `cel_evaluator` is absent, return verdict with `result: skipped` and evidence indicating CEL support is unavailable. Otherwise call `evaluate_expression(indicator.expression, message, cel_evaluator)`. If it returns `Ok(bool)`, the result is that boolean. If it returns `Err(EvaluationError)`, return verdict with `result: error` and the error as evidence.
    - `semantic` → if `semantic_evaluator` is absent, return verdict with `result: skipped` and evidence indicating semantic evaluation is unavailable. Otherwise:
-     a. Resolve `indicator.semantic.target` against `message` using dot-path resolution (§5.1). Serialize the first resolved value to string. If the path resolves to nothing, return verdict with `result: not_matched`.
-     b. Call `semantic_evaluator.evaluate(text, indicator.semantic.intent, indicator.semantic.category, indicator.semantic.threshold, indicator.semantic.examples)`.
-     c. Determine the effective threshold: use `indicator.semantic.threshold` if present, otherwise `0.7` (per format specification §6.5).
-     d. If the returned score ≥ the effective threshold, the result is `true` (matched). Otherwise `false` (not matched).
+     a. Resolve `indicator.semantic.target` against `message` using `resolve_wildcard_path` (§5.1.2). If the path resolves to nothing, return verdict with `result: not_matched`.
+     b. For each resolved value, serialize to string and call `semantic_evaluator.evaluate(text, indicator.semantic.intent, indicator.semantic.intent_class, indicator.semantic.threshold, indicator.semantic.examples)`. When `intent_class` is absent, pass `None`; the evaluator MUST handle this gracefully.
+     c. Determine the effective threshold: use `indicator.semantic.threshold` if present, otherwise `0.7` (per format specification §6.4).
+     d. If the highest returned score across all resolved values ≥ the effective threshold, the result is `true` (matched). Otherwise `false` (not matched). Use the highest score as evidence.
 2. Catch any runtime evaluation error. On error, return verdict with `result: error` and the diagnostic as `evidence`.
 3. On successful evaluation, return verdict with `result: matched` (if true) or `result: not_matched` (if false).
 4. Populate `indicator_id` from the indicator, `timestamp` from the current time.
 
-### 4.6 compute_verdict
+### 4.5 compute_verdict
 
 ```
 compute_verdict(
     attack: Attack,
-    indicator_verdicts: Map<String, IndicatorVerdict>,
-    cel_evaluator: Optional<CelEvaluator>
+    indicator_verdicts: Map<String, IndicatorVerdict>
 ) → AttackVerdict
 ```
 
-Computes the attack-level verdict from a set of indicator verdicts according to the attack's `indicator_logic`.
+Computes the attack-level verdict from a set of indicator verdicts according to the attack's `correlation.logic`. The verdict answers one question: did the agent comply with the attack?
 
-**Preconditions:** `indicator_verdicts` maps indicator IDs to their individual verdicts. All indicator IDs referenced in the attack SHOULD be present.
+**Preconditions:** The attack MUST have indicators. If `attack.indicators` is absent, return an `AttackVerdict` with result `error` and a diagnostic indicating the document has no indicators. `indicator_verdicts` maps indicator IDs to their individual verdicts. All indicator IDs referenced in the attack SHOULD be present. If an indicator ID present in `attack.indicators` has no entry in `indicator_verdicts`, treat it as `skipped` and count it in `evaluation_summary`. This ensures missing evaluations are visible in coverage metrics rather than silently ignored.
 
 **Behavior by logic mode:**
 
 **`any` (default):**
 - If any indicator verdict is `error`, return `error`.
-- If any indicator verdict is `matched`, return `detected`.
-- Otherwise return `not_detected`.
+- Else if any indicator verdict is `matched`, return `exploited`.
+- Else return `not_exploited`.
 
 **`all`:**
 - If any indicator verdict is `error`, return `error`.
-- If all indicator verdicts are `matched`, return `detected`.
+- If all indicator verdicts are `matched`, return `exploited`.
 - If at least one is `matched` and at least one is `not_matched`, return `partial`.
-- If all are `not_matched` or `skipped`, return `not_detected`.
+- If all are `not_matched` or `skipped`, return `not_exploited`.
 
-**`ordered`:**
-- If any indicator verdict is `error`, return `error`.
-- Collect all `matched` indicators with their timestamps.
-- Check that matched indicators appear in the same order as they are listed in the attack's `indicators` array.
-- Check that the time span between the first and last matched indicator is within `indicator_window`.
-- If all indicators matched in order within the window, return `detected`.
-- If some but not all matched, return `partial`.
-- If none matched, return `not_detected`.
-- If timestamps are missing on any `matched` verdict, return `error` with diagnostic indicating that ordered evaluation requires timestamps.
+**Treatment of `skipped` verdicts:** A `skipped` verdict means the indicator could not be evaluated (absent evaluator, unsupported method). For verdict computation purposes, `skipped` is treated equivalently to `not_matched`: the indicator did not produce evidence of agent compliance. This is semantically correct: the agent was not shown to be exploited by that indicator, regardless of why. Consuming tools that need to distinguish between "evaluated and not matched" versus "not evaluated" SHOULD inspect the individual `IndicatorVerdict` results or the `evaluation_summary` in the returned `AttackVerdict`.
 
-**`custom`:**
-- If `cel_evaluator` is absent, return `error` with diagnostic indicating CEL support is required for custom logic.
-- Construct CEL context with `indicators` as a map from indicator ID to an object with fields `matched` (boolean), `timestamp` (datetime or null), and `result` (string).
-- Evaluate `attack.indicator_expression` against this context.
-- If the expression returns `true`, return `detected`. If `false`, return `not_detected`. If error, return `error`.
-
-**Treatment of `skipped` verdicts:** A `skipped` verdict means the indicator could not be evaluated (absent evaluator, unsupported method). For verdict computation purposes, `skipped` is treated equivalently to `not_matched`: the indicator did not produce evidence of the attack. This is semantically correct — the attack was not detected by that indicator, regardless of why. Consuming tools that need to distinguish between "evaluated and not matched" versus "not evaluated" SHOULD inspect the individual `IndicatorVerdict` results in the returned `AttackVerdict.indicator_verdicts`.
+**Evaluation summary:** The returned `AttackVerdict` MUST include an `evaluation_summary` containing counts of each indicator result (`matched`, `not_matched`, `error`, `skipped`). This enables consumers to detect evaluation gaps — for example, a `not_exploited` verdict with a high `skipped` count signals incomplete coverage rather than confirmed resilience.
 
 ---
 
@@ -728,43 +770,70 @@ Computes the attack-level verdict from a set of indicator verdicts according to 
 
 Shared utility operations used by both entry points and evaluation. SDKs MUST implement these and SHOULD expose them in the public API for use by consuming tools.
 
-### 5.1 resolve_path
+### 5.1 Path Resolution
+
+OATF defines two path variants with different capabilities, matching the format specification (§5.4):
+
+#### 5.1.1 Simple Dot-Path
+
+Used for: `MatchPredicate` keys (§2.10), `{{request.*}}` and `{{response.*}}` template references (§5.3), `expression.variables` values (§2.14).
 
 ```
-resolve_path(path: String, value: Value) → List<Value>
+resolve_simple_path(path: String, value: Value) → Optional<Value>
 ```
 
-Resolves a dot-path expression against a dynamically-typed value tree. Returns all values that match the path. Returns an empty list if the path does not match.
+Resolves a simple dot-path against a value tree. Returns the single value at the path, or nothing if any segment fails to resolve.
+
+**Path syntax:**
+
+| Segment | Meaning | Example |
+|---|---|---|
+| `field_name` | Access named field on object | `arguments.command` |
+| `.` | Segment separator | `capabilities.tools` |
+
+Segments consist of alphanumeric characters, underscores, and hyphens (`[a-zA-Z0-9_-]+`). No wildcard or index support. Resolution proceeds left to right: if any segment encounters a non-object, a missing key, or an array, resolution fails and returns nothing.
+
+**Empty path:** When `path` is the empty string `""`, returns the root value itself. This is the canonical representation for targeting the entire message.
+
+#### 5.1.2 Wildcard Dot-Path
+
+Used for: `pattern.target` (§2.13), `semantic.target` (§2.15).
+
+```
+resolve_wildcard_path(path: String, value: Value) → List<Value>
+```
+
+Resolves a wildcard dot-path against a value tree. Returns all values that match, potentially expanding across array elements. Returns an empty list if the path does not match.
 
 **Path syntax:**
 
 | Segment | Meaning | Example |
 |---|---|---|
 | `field_name` | Access named field on object | `capabilities` |
-| `[N]` | Access array element by index | `tools[0]` |
 | `[*]` | Wildcard: all elements of array | `tools[*]` |
 | `.` | Segment separator | `tools[*].description` |
 
+Segments consist of alphanumeric characters, underscores, and hyphens, with optional `[*]` suffix. Numeric indexing (`[0]`, `[1]`) is not supported — use CEL expressions for positional access.
+
 **Behavior:**
 
-1. Split `path` on `.` segment boundaries (respecting `[*]` and `[N]` as atomic segments).
+1. Split `path` on `.` segment boundaries (respecting `[*]` as atomic suffixes).
 2. Starting from `value` as the root, traverse each segment:
    - For a field name: if the current value is an object, access the named field. If the field is absent or the current value is not an object, produce no results for this branch.
-   - For `[N]`: if the current value is an array with index N in bounds, access element N. Otherwise, produce no results.
-   - For `[*]`: if the current value is an array, fan out to all elements. Each element continues independently through remaining segments. If the current value is not an array, produce no results.
+   - For `[*]`: if the current value is an array, fan out to all elements. Each element continues independently through remaining segments. If the current value is not an array, produce no results for this branch (not an error).
 3. Collect all terminal values reached after processing all segments.
 
-**Empty path:** When `path` is the empty string `""`, `resolve_path` returns the root value itself as a single-element list. This is the canonical representation for targeting the entire message, used by surfaces like `agent_card` whose default target is the root.
+**Empty path:** When `path` is the empty string `""`, returns the root value itself as a single-element list.
 
 **Examples:**
 
-- `resolve_path("tools[*].description", {"tools": [{"description": "A"}, {"description": "B"}]})` → `["A", "B"]`
-- `resolve_path("capabilities.tools", {"capabilities": {"tools": {"listChanged": true}}})` → `[{"listChanged": true}]`
-- `resolve_path("missing.path", {"other": 1})` → `[]`
+- `resolve_wildcard_path("tools[*].description", {"tools": [{"description": "A"}, {"description": "B"}]})` → `["A", "B"]`
+- `resolve_wildcard_path("capabilities.tools", {"capabilities": {"tools": {"listChanged": true}}})` → `[{"listChanged": true}]`
+- `resolve_wildcard_path("missing.path", {"other": 1})` → `[]`
 
 SDKs SHOULD enforce a maximum traversal depth to prevent stack overflow on pathological inputs. A depth limit of 64 is RECOMMENDED.
 
-**Limitation:** Dot-path syntax does not support escaping literal dots within field names. A JSON object key containing a dot (for example, `{"content.type": "text"}`) cannot be addressed because the path `content.type` is always interpreted as two segments. This is an intentional simplification — protocol messages in MCP, A2A, and AG-UI do not use dotted key names. If future protocol bindings introduce dotted keys, the path syntax will need an escape mechanism (for example, backtick quoting), introduced in a future SDK specification version.
+**Limitation:** Dot-path syntax does not support escaping literal dots within field names. A JSON object key containing a dot (for example, `{"content.type": "text"}`) cannot be addressed because the path `content.type` is always interpreted as two segments. This is an intentional simplification; protocol messages in MCP, A2A, and AG-UI do not use dotted key names. Authors MUST use CEL expressions (format specification §6.3) to match fields with dots, brackets, or other special characters in their names.
 
 ### 5.2 parse_duration
 
@@ -786,17 +855,20 @@ Parses a duration string in either shorthand or ISO 8601 format.
 | `PT{N}M` | `PT5M` | 5 minutes (ISO 8601) |
 | `PT{N}H` | `PT1H` | 1 hour (ISO 8601) |
 | `P{N}D` | `P2D` | 2 days (ISO 8601) |
+| `PT{N}M{N}S` | `PT5M30S` | 5 minutes 30 seconds (ISO 8601 composite) |
+| `PT{N}H{N}M` | `PT1H30M` | 1 hour 30 minutes (ISO 8601 composite) |
+| `PT{N}H{N}M{N}S` | `PT1H30M15S` | 1 hour 30 minutes 15 seconds (ISO 8601 composite) |
 | `P{N}DT{...}` | `P1DT12H` | 1 day 12 hours (ISO 8601 composite) |
 
-`N` is a positive integer. Fractional values are not supported.
+`N` is a positive integer. Fractional values are not supported. Any ISO 8601 duration composed of integer D, H, M, and S components is accepted; the components must appear in descending order (days → hours → minutes → seconds) and the `T` separator is required before any time components.
 
 ### 5.3 evaluate_condition
 
 ```
-evaluate_condition(condition: MatchCondition, value: Value) → Boolean
+evaluate_condition(condition: Condition, value: Value) → Boolean
 ```
 
-Evaluates a single match condition against a resolved value.
+Evaluates a condition against a resolved value. If `condition` is a bare value (string, number, boolean, array), performs deep equality comparison. If `condition` is a `MatchCondition` object, evaluates each present operator — when multiple operators are present, all must match (AND logic). Returns `true` only if every present operator is satisfied.
 
 **Behavior by operator:**
 
@@ -829,10 +901,10 @@ Evaluates a match predicate (a set of dot-path → condition entries) against a 
 
 **Behavior:**
 
-1. For each entry in `predicate.entries`:
-   a. Resolve the dot-path key against `value` using `resolve_path`.
-   b. If the path resolves to no values, the entry evaluates to `false`.
-   c. If the path resolves to one or more values, evaluate the condition against each. The entry is `true` if any resolved value satisfies the condition.
+1. For each entry `(path, condition)` in the predicate map:
+   a. Resolve the dot-path key against `value` using `resolve_simple_path` (§5.1.1).
+   b. If the path does not resolve (returns nothing), the entry evaluates to `false`.
+   c. If the path resolves to a value, evaluate the condition against it. The entry is `true` if the value satisfies the condition.
 2. Return `true` if all entries are `true`. Return `false` if any entry is `false`.
 
 ### 5.5 interpolate_template
@@ -841,17 +913,22 @@ Evaluates a match predicate (a set of dot-path → condition entries) against a 
 interpolate_template(
     template: String,
     extractors: Map<String, String>,
-    request: Optional<Value>
-) → String
+    request: Optional<Value>,
+    response: Optional<Value>
+) → (String, List<Diagnostic>)
 ```
 
-Resolves template expressions in a string.
+Resolves template expressions in a string. Returns the interpolated string and any diagnostics (e.g., undefined references).
 
 **Template syntax:**
 
-- `{{extractor_name}}` → replaced with the value of the named extractor.
+- `{{extractor_name}}` → replaced with the value of the named extractor (current actor scope).
+- `{{actor_name.extractor_name}}` → replaced with the value of a cross-actor extractor reference.
 - `{{request.field.path}}` → replaced with the value at the dot-path in the current request.
+- `{{response.field.path}}` → replaced with the value at the dot-path in the current response.
 - `\{{` → replaced with a literal `{{` (escape sequence).
+
+The `extractors` map is populated by the calling runtime with both local names (unqualified, from the current actor) and qualified names (`actor_name.extractor_name`, from all actors). The function itself performs simple key lookup — cross-actor resolution is a runtime responsibility.
 
 **Behavior:**
 
@@ -859,18 +936,18 @@ Resolves template expressions in a string.
 2. Find all `{{...}}` expressions in `template`.
 3. For each expression:
    a. If the name matches a key in `extractors`, replace with the extractor value.
-   b. If the name starts with `request.` and `request` is present, resolve the remaining path against `request` using `resolve_path`. Replace with the first resolved value, serialized to string. If the path resolves to no values, replace with empty string.
-   c. If neither matches, replace with empty string and emit a warning diagnostic.
+   b. If the name starts with `request.` and `request` is present, resolve the remaining path against `request` using `resolve_simple_path`. Replace with the resolved value, serialized to string. If the path does not resolve, replace with empty string and emit a warning diagnostic (W-004).
+   c. If the name starts with `response.` and `response` is present, resolve the remaining path against `response` using `resolve_simple_path`. Replace with the resolved value, serialized to string. If the path does not resolve, replace with empty string and emit a warning diagnostic (W-004).
+   d. If neither matches, replace with empty string and emit a warning diagnostic (W-004).
 4. Restore all placeholders to literal `{{`.
-5. Return the interpolated string.
+5. Return the interpolated string and accumulated diagnostics.
 
 ### 5.6 evaluate_extractor
 
 ```
 evaluate_extractor(
     extractor: Extractor,
-    message: Value,
-    headers: Optional<Map<String, String>>
+    message: Value
 ) → Optional<String>
 ```
 
@@ -878,9 +955,10 @@ Applies an extractor to a message, capturing a value.
 
 **Behavior by type:**
 
-- `json_path`: Evaluate the JSONPath expression against `message`. If the expression matches one or more nodes, return the first match serialized to its compact JSON string representation. If no match, return empty.
-- `regex`: Convert `message` to its string representation, evaluate the regular expression. If the regex matches and has at least one capture group, return the first capture group's value. If no match, return empty.
-- `header`: Look up the extractor's `expression` as a key in `headers`. Return the header value as a string, or empty if the header is absent or `headers` is not provided. Header names SHOULD be compared case-insensitively per HTTP semantics. The `headers` parameter is transport-level data supplied by the consuming tool; the SDK does not perform HTTP I/O. When `headers` is absent and a `header` extractor is evaluated, the extractor returns empty and the SDK SHOULD emit a warning diagnostic.
+- `json_path`: Evaluate the JSONPath expression against `message`. If the expression matches one or more nodes, return the first match in document order (per RFC 9535 §2.6) serialized to its compact JSON string representation. If no match, return `None`.
+- `regex`: Convert `message` to its string representation, evaluate the regular expression. If the regex matches and has at least one capture group, return the first capture group's value. If no match, return `None`.
+
+`None` means "no match" (the extractor did not find the targeted content). `Some("")` is a valid result when the extractor matched but the captured value is genuinely an empty string. Downstream template interpolation treats `None` as an undefined extractor (triggering W-004 warnings), while `Some("")` substitutes the empty string silently.
 
 When the extracted value is a non-scalar (object or array), it MUST be serialized to its compact JSON string representation.
 
@@ -929,7 +1007,7 @@ Evaluates a CEL expression against a context of named variables. Returns the exp
 
 SDKs SHOULD ship a default `CelEvaluator` implementation when a production-quality CEL library is available for the target language. SDKs that cannot ship a default implementation MUST clearly document this and MUST accept a user-provided implementation.
 
-**Partial compliance:** When the underlying CEL library does not support the full set of standard functions listed above, the default implementation MAY ship with partial function coverage. In this case, the SDK MUST document which functions are supported, and the evaluator MUST return an `EvaluationError` with `kind: unsupported_method` when an expression calls an unsupported function (rather than failing silently or crashing). The CEL ecosystem maturity varies across languages — Go has Google's reference implementation, while Rust and Python have less complete alternatives. Partial compliance with a clear extension point is preferable to no default implementation.
+**Partial compliance:** When the underlying CEL library does not support the full set of standard functions listed above, the default implementation MAY ship with partial function coverage. In this case, the SDK MUST document which functions are supported, and the evaluator MUST return an `EvaluationError` with `kind: unsupported_method` when an expression calls an unsupported function (rather than failing silently or crashing). The CEL ecosystem maturity varies across languages: Go has Google's reference implementation, while Rust and Python have less complete alternatives. Partial compliance with a clear extension point is preferable to no default implementation.
 
 ### 6.2 SemanticEvaluator
 
@@ -938,7 +1016,7 @@ interface SemanticEvaluator {
     evaluate(
         text: String,
         intent: String,
-        category: SemanticCategory,
+        intent_class: Optional<SemanticIntentClass>,
         threshold: Optional<Float>,
         examples: Optional<SemanticExamples>
     ) → Result<Float, EvaluationError>
@@ -950,18 +1028,80 @@ Evaluates the semantic similarity or intent match between observed text and the 
 **Contract:**
 
 - The evaluator is responsible for all inference logic (LLM calls, embedding similarity, classifier invocation). The SDK provides none of this.
+- When `intent_class` is present, classification-based engines SHOULD use it as a hint. When absent, the evaluator MUST rely on the `intent` text and `examples` alone.
 - When `threshold` is present, the indicator is considered matched if the returned score ≥ `threshold`.
-- When `threshold` is absent, the SDK uses a default threshold of `0.7` (per format specification §6.5).
+- When `threshold` is absent, the SDK uses a default threshold of `0.7` (per format specification §6.4).
 - The evaluator MAY use `examples.positive` and `examples.negative` to calibrate its scoring.
 - Evaluation errors (model unavailable, timeout, malformed response) MUST be returned as `EvaluationError`, not thrown as unhandled exceptions.
 
 SDKs MUST NOT ship a default `SemanticEvaluator`. Semantic evaluation is inherently model-dependent and deployment-specific.
 
+> *Note:* The signature above is written synchronously for clarity. Semantic evaluation involves I/O (LLM inference, embedding API calls). SDKs in languages with async ecosystems SHOULD provide async variants of this interface. See §8.7.
+
+### 6.3 GenerationProvider
+
+```
+interface GenerationProvider {
+    generate(
+        prompt: String,
+        protocol: Protocol,
+        response_context: Value
+    ) → Result<Value, GenerationError>
+}
+```
+
+Generates protocol-conformant content from a prompt. Used by adversarial tools to execute `synthesize` blocks (format specification §7.4). For server-mode actors (MCP, A2A), this generates response payloads. For client-mode actors (AG-UI), this generates input content (message histories).
+
+**Contract:**
+
+- The `prompt` has already been resolved (all `{{template}}` references interpolated). The provider receives the final prompt string.
+- The `protocol` identifies which protocol binding the output must conform to (MCP, A2A, or AG-UI).
+- The `response_context` provides protocol-specific metadata the provider needs to shape its output (for example, the tool's `inputSchema` for MCP, the task's expected `status` for A2A, or the `tools` and `state` from `run_agent_input` for AG-UI). The structure is defined by the consuming tool, not by this specification.
+- The provider MUST return a `Value` that conforms to the protocol's expected structure. The consuming tool MUST validate this value against the protocol binding before injection (§7.4 of the format specification).
+- The provider is responsible for all LLM interaction: model selection, API calls, structured output enforcement, caching, and retry.
+- Generation errors (model unavailable, timeout, content policy rejection, validation failure) MUST be returned as `GenerationError`, not thrown as unhandled exceptions.
+
+SDKs MUST NOT ship a default `GenerationProvider`. LLM generation is model-dependent, API-specific, and deployment-specific. The consuming tool (e.g., ThoughtJack) provides its own implementation.
+
+> *Note:* The signature above is written synchronously for clarity. LLM generation involves I/O. SDKs in languages with async ecosystems SHOULD provide async variants of this interface. See §8.7.
+
 ---
 
-## 7. Error Types
+## 7. Diagnostics and Error Types
 
-SDKs MUST define the following error types. Each error carries structured fields that enable programmatic handling and human-readable diagnostics.
+### 7.0 Diagnostic
+
+A structured diagnostic message produced during validation, normalization, or evaluation. SDKs MUST define this type.
+
+| Field | Type | Description |
+|---|---|---|
+| `severity` | `DiagnosticSeverity` | One of: `error`, `warning`. |
+| `code` | `String` | Machine-readable identifier (for example, `V-002`, `W-001`, `N-007`). |
+| `path` | `Optional<String>` | Dot-path to the offending field (for example, `attack.indicators[0].surface`). |
+| `message` | `String` | Human-readable description. |
+
+**Usage:** `validate` returns a `ValidationResult` containing both errors and warnings:
+
+```
+ValidationResult {
+    errors: List<ValidationError>   // conformance violations — document is non-conforming
+    warnings: List<Diagnostic>      // severity: warning — document is valid but has issues
+}
+```
+
+A document is valid if and only if `errors` is empty. Warnings are informational and do not block processing. SDKs MUST populate `errors` for all V-xxx rule failures.
+
+SDKs MUST produce warnings for the following conditions:
+
+| Code | Condition |
+|---|---|
+| W-001 | `oatf` is not the first key in the document (V-002). |
+| W-002 | A mode passes pattern validation but is not in the known modes registry (§2.22). Likely typo. |
+| W-003 | A protocol passes pattern validation but is not in the known protocols set. |
+| W-004 | Template interpolation references an undefined extractor or an unresolvable message path. Two sub-cases: (a) "unknown extractor reference" — detectable at validate time by cross-referencing template expressions against declared extractor names; (b) "request/response path failed to resolve" — detectable only at runtime when the actual message is available. |
+| W-005 | An indicator targets a protocol with no matching actor in the execution profile. |
+
+SDKs MAY define additional warning codes for tool-specific diagnostics.
 
 ### 7.1 ParseError
 
@@ -996,13 +1136,28 @@ Produced during indicator evaluation when a runtime error occurs.
 | `message` | `String` | Human-readable description. |
 | `indicator_id` | `Optional<String>` | The indicator being evaluated when the error occurred. |
 
+### 7.3a GenerationError
+
+Produced by a `GenerationProvider` when LLM synthesis fails.
+
+| Field | Type | Description |
+|---|---|---|
+| `kind` | `GenerationErrorKind` | One of: `provider_unavailable`, `model_error`, `validation_failure`, `timeout`, `content_policy`. |
+| `message` | `String` | Human-readable description. |
+| `phase_name` | `Optional<String>` | The phase during which generation was attempted. |
+| `prompt_preview` | `Optional<String>` | First 200 characters of the resolved prompt, for diagnostics. |
+
+The `GenerationProvider.generate` interface does not receive `phase_name` — the provider is intentionally unaware of execution context. The SDK is responsible for catching the error returned by the provider and populating `phase_name` from the current execution state before surfacing the `GenerationError` to the consuming tool.
+
+`provider_unavailable` indicates no `GenerationProvider` is configured but a `synthesize` block was encountered. `validation_failure` indicates the LLM produced output that did not conform to the protocol binding's expected structure.
+
 ### 7.4 Error Aggregation
 
-`validate` returns lists of errors rather than stopping at the first failure. This enables IDE-style diagnostics where all problems are surfaced at once. `parse` MAY return a single error or multiple errors depending on the language deserialization framework's capabilities (see §3.1).
+`validate` returns a `ValidationResult` containing both errors and warnings rather than stopping at the first failure. This enables IDE-style diagnostics where all problems are surfaced at once. `parse` MAY return a single error or multiple errors depending on the language deserialization framework's capabilities (see §3.1).
 
-SDKs SHOULD order errors by their location in the source document (by line number for parse errors, by dot-path for validation errors).
+SDKs SHOULD order errors by their location in the source document (by line number for parse errors, by dot-path for validation errors). Diagnostics (warnings) SHOULD follow the same ordering.
 
-The `load` convenience entry point (§3.5) returns the first applicable error list: if parsing fails, parse errors are returned and validation is not attempted. If parsing succeeds but validation fails, validation errors are returned. A tool that needs both parse warnings and validation errors should call the steps individually.
+The `load` convenience entry point (§3.5) returns the first applicable error list: if parsing fails, parse errors are returned and validation is not attempted. If parsing succeeds but validation finds errors, validation errors are returned. If both succeed, the normalized document and any warnings are returned together. A tool that needs fine-grained control over parse warnings and validation diagnostics should call the steps individually.
 
 ---
 
@@ -1034,7 +1189,7 @@ SDKs SHOULD adapt field names to the target language's naming convention:
 
 The canonical names in this specification use `snake_case` to match the YAML document format.
 
-**Reserved keywords:** Several OATF field names collide with reserved keywords in common languages. Notably, `match` (§2.8 Trigger, §2.12 Indicator) is reserved in Rust, Scala, and PHP; `type` (§2.15 SchemaCheck, §2.9 Extractor) is reserved in Python. SDKs MUST use the canonical YAML key for serialization/deserialization while renaming the struct field to a non-reserved alternative. For example, in Rust: `#[serde(rename = "match")] pub match_predicate: Option<MatchPredicate>`. The renamed field name is a language SDK decision; the YAML key is fixed by the format specification.
+**Reserved keywords:** Several OATF field names collide with reserved keywords in common languages. In particular, `match` (§2.8 Trigger, §2.12 Indicator) is reserved in Rust, Scala, and PHP; `type` (§2.9 Extractor) is reserved in Python. SDKs MUST use the canonical YAML key for serialization/deserialization while renaming the struct field to a non-reserved alternative. For example, in Rust: `#[serde(rename = "match")] pub match_predicate: Option<MatchPredicate>`. The renamed field name is a language SDK decision; the YAML key is fixed by the format specification.
 
 ### 8.3 Immutability
 
@@ -1042,13 +1197,13 @@ SDKs SHOULD make the document model immutable after construction. `normalize` re
 
 ### 8.4 Extension Fields
 
-OATF documents may contain fields prefixed with `x-`. SDKs MUST preserve these through parse → normalize → serialize round-trips. The RECOMMENDED approach is to store extension fields in a `Map<String, Value>` on each type that may contain them (`Attack`, `Phase`, `Indicator`).
+OATF documents may contain fields prefixed with `x-`. SDKs MUST preserve these through parse → normalize → serialize round-trips. The following core types include an `extensions: Optional<Map<String, Value>>` field for this purpose: `Attack` (§2.3), `Execution` (§2.6), `Phase` (§2.7), `Indicator` (§2.12). During parsing, the SDK MUST collect any `x-` prefixed keys from each object and store them in the corresponding `extensions` map. During serialization, the SDK MUST emit these keys back into the output. Key names are preserved exactly (including the `x-` prefix); relative ordering of extension fields among themselves is preserved where the language's map type supports it. Ordering relative to standard fields is not guaranteed.
 
 ### 8.5 Performance Considerations
 
 - Regex patterns SHOULD be compiled once during `validate` or `normalize` and cached for reuse during evaluation.
 - CEL expressions SHOULD be parsed once during `validate` and the parsed AST cached for evaluation.
-- The surface registry (§2.25) is static data. SDKs SHOULD represent it as a compile-time constant, not a runtime lookup.
+- The surface registry (§2.17) is static data. SDKs SHOULD represent it as a compile-time constant, not a runtime lookup.
 
 ### 8.6 Dependency Guidance
 
@@ -1058,8 +1213,8 @@ OATF documents may contain fields prefixed with `x-`. SDKs MUST preserve these t
 | Regular expressions | Use an RE2-compatible engine for linear-time guarantees. |
 | CEL evaluation | Wrap an existing CEL library. Do not implement CEL from scratch. |
 | JSONPath | Use a standard JSONPath library. Enforce traversal depth limits. |
-| Duration parsing | Implement directly — the grammar is simple enough to avoid a dependency. See note below. |
-| Dot-path resolution | Implement directly — no standard library exists for the OATF path syntax. |
+| Duration parsing | Implement directly; the grammar is simple enough to avoid a dependency. See note below. |
+| Dot-path resolution | Implement directly; no standard library exists for the OATF path syntax. |
 
 **Duration parsing note:** OATF durations require accepting both shorthand (`30s`, `5m`) and ISO 8601 (`PT30S`, `PT5M`, `P1DT12H`) formats. Most language ecosystems have libraries that handle one format but not both (for example, Rust's `humantime` handles shorthand, `iso8601` handles ISO, but neither handles both). A hybrid parser is needed. The grammar is two branches: if the string starts with `P`, parse as ISO 8601; otherwise parse as shorthand. Both branches are simple enough to implement directly (shorthand is `\d+[smhd]`, ISO 8601 is `P(\d+D)?(T(\d+H)?(\d+M)?(\d+S)?)?`), avoiding the need for two separate dependencies.
 
@@ -1071,7 +1226,7 @@ The entry points and evaluation functions in this specification are defined with
 - `evaluate_indicator` and `compute_verdict` may invoke extension points (`CelEvaluator`, `SemanticEvaluator`) that perform I/O. SDKs in languages with async ecosystems (Rust, Python, TypeScript, Go) SHOULD provide async variants of these functions or define the extension point interfaces as async.
 - Batch evaluation of multiple indicators against multiple messages is a common workflow. SDKs MAY offer batch evaluation functions that evaluate indicators concurrently where the language supports it.
 
-The decision between sync and async interfaces is a language SDK concern. This specification defines the behavioral contracts (inputs, outputs, error handling) — how those contracts are scheduled is an implementation detail. SDKs SHOULD document whether their evaluation APIs are sync, async, or both.
+The decision between sync and async interfaces is a language SDK concern. This specification defines the behavioral contracts (inputs, outputs, error handling). How those contracts are scheduled is an implementation detail. SDKs SHOULD document whether their evaluation APIs are sync, async, or both.
 
 ---
 
@@ -1091,7 +1246,7 @@ Each SDK specification version declares which OATF format specification version(
 
 This version (SDK Spec 0.1) supports **OATF Format Spec 0.1**.
 
-When the format specification adds a new protocol binding (for example, a hypothetical OATF 0.2 adding a new protocol), the SDK specification will be updated to include the new surfaces and event types. SDKs implementing the prior SDK specification version MUST still correctly parse documents using the new binding (ignoring unknown surfaces), per the forward-compatibility requirement of the format specification §10.1.
+When the format specification adds a new protocol binding (for example, a hypothetical OATF 0.2 adding a new protocol), the SDK specification will be updated to include the new surfaces and event types. During the 0.x series, minor versions may introduce breaking changes (per format specification §10.1), so SDKs are not required to handle unknown format versions gracefully. Post-1.0, SDKs implementing a prior SDK specification version MUST still correctly parse documents using new minor-version bindings, ignoring unknown surfaces.
 
 ### 9.3 Language SDK Versioning
 
