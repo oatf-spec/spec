@@ -1,17 +1,15 @@
 # =============================================================================
 # OATF Conformance: compute_verdict — "all" Logic Mode
-# Tests SDK compute_verdict with indicator_logic: all per SDK spec §4.6.
+# Tests SDK compute_verdict with correlation.logic: all per SDK spec §4.5.
 #
-# all: error takes precedence, then all matched → detected,
-#      mixed matched/not_matched → partial, all not_matched/skipped → not_detected.
+# all: error takes precedence, then all matched → exploited,
+#      mixed matched/not_matched → partial, all not_matched/skipped → not_exploited.
 # =============================================================================
 
-- name: "All matched — detected"
+- name: "All matched — exploited"
   id: VERDICT-ALL-01
   input:
-    indicator_logic: all
-    indicator_window: null
-    indicator_expression: null
+    correlation_logic: all
     indicators:
       - id: "ind-1"
       - id: "ind-2"
@@ -22,16 +20,13 @@
       - indicator_id: "ind-2"
         result: matched
         timestamp: null
-    cel_evaluator: absent
   expected:
-    result: detected
+    result: exploited
 
 - name: "One matched one not — partial"
   id: VERDICT-ALL-02
   input:
-    indicator_logic: all
-    indicator_window: null
-    indicator_expression: null
+    correlation_logic: all
     indicators:
       - id: "ind-1"
       - id: "ind-2"
@@ -42,16 +37,13 @@
       - indicator_id: "ind-2"
         result: not_matched
         timestamp: null
-    cel_evaluator: absent
   expected:
     result: partial
 
-- name: "None matched — not_detected"
+- name: "None matched — not_exploited"
   id: VERDICT-ALL-03
   input:
-    indicator_logic: all
-    indicator_window: null
-    indicator_expression: null
+    correlation_logic: all
     indicators:
       - id: "ind-1"
       - id: "ind-2"
@@ -62,16 +54,13 @@
       - indicator_id: "ind-2"
         result: not_matched
         timestamp: null
-    cel_evaluator: absent
   expected:
-    result: not_detected
+    result: not_exploited
 
 - name: "One error — error takes precedence"
   id: VERDICT-ALL-04
   input:
-    indicator_logic: all
-    indicator_window: null
-    indicator_expression: null
+    correlation_logic: all
     indicators:
       - id: "ind-1"
       - id: "ind-2"
@@ -82,16 +71,13 @@
       - indicator_id: "ind-2"
         result: error
         timestamp: null
-    cel_evaluator: absent
   expected:
     result: error
 
-- name: "All skipped — not_detected"
+- name: "All skipped — not_exploited"
   id: VERDICT-ALL-05
   input:
-    indicator_logic: all
-    indicator_window: null
-    indicator_expression: null
+    correlation_logic: all
     indicators:
       - id: "ind-1"
       - id: "ind-2"
@@ -102,16 +88,13 @@
       - indicator_id: "ind-2"
         result: skipped
         timestamp: null
-    cel_evaluator: absent
   expected:
-    result: not_detected
+    result: not_exploited
 
 - name: "One matched one skipped — partial"
   id: VERDICT-ALL-06
   input:
-    indicator_logic: all
-    indicator_window: null
-    indicator_expression: null
+    correlation_logic: all
     indicators:
       - id: "ind-1"
       - id: "ind-2"
@@ -122,6 +105,5 @@
       - indicator_id: "ind-2"
         result: skipped
         timestamp: null
-    cel_evaluator: absent
   expected:
     result: partial

@@ -1,6 +1,6 @@
 # =============================================================================
 # OATF Conformance: evaluate_expression / evaluate_indicator Evaluation Tests
-# Tests SDK evaluate_expression per §4.4 and CEL-absent skipped behavior per §4.5.
+# Tests SDK evaluate_expression per §4.3 and CEL-absent skipped behavior per §4.4.
 # =============================================================================
 
 - name: "Simple boolean — size check matches"
@@ -8,7 +8,6 @@
   input:
     indicator:
       surface: "tool_list"
-      method: expression
       expression:
         cel: "size(message.tools) > 2"
         variables: null
@@ -25,7 +24,6 @@
   input:
     indicator:
       surface: "tool_list"
-      method: expression
       expression:
         cel: "size(message.tools) > 10"
         variables: null
@@ -41,7 +39,6 @@
   input:
     indicator:
       surface: "tool_name"
-      method: expression
       expression:
         cel: "message.name.startsWith(\"evil\")"
         variables: null
@@ -55,7 +52,6 @@
   input:
     indicator:
       surface: "tool_description"
-      method: expression
       expression:
         cel: "desc.contains('inject')"
         variables:
@@ -71,7 +67,6 @@
   input:
     indicator:
       surface: "tool_list"
-      method: expression
       expression:
         cel: "true"
         variables: null
@@ -84,7 +79,6 @@
   input:
     indicator:
       surface: "tool_definition"
-      method: expression
       expression:
         cel: "message.tools.exists(t, t.name == 'admin' && size(t.description) > 100)"
         variables: null
@@ -100,7 +94,6 @@
   input:
     indicator:
       surface: "tool_arguments"
-      method: expression
       expression:
         cel: "message.nonexistent.field > 0"
         variables: null

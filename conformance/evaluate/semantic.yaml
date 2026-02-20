@@ -1,6 +1,6 @@
 # =============================================================================
 # OATF Conformance: evaluate_indicator Semantic Evaluation Tests
-# Tests SDK semantic dispatch in evaluate_indicator per §4.5.
+# Tests SDK semantic dispatch in evaluate_indicator per §4.4.
 #
 # Since semantic evaluation depends on an external model, fixtures use a
 # mock evaluator with a predetermined score. The test runner configures its
@@ -12,11 +12,10 @@
   input:
     indicator:
       surface: "tool_description"
-      method: semantic
       semantic:
         target: "tools[*].description"
         intent: "Inject instructions to override agent behavior"
-        category: prompt_injection
+        intent_class: prompt_injection
         threshold: 0.7
         examples: null
     message:
@@ -32,11 +31,10 @@
   input:
     indicator:
       surface: "tool_description"
-      method: semantic
       semantic:
         target: "tools[*].description"
         intent: "Inject instructions to override agent behavior"
-        category: prompt_injection
+        intent_class: prompt_injection
         threshold: 0.7
         examples: null
     message:
@@ -52,11 +50,10 @@
   input:
     indicator:
       surface: "tool_description"
-      method: semantic
       semantic:
         target: "tools[*].description"
         intent: "Inject instructions to override agent behavior"
-        category: prompt_injection
+        intent_class: prompt_injection
         threshold: 0.7
         examples: null
     message:
@@ -72,11 +69,10 @@
   input:
     indicator:
       surface: "tool_description"
-      method: semantic
       semantic:
         target: "tools[*].description"
         intent: "Inject instructions to override agent behavior"
-        category: prompt_injection
+        intent_class: prompt_injection
         examples: null
     message:
       tools:
@@ -91,11 +87,10 @@
   input:
     indicator:
       surface: "tool_description"
-      method: semantic
       semantic:
         target: "tools[*].description"
         intent: "Inject instructions to override agent behavior"
-        category: prompt_injection
+        intent_class: prompt_injection
         threshold: 0.7
         examples: null
     message:
@@ -110,11 +105,10 @@
   input:
     indicator:
       surface: "tool_description"
-      method: semantic
       semantic:
         target: "nonexistent.path"
         intent: "Inject instructions to override agent behavior"
-        category: prompt_injection
+        intent_class: prompt_injection
         threshold: 0.7
         examples: null
     message:

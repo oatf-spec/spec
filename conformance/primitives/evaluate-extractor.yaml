@@ -10,7 +10,7 @@
       name: "tool_name"
       source: "request"
       type: "json_path"
-      expression: "$.tools[0].name"
+      selector: "$.tools[0].name"
     message:
       tools:
         - name: "calc"
@@ -24,7 +24,7 @@
       name: "missing"
       source: "request"
       type: "json_path"
-      expression: "$.missing"
+      selector: "$.missing"
     message:
       other: 1
     headers: null
@@ -37,7 +37,7 @@
       name: "api_key"
       source: "response"
       type: "regex"
-      expression: "key=([a-zA-Z0-9]+)"
+      selector: "key=([a-zA-Z0-9]+)"
     message: "api key=abc123 here"
     headers: null
   expected: "abc123"
@@ -49,7 +49,7 @@
       name: "secret"
       source: "response"
       type: "regex"
-      expression: "secret=(\\w+)"
+      selector: "secret=(\\w+)"
     message: "no secrets"
     headers: null
   expected: null
@@ -61,7 +61,7 @@
       name: "auth"
       source: "request"
       type: "header"
-      expression: "Authorization"
+      selector: "Authorization"
     message: {}
     headers:
       Authorization: "Bearer token123"
@@ -74,7 +74,7 @@
       name: "content_type"
       source: "response"
       type: "header"
-      expression: "content-type"
+      selector: "content-type"
     message: {}
     headers:
       Content-Type: "application/json"
@@ -87,7 +87,7 @@
       name: "schema"
       source: "request"
       type: "json_path"
-      expression: "$.tools[0].inputSchema"
+      selector: "$.tools[0].inputSchema"
     message:
       tools:
         - inputSchema:
@@ -105,7 +105,7 @@
       name: "has_key"
       source: "response"
       type: "regex"
-      expression: "key=[a-zA-Z0-9]+"
+      selector: "key=[a-zA-Z0-9]+"
     message: "api key=abc123 here"
     headers: null
   expected: null
@@ -117,7 +117,7 @@
       name: "custom"
       source: "request"
       type: "header"
-      expression: "X-Custom"
+      selector: "X-Custom"
     message: {}
     headers: null
   expected: null
