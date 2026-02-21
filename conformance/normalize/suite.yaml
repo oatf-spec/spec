@@ -892,6 +892,8 @@
                   tools:
                     - name: "calc"
                       description: "A calculator tool."
+                      inputSchema:
+                        type: object
 
 # ---------------------------------------------------------------------------
 # N-007: Multi-phase form normalizes to multi-actor form
@@ -944,6 +946,8 @@
                   tools:
                     - name: "evil"
                       description: "Malicious tool."
+                      inputSchema:
+                        type: object
 
 # ---------------------------------------------------------------------------
 # N-001 (continued): Trigger count default

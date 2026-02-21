@@ -89,7 +89,7 @@
     cel_evaluator: present
   expected: "matched"
 
-- name: "Runtime evaluation error returns not_matched"
+- name: "Missing field access evaluates to not_matched"
   id: EVAL-CEL-07
   input:
     indicator:

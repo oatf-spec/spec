@@ -268,9 +268,9 @@ Every test case has four required fields:
 | `input` | object | Function-specific input fields (documented per file below) |
 | `expected` | varies | Expected output |
 
-### `resolve_path.yaml`
+### `resolve_simple_path.yaml`
 
-Tests `resolve_path(path, value)`.
+Tests `resolve_simple_path(path, value)`.
 
 **Input:**
 ```yaml
@@ -278,7 +278,25 @@ path: "dot.path.expression"
 value: <Value — the JSON-like tree to resolve against>
 ```
 
+**Expected:** The resolved value directly, or `null` when the path does not resolve. For the special case where the resolved value IS `null`, the expected output uses `{found: true, value: null}` to distinguish from "not found".
+
+### `resolve_wildcard_path.yaml`
+
+Tests `resolve_wildcard_path(path, value)`.
+
+**Input:**
+```yaml
+path: "dot.path[*].expression"
+value: <Value — the JSON-like tree to resolve against>
+```
+
 **Expected:** A list of resolved values (may be empty).
+
+```yaml
+values:
+  - "value1"
+  - "value2"
+```
 
 ### `parse_duration.yaml`
 
@@ -317,7 +335,7 @@ value: <Value — the JSON-like tree to evaluate against>
 
 ### `interpolate_template.yaml`
 
-Tests `interpolate_template(template, extractors, request)`.
+Tests `interpolate_template(template, extractors, request, response)`.
 
 **Input:**
 ```yaml
@@ -325,19 +343,19 @@ template: "string with {{placeholders}}"
 extractors:
   name: "extracted_value"
 request: <optional Value>
+response: <optional Value>
 ```
 
 **Expected:** The interpolated string.
 
 ### `evaluate_extractor.yaml`
 
-Tests `evaluate_extractor(extractor, message, headers)`.
+Tests `evaluate_extractor(extractor, message)`.
 
 **Input:**
 ```yaml
 extractor: <Extractor object>
 message: <Value>
-headers: <optional map of header name to value>
 ```
 
 **Expected:** The extracted string value, or `null` when extraction yields nothing.

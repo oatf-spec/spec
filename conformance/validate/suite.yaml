@@ -1251,6 +1251,23 @@
       - rule: "V-033"
         path: "attack.execution"
 
+- name: "V-033 invalid: state present but mode absent"
+  id: VAL-033d
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-033"
+        path: "attack.execution.mode"
+
 # ---------------------------------------------------------------------------
 # V-034: Multi-actor constraints
 # ---------------------------------------------------------------------------

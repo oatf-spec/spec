@@ -3,8 +3,8 @@
 # Tests SDK validate() warning diagnostics per SDK spec §2.23.
 #
 # Only deterministic, validate-time warnings are tested here.
-# Runtime-dependent warnings (W-004b: unresolvable request/response paths,
-# W-005: runtime protocol mismatch) belong in SDK unit tests.
+# Runtime-dependent warnings (W-004b: unresolvable request/response paths)
+# belong in SDK unit tests.
 #
 # Test format: each case specifies expected errors (empty for valid docs)
 # and expected warnings (matched on rule ID only, not message text).
@@ -177,6 +177,55 @@
                 source: request
                 type: json_path
                 selector: "$.name"
+  expected:
+    errors: []
+    warnings: []
+
+# ---------------------------------------------------------------------------
+# W-005: Indicator targets protocol with no matching actor
+# ---------------------------------------------------------------------------
+
+- name: "W-005 warning: indicator protocol does not match any actor"
+  id: WARN-005a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        actors:
+          - name: attacker
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
+      indicators:
+        - protocol: a2a
+          surface: skill_description
+          pattern:
+            contains: "test"
+  expected:
+    errors: []
+    warnings:
+      - rule: W-005
+
+- name: "W-005 absent: indicator protocol matches an actor — no W-005 warning"
+  id: WARN-005b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        actors:
+          - name: attacker
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
+      indicators:
+        - protocol: mcp
+          surface: tool_description
+          pattern:
+            contains: "test"
   expected:
     errors: []
     warnings: []
