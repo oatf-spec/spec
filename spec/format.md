@@ -1914,7 +1914,7 @@ A conforming OATF document:
 2. MUST declare `oatf: "0.1"`. Documents SHOULD place it as the first key (see §4.1).
 3. MUST contain exactly one `attack` object.
 4. MUST include `attack.execution`.
-5. MUST use only valid values for closed enumerations defined in this specification: `severity.level`, `attack.status`, `impact`, `classification.category`, `correlation.logic`, `extractor.source`, and `extractor.type`. Mode values (`execution.mode`, `actor.mode`, `phase.mode`) are open — they MUST match the pattern `[a-z][a-z0-9_]*_(server|client)` but are not restricted to modes defined in this version. Protocol values (`indicator.protocol`) MUST match the pattern `[a-z][a-z0-9_]*`. Surface and event values for recognized protocol bindings MUST be valid according to the binding's tables (§7); for unrecognized bindings, tools MUST skip surface and event validation.
+5. MUST use only valid values for closed enumerations defined in this specification: `severity.level`, `attack.status`, `impact`, `classification.category`, `correlation.logic`, `extractor.source`, `extractor.type`, and `mapping.relationship`. Mode values (`execution.mode`, `actor.mode`, `phase.mode`) are open — they MUST match the pattern `[a-z][a-z0-9_]*_(server|client)` but are not restricted to modes defined in this version. Protocol values (`indicator.protocol`) MUST match the pattern `[a-z][a-z0-9_]*`. Surface and event values for recognized protocol bindings MUST be valid according to the binding's tables (§7); for unrecognized bindings, tools MUST skip surface and event validation.
 
 **Execution forms, phases, and actors**
 
