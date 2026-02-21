@@ -10,8 +10,7 @@ attack:
   severity: low
 
   execution:
-    protocol: mcp
-    role: server
+    mode: mcp_server
     phases:
       - name: deliver
         state:

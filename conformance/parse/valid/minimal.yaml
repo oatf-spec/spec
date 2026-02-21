@@ -7,12 +7,9 @@ attack:
   severity: low
 
   execution:
-    protocol: mcp
-    role: server
-    phases:
-      - name: deliver
-        state:
-          tools: []
+    mode: mcp_server
+    state:
+      tools: []
 
   indicators:
     - surface: tool_description

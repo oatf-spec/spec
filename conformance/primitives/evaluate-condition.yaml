@@ -150,3 +150,36 @@
     condition: "expected_value"
     value: "expected_value"
   expected: true
+
+- name: "multiple operators AND logic: contains + starts_with both satisfied"
+  id: COND-019
+  input:
+    condition:
+      contains: "passwd"
+      starts_with: "Read"
+    value: "Read /etc/passwd"
+  expected: true
+
+- name: "multiple operators AND logic: starts_with fails, contains passes"
+  id: COND-020
+  input:
+    condition:
+      contains: "passwd"
+      starts_with: "Write"
+    value: "Read /etc/passwd"
+  expected: false
+
+- name: "deep equality: array condition matches via deep equality"
+  id: COND-021
+  input:
+    condition:
+      - type: "object"
+        properties:
+          name:
+            type: "string"
+    value:
+      - type: "object"
+        properties:
+          name:
+            type: "string"
+  expected: true

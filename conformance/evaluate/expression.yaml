@@ -1,6 +1,6 @@
 # =============================================================================
 # OATF Conformance: evaluate_expression / evaluate_indicator Evaluation Tests
-# Tests SDK evaluate_expression per §4.4 and CEL-absent skipped behavior per §4.5.
+# Tests SDK evaluate_expression per §4.3 and CEL-absent skipped behavior per §4.4.
 # =============================================================================
 
 - name: "Simple boolean — size check matches"
@@ -8,7 +8,6 @@
   input:
     indicator:
       surface: "tool_list"
-      method: expression
       expression:
         cel: "size(message.tools) > 2"
         variables: null
@@ -25,7 +24,6 @@
   input:
     indicator:
       surface: "tool_list"
-      method: expression
       expression:
         cel: "size(message.tools) > 10"
         variables: null
@@ -41,7 +39,6 @@
   input:
     indicator:
       surface: "tool_name"
-      method: expression
       expression:
         cel: "message.name.startsWith(\"evil\")"
         variables: null
@@ -55,11 +52,10 @@
   input:
     indicator:
       surface: "tool_description"
-      method: expression
       expression:
-        cel: "desc.contains('inject')"
+        cel: "tools[0].description.contains('inject')"
         variables:
-          desc: "tools[0].description"
+          tools: "tools"
     message:
       tools:
         - description: "inject code here"
@@ -71,7 +67,6 @@
   input:
     indicator:
       surface: "tool_list"
-      method: expression
       expression:
         cel: "true"
         variables: null
@@ -84,7 +79,6 @@
   input:
     indicator:
       surface: "tool_definition"
-      method: expression
       expression:
         cel: "message.tools.exists(t, t.name == 'admin' && size(t.description) > 100)"
         variables: null
@@ -95,12 +89,11 @@
     cel_evaluator: present
   expected: "matched"
 
-- name: "Runtime evaluation error returns not_matched"
+- name: "Missing field access evaluates to not_matched"
   id: EVAL-CEL-07
   input:
     indicator:
       surface: "tool_arguments"
-      method: expression
       expression:
         cel: "message.nonexistent.field > 0"
         variables: null
@@ -108,3 +101,33 @@
       other: 1
     cel_evaluator: present
   expected: "not_matched"
+
+- name: "Non-boolean CEL result returns error (type_error)"
+  id: EVAL-CEL-08
+  input:
+    indicator:
+      surface: "tool_arguments"
+      expression:
+        cel: "size(message.tools)"
+        variables: null
+    message:
+      tools:
+        - {}
+        - {}
+    cel_evaluator: present
+  expected: "error"
+  expected_error_kind: "type_error"
+
+- name: "Variable with missing path evaluates with null binding"
+  id: EVAL-CEL-09
+  input:
+    indicator:
+      surface: "tool_description"
+      expression:
+        cel: "desc == null || desc.contains('inject')"
+        variables:
+          desc: "nonexistent.path"
+    message:
+      other: "data"
+    cel_evaluator: present
+  expected: "matched"

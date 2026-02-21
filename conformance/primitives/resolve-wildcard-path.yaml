@@ -1,0 +1,52 @@
+# =============================================================================
+# OATF Conformance: resolve_wildcard_path Primitive Tests
+# Tests SDK resolve_wildcard_path(path, value) per SDK spec §5.1.2.
+# =============================================================================
+
+- name: "Array wildcard fans out to all elements"
+  id: PATH-007
+  input:
+    path: "tools[*].name"
+    value:
+      tools:
+        - name: "a"
+        - name: "b"
+  expected:
+    values:
+      - "a"
+      - "b"
+
+- name: "Wildcard on non-array returns empty"
+  id: PATH-008
+  input:
+    path: "tools[*]"
+    value:
+      tools: "string"
+  expected:
+    values: []
+
+- name: "Nested wildcards fan out at each level"
+  id: PATH-009
+  input:
+    path: "a[*].b[*].c"
+    value:
+      a:
+        - b:
+            - c: 1
+            - c: 2
+        - b:
+            - c: 3
+  expected:
+    values:
+      - 1
+      - 2
+      - 3
+
+- name: "Wildcard on empty array returns empty"
+  id: PATH-013
+  input:
+    path: "items[*].name"
+    value:
+      items: []
+  expected:
+    values: []

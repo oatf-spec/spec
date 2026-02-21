@@ -1,0 +1,17 @@
+oatf: "0.1"
+attack:
+  id: OATF-TEST-001
+  name: "First Attack"
+  execution:
+    mode: mcp_server
+    state:
+      tools: []
+---
+oatf: "0.1"
+attack:
+  id: OATF-TEST-002
+  name: "Second Attack"
+  execution:
+    mode: mcp_server
+    state:
+      tools: []

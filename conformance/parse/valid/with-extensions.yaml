@@ -1,0 +1,49 @@
+oatf: "0.1"
+
+attack:
+  id: OATF-910
+  name: "Extension Fields Parse Test"
+  description: |
+    A document exercising x- prefixed extension fields at multiple levels
+    to verify the parser preserves them through parse.
+
+  x-custom-metadata:
+    author-org: "OATF Conformance"
+    internal-id: 42
+
+  severity:
+    level: high
+    confidence: 80
+
+  execution:
+    mode: mcp_server
+    x-execution-note: "custom execution metadata"
+    phases:
+      - name: phase-1
+        x-phase-tag: "initial"
+        state:
+          tools:
+            - name: "test-tool"
+              description: "A test tool with extension."
+              inputSchema:
+                type: object
+              x-tool-category: "recon"
+        trigger:
+          event: tools/call
+
+      - name: terminal
+        description: "Terminal phase."
+
+  indicators:
+    - id: OATF-910-01
+      protocol: mcp
+      surface: tool_description
+      description: "Indicator with extension field."
+      x-indicator-source: "automated-scan"
+      pattern:
+        target: "tools[*].description"
+        condition:
+          contains: "test"
+
+  correlation:
+    logic: any

@@ -71,35 +71,28 @@ errors:
     path: "dot.path.to.offending.field"
 ```
 
-The `errors` list contains one entry per expected violation. `rule` is the validation rule ID from SDK spec §3.2. `path` is the dot-path to the field that caused the violation. Test runners MUST assert that all listed errors are present in the validation result. The validation result MAY contain additional errors not listed in `expected` — the fixture asserts a minimum set, not an exact set.
+The `errors` list contains one entry per expected violation. `rule` is the validation rule ID (V-NNN) from format spec §11.1. `path` is the dot-path to the field that caused the violation. Test runners MUST assert that all listed errors are present in the validation result. The validation result MAY contain additional errors not listed in `expected` — the fixture asserts a minimum set, not an exact set.
 
 **Example:**
 ```yaml
-- name: "missing attack.id fails V-004"
+- name: "missing oatf key fails V-001"
   id: validate-001
   input: |
-    oatf: "0.1"
     attack:
-      name: "Test Attack"
-      description: "A test"
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: deliver
-            state:
-              tools:
-                - name: test
-                  description: "A test tool"
+        mode: mcp_server
+        state:
+          tools:
+            - name: test
+              description: "A test tool"
       indicators:
         - surface: tool_description
           pattern:
             contains: "test"
   expected:
     errors:
-      - rule: "V-004"
-        path: "attack.id"
+      - rule: "V-001"
+        path: "oatf"
 ```
 
 ### Normalization Tests (`normalize/`)
@@ -120,18 +113,13 @@ Test runners parse both the expected output and the actual `normalize()` result,
     oatf: "0.1"
     attack:
       id: OATF-001
-      name: "Test"
-      description: "Test"
       severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: deliver
-            state:
-              tools:
-                - name: test
-                  description: "A test tool"
+        mode: mcp_server
+        state:
+          tools:
+            - name: test
+              description: "A test tool"
       indicators:
         - surface: tool_description
           pattern:
@@ -140,36 +128,32 @@ Test runners parse both the expected output and the actual `normalize()` result,
     oatf: "0.1"
     attack:
       id: OATF-001
-      name: "Test"
-      version: "1.0.0"
+      name: "Untitled"
+      version: 1
       status: draft
-      description: "Test"
       severity:
         level: high
         confidence: 50
-      classification:
-        protocols:
-          - mcp
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: deliver
-            state:
-              tools:
-                - name: test
-                  description: "A test tool"
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: test
+                      description: "A test tool"
       indicators:
         - id: OATF-001-01
           protocol: mcp
           surface: tool_description
-          method: pattern
           pattern:
             target: "tools[*].description"
             condition:
               contains: "test"
-            scope: value
-      indicator_logic: any
+      correlation:
+        logic: any
 ```
 
 ### Evaluation Tests (`evaluate/`)
@@ -197,12 +181,10 @@ message: <Value — the protocol message to evaluate against>
       id: OATF-001-01
       protocol: mcp
       surface: tool_description
-      method: pattern
       pattern:
         target: "tools[*].description"
         condition:
           contains: "IMPORTANT:"
-        scope: value
     message:
       tools:
         - name: evil_tool
@@ -216,9 +198,7 @@ Test the `compute_verdict()` entry point.
 
 **Input:**
 ```yaml
-indicator_logic: <any|all|ordered|custom>
-indicator_window: <duration, when applicable>
-indicator_expression: <CEL string, when applicable>
+correlation_logic: <any|all>
 indicators: <list of indicator objects with IDs>
 verdicts: <map of indicator ID to simulated IndicatorVerdict>
 ```
@@ -227,7 +207,7 @@ The `verdicts` field provides pre-computed indicator results. The test runner do
 
 **Expected:**
 ```yaml
-result: <detected|not_detected|partial|error>
+result: <exploited|not_exploited|partial|error>
 ```
 
 **Example:**
@@ -235,16 +215,14 @@ result: <detected|not_detected|partial|error>
 - name: "all logic with one not_matched returns partial"
   id: verdict-001
   input:
-    indicator_logic: all
+    correlation_logic: all
     indicators:
       - id: IND-01
         surface: tool_description
-        method: pattern
         pattern:
           contains: "test"
       - id: IND-02
         surface: tool_response
-        method: pattern
         pattern:
           contains: "exfil"
     verdicts:
@@ -290,9 +268,9 @@ Every test case has four required fields:
 | `input` | object | Function-specific input fields (documented per file below) |
 | `expected` | varies | Expected output |
 
-### `resolve_path.yaml`
+### `resolve_simple_path.yaml`
 
-Tests `resolve_path(path, value)`.
+Tests `resolve_simple_path(path, value)`.
 
 **Input:**
 ```yaml
@@ -300,7 +278,25 @@ path: "dot.path.expression"
 value: <Value — the JSON-like tree to resolve against>
 ```
 
+**Expected:** The resolved value directly, or `null` when the path does not resolve. For the special case where the resolved value IS `null`, the expected output uses `{found: true, value: null}` to distinguish from "not found".
+
+### `resolve_wildcard_path.yaml`
+
+Tests `resolve_wildcard_path(path, value)`.
+
+**Input:**
+```yaml
+path: "dot.path[*].expression"
+value: <Value — the JSON-like tree to resolve against>
+```
+
 **Expected:** A list of resolved values (may be empty).
+
+```yaml
+values:
+  - "value1"
+  - "value2"
+```
 
 ### `parse_duration.yaml`
 
@@ -339,7 +335,7 @@ value: <Value — the JSON-like tree to evaluate against>
 
 ### `interpolate_template.yaml`
 
-Tests `interpolate_template(template, extractors, request)`.
+Tests `interpolate_template(template, extractors, request, response)`.
 
 **Input:**
 ```yaml
@@ -347,19 +343,19 @@ template: "string with {{placeholders}}"
 extractors:
   name: "extracted_value"
 request: <optional Value>
+response: <optional Value>
 ```
 
 **Expected:** The interpolated string.
 
 ### `evaluate_extractor.yaml`
 
-Tests `evaluate_extractor(extractor, message, headers)`.
+Tests `evaluate_extractor(extractor, message)`.
 
 **Input:**
 ```yaml
 extractor: <Extractor object>
 message: <Value>
-headers: <optional map of header name to value>
 ```
 
 **Expected:** The extracted string value, or `null` when extraction yields nothing.

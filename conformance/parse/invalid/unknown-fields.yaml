@@ -9,8 +9,7 @@ attack:
   unknown_attack_field: "should not be here"
 
   execution:
-    protocol: mcp
-    role: server
+    mode: mcp_server
     unknown_execution_field: 42
     phases:
       - name: deliver

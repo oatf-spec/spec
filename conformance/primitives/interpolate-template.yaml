@@ -75,15 +75,15 @@
     request: null
   expected: "{{literal}} and value"
 
-- name: "Request with nested path including array index"
+- name: "Request with deeply nested object path"
   id: TMPL-009
   input:
-    template: "{{request.a.b[0]}}"
+    template: "{{request.a.b.c}}"
     extractors: {}
     request:
       a:
         b:
-          - "deep"
+          c: "deep"
   expected: "deep"
 
 - name: "Extractor takes priority over request path"
@@ -95,3 +95,32 @@
     request:
       name: "from_request"
   expected: "from_extractor"
+
+- name: "Cross-actor reference resolves from actor extractors"
+  id: TMPL-011
+  input:
+    template: "Got: {{actor_b.extracted_val}}"
+    extractors:
+      "actor_b.extracted_val": "secret_data"
+    request: null
+  expected: "Got: secret_data"
+
+- name: "Response path resolves from response parameter"
+  id: TMPL-012
+  input:
+    template: "Status: {{response.status}}"
+    extractors: {}
+    request: null
+    response:
+      status: "ok"
+  expected: "Status: ok"
+
+- name: "Non-recursive: result containing template syntax is NOT re-expanded"
+  id: TMPL-013
+  input:
+    template: "{{injected}}"
+    extractors:
+      injected: "{{secret}}"
+      secret: "should_not_appear"
+    request: null
+  expected: "{{secret}}"

@@ -1,0 +1,93 @@
+# =============================================================================
+# OATF Conformance: resolve_simple_path Primitive Tests
+# Tests SDK resolve_simple_path(path, value) per SDK spec §5.1.1.
+# =============================================================================
+
+- name: "Simple field access"
+  id: PATH-001
+  input:
+    path: "name"
+    value:
+      name: "test"
+  expected: "test"
+
+- name: "Nested field access"
+  id: PATH-002
+  input:
+    path: "a.b.c"
+    value:
+      a:
+        b:
+          c: 42
+  expected: 42
+
+- name: "Missing field returns null"
+  id: PATH-003
+  input:
+    path: "a.b"
+    value:
+      a:
+        x: 1
+  expected: null
+
+- name: "Non-object intermediate returns null"
+  id: PATH-004
+  input:
+    path: "a.b"
+    value:
+      a: "string"
+  expected: null
+
+- name: "Root-level field with null value"
+  id: PATH-010
+  input:
+    path: "x"
+    value:
+      x: null
+  expected:
+    found: true
+    value: null
+
+- name: "Array at leaf is returned as the value itself"
+  id: PATH-011
+  input:
+    path: "tags"
+    value:
+      tags:
+        - 1
+        - 2
+        - 3
+  expected:
+    - 1
+    - 2
+    - 3
+
+- name: "Empty path returns root value"
+  id: PATH-012
+  input:
+    path: ""
+    value:
+      a: 1
+  expected:
+    a: 1
+
+- name: "Numeric string key on object"
+  id: PATH-015
+  input:
+    path: "0"
+    value:
+      "0": "zero"
+  expected: "zero"
+
+- name: "Deeply nested field access"
+  id: PATH-016
+  input:
+    path: "a.b.c.d.e.f"
+    value:
+      a:
+        b:
+          c:
+            d:
+              e:
+                f: "deep"
+  expected: "deep"

@@ -1,0 +1,11 @@
+oatf: "0.1"
+attack:
+  id: OATF-TEST-001
+  name: "Type Mismatch Test"
+  severity:
+    level: high
+    confidence: "fifty"
+  execution:
+    mode: mcp_server
+    state:
+      tools: []
