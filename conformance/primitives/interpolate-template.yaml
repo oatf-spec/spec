@@ -75,15 +75,15 @@
     request: null
   expected: "{{literal}} and value"
 
-- name: "Request with nested path including array index"
+- name: "Request with deeply nested object path"
   id: TMPL-009
   input:
-    template: "{{request.a.b[0]}}"
+    template: "{{request.a.b.c}}"
     extractors: {}
     request:
       a:
         b:
-          - "deep"
+          c: "deep"
   expected: "deep"
 
 - name: "Extractor takes priority over request path"

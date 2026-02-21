@@ -2,10 +2,9 @@
 # OATF Conformance: evaluate_predicate Primitive Tests
 # Tests SDK evaluate_predicate(predicate, value) per SDK spec §5.4.
 #
-# A predicate is a map of dot-path → condition entries combined with AND.
-# Each entry resolves its path via resolve_path, then evaluates the
-# condition against each resolved value — true if any resolved value
-# satisfies the condition.
+# A predicate is a map of simple dot-path → condition entries combined with AND.
+# Each entry resolves its path via resolve_simple_path (no wildcards or
+# array indices), then evaluates the condition against the resolved value.
 # =============================================================================
 
 - name: "Single entry equality match"
@@ -70,16 +69,16 @@
       other: "data"
   expected: false
 
-- name: "Wildcard path — true if any resolved value satisfies condition"
+- name: "Simple path on array-valued field returns false (no wildcard support)"
   id: PRED-007
   input:
     predicate:
-      "items[*].type": "secret"
+      items.type: "secret"
     value:
       items:
         - type: "normal"
         - type: "secret"
-  expected: true
+  expected: false
 
 - name: "Empty predicate is vacuously true"
   id: PRED-008
