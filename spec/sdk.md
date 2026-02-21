@@ -1155,7 +1155,7 @@ Evaluates the semantic similarity or intent match between observed text and the 
 
 SDKs MUST NOT ship a default `SemanticEvaluator`. Semantic evaluation is inherently model-dependent and deployment-specific.
 
-> *Note:* The signature above is written synchronously for clarity. Semantic evaluation involves I/O (LLM inference, embedding API calls). SDKs in languages with async ecosystems SHOULD provide async variants of this interface. See §8.7.
+> *Note:* Semantic evaluation involves I/O (LLM inference, embedding API calls). The trait interface is synchronous; implementations manage I/O internally. Language SDKs MAY provide async convenience wrappers. See §8.7.
 
 ### 6.3 GenerationProvider
 
@@ -1182,7 +1182,7 @@ Generates protocol-conformant content from a prompt. Used by adversarial tools t
 
 SDKs MUST NOT ship a default `GenerationProvider`. LLM generation is model-dependent, API-specific, and deployment-specific. The consuming tool (e.g., ThoughtJack) provides its own implementation.
 
-> *Note:* The signature above is written synchronously for clarity. LLM generation involves I/O. SDKs in languages with async ecosystems SHOULD provide async variants of this interface. See §8.7.
+> *Note:* LLM generation involves I/O. The trait interface is synchronous; implementations manage I/O internally. Language SDKs MAY provide async convenience wrappers. See §8.7.
 
 ---
 
@@ -1349,13 +1349,15 @@ OATF documents may contain fields prefixed with `x-`. SDKs MUST preserve these t
 
 ### 8.7 Async Evaluation
 
-The entry points and evaluation functions in this specification are defined with synchronous signatures. However, semantic evaluation (§6.2) involves I/O (LLM inference, embedding API calls) that may take seconds. CEL evaluation may also involve non-trivial computation. SDKs SHOULD consider the following:
+All entry points and evaluation functions defined in this specification have synchronous signatures. The SDK core MUST be synchronous:
 
 - `parse`, `validate`, `normalize`, and `serialize` are CPU-bound operations on in-memory data. Synchronous signatures are appropriate.
-- `evaluate_indicator` and `compute_verdict` may invoke extension points (`CelEvaluator`, `SemanticEvaluator`) that perform I/O. SDKs in languages with async ecosystems (Rust, Python, TypeScript, Go) SHOULD provide async variants of these functions or define the extension point interfaces as async.
+- The core evaluation functions (`evaluate_indicator`, `compute_verdict`) MUST be synchronous. They invoke extension point trait implementations which present a synchronous interface to the SDK.
+- Extension point implementations (`CelEvaluator`, `SemanticEvaluator`, `GenerationProvider`) MAY perform I/O internally (LLM inference, embedding API calls, network requests) but MUST present a synchronous interface to the SDK. How I/O is managed within the implementation (blocking calls, internal async runtimes, thread pools) is an implementation concern opaque to the SDK.
+- Language SDKs MAY additionally provide async convenience wrappers that delegate to the synchronous core. These wrappers are SDK-specific sugar and not part of the abstract specification.
 - Batch evaluation of multiple indicators against multiple messages is a common workflow. SDKs MAY offer batch evaluation functions that evaluate indicators concurrently where the language supports it.
 
-The decision between sync and async interfaces is a language SDK concern. This specification defines the behavioral contracts (inputs, outputs, error handling). How those contracts are scheduled is an implementation detail. SDKs SHOULD document whether their evaluation APIs are sync, async, or both.
+This pattern — sync core, sync trait interface, optional async wrappers — ensures that the behavioral contracts are uniform across language ecosystems while allowing each SDK to integrate naturally with its language's concurrency model. SDKs SHOULD document whether they provide async convenience wrappers.
 
 ---
 
