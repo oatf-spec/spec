@@ -483,12 +483,12 @@
         },
         "relationship": {
           "type": "string",
-          "enum": [
+          "default": "primary",
+          "description": "How closely this attack maps to the referenced entry. Primary = directly implements; related = associated but not a direct implementation.",
+          "examples": [
             "primary",
             "related"
-          ],
-          "default": "primary",
-          "description": "How closely this attack maps to the referenced entry. Primary = directly implements; related = associated but not a direct implementation."
+          ]
         }
       },
       "patternProperties": {
