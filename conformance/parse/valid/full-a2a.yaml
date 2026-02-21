@@ -102,7 +102,7 @@ attack:
           event: message/send
           count: 1
           match:
-            messages[0].parts[0].text:
+            params.message.text:
               contains: "analyze"
 
       - name: exfiltrate

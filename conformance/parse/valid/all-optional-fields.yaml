@@ -184,7 +184,7 @@ attack:
             trigger:
               event: message/send
               match:
-                messages[0].parts[0].text:
+                params.message.text:
                   contains: "delegate"
                   regex: "delegate.*task"
 
