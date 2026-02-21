@@ -1920,7 +1920,7 @@ A conforming OATF document:
 
 6. MUST have at least one entry in `indicators` when `indicators` is present.
 7. MUST specify exactly one of `execution.state` (single-phase form), `execution.phases` (multi-phase form), or `execution.actors` (multi-actor form) — they are mutually exclusive. When `execution.state` is present, `execution.mode` MUST also be present.
-8. In multi-phase form: MUST have at least one entry in `execution.phases`. MUST have at most one terminal phase, and it MUST be the last phase. MUST include `state` on the first phase. Explicitly specified `phase.name` values MUST be unique.
+8. In multi-phase form: MUST have at least one entry in `execution.phases`. MUST have at most one terminal phase, and it MUST be the last phase. MUST include `state` on the first phase. Explicitly specified `phase.name` values MUST be unique. When `phase.extractors` is present, it MUST contain at least one entry.
 9. In multi-actor form: MUST have at least one entry in `execution.actors`. Each actor MUST declare `actor.name` (matching `[a-z][a-z0-9_]*`) and `actor.mode`. Actor names MUST be unique. Each actor MUST have at least one phase. Explicitly specified phase names MUST be unique within each actor. Terminal phase rules and first-phase `state` rules apply per-actor.
 
 **Indicators and event validation**
