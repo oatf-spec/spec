@@ -1013,11 +1013,11 @@
     valid: true
 
 # ---------------------------------------------------------------------------
-# V-019: severity.confidence is in range 0-100
+# V-017: severity.confidence is in range 0-100
 # ---------------------------------------------------------------------------
 
-- name: "V-019 valid: severity.confidence is 75"
-  id: VAL-019a
+- name: "V-017 valid: severity.confidence is 75"
+  id: VAL-017a
   input: |
     oatf: "0.1"
     attack:
@@ -1031,8 +1031,8 @@
   expected:
     valid: true
 
-- name: "V-019 invalid: severity.confidence is -1 (below range)"
-  id: VAL-019b
+- name: "V-017 invalid: severity.confidence is -1 (below range)"
+  id: VAL-017b
   input: |
     oatf: "0.1"
     attack:
@@ -1045,11 +1045,11 @@
           tools: []
   expected:
     errors:
-      - rule: "V-019"
+      - rule: "V-017"
         path: "attack.severity.confidence"
 
-- name: "V-019 invalid: severity.confidence is 101 (above range)"
-  id: VAL-019c
+- name: "V-017 invalid: severity.confidence is 101 (above range)"
+  id: VAL-017c
   input: |
     oatf: "0.1"
     attack:
@@ -1062,11 +1062,11 @@
           tools: []
   expected:
     errors:
-      - rule: "V-019"
+      - rule: "V-017"
         path: "attack.severity.confidence"
 
-- name: "V-019 valid: severity.confidence at lower boundary (0)"
-  id: VAL-019d
+- name: "V-017 valid: severity.confidence at lower boundary (0)"
+  id: VAL-017d
   input: |
     oatf: "0.1"
     attack:
@@ -1080,8 +1080,8 @@
   expected:
     valid: true
 
-- name: "V-019 valid: severity.confidence at upper boundary (100)"
-  id: VAL-019e
+- name: "V-017 valid: severity.confidence at upper boundary (100)"
+  id: VAL-017e
   input: |
     oatf: "0.1"
     attack:
@@ -1096,11 +1096,11 @@
     valid: true
 
 # ---------------------------------------------------------------------------
-# V-021: Indicator surface is valid for the indicator's resolved protocol
+# V-018: Indicator surface is valid for the indicator's resolved protocol
 # ---------------------------------------------------------------------------
 
-- name: "V-021 valid: MCP indicator with MCP surface"
-  id: VAL-021a
+- name: "V-018 valid: MCP indicator with MCP surface"
+  id: VAL-018a
   input: |
     oatf: "0.1"
     attack:
@@ -1115,8 +1115,8 @@
   expected:
     valid: true
 
-- name: "V-021 invalid: MCP execution with A2A surface agent_card"
-  id: VAL-021b
+- name: "V-018 invalid: MCP execution with A2A surface agent_card"
+  id: VAL-018b
   input: |
     oatf: "0.1"
     attack:
@@ -1130,15 +1130,15 @@
             contains: "malicious"
   expected:
     errors:
-      - rule: "V-021"
+      - rule: "V-018"
         path: "attack.indicators[0].surface"
 
 # ---------------------------------------------------------------------------
-# V-022: Trigger count and match only present when event is also present
+# V-019: Trigger count and match only present when event is also present
 # ---------------------------------------------------------------------------
 
-- name: "V-022 invalid: trigger has count but no event"
-  id: VAL-022a
+- name: "V-019 invalid: trigger has count but no event"
+  id: VAL-019a
   input: |
     oatf: "0.1"
     attack:
@@ -1158,11 +1158,11 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-022"
+      - rule: "V-019"
         path: "attack.execution.phases[0].trigger"
 
-- name: "V-022 invalid: trigger has match but no event"
-  id: VAL-022b
+- name: "V-019 invalid: trigger has match but no event"
+  id: VAL-019b
   input: |
     oatf: "0.1"
     attack:
@@ -1183,15 +1183,15 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-022"
+      - rule: "V-019"
         path: "attack.execution.phases[0].trigger"
 
 # ---------------------------------------------------------------------------
-# V-033: Execution form mutual exclusivity (state/phases/actors)
+# V-030: Execution form mutual exclusivity (state/phases/actors)
 # ---------------------------------------------------------------------------
 
-- name: "V-033 invalid: both state and phases present"
-  id: VAL-033a
+- name: "V-030 invalid: both state and phases present"
+  id: VAL-030a
   input: |
     oatf: "0.1"
     attack:
@@ -1205,11 +1205,11 @@
               tools: []
   expected:
     errors:
-      - rule: "V-033"
+      - rule: "V-030"
         path: "attack.execution"
 
-- name: "V-033 invalid: both state and actors present"
-  id: VAL-033b
+- name: "V-030 invalid: both state and actors present"
+  id: VAL-030b
   input: |
     oatf: "0.1"
     attack:
@@ -1226,11 +1226,11 @@
                   tools: []
   expected:
     errors:
-      - rule: "V-033"
+      - rule: "V-030"
         path: "attack.execution"
 
-- name: "V-033 invalid: both phases and actors present"
-  id: VAL-033c
+- name: "V-030 invalid: both phases and actors present"
+  id: VAL-030c
   input: |
     oatf: "0.1"
     attack:
@@ -1249,11 +1249,11 @@
                   tools: []
   expected:
     errors:
-      - rule: "V-033"
+      - rule: "V-030"
         path: "attack.execution"
 
-- name: "V-033 invalid: state present but mode absent"
-  id: VAL-033d
+- name: "V-030 invalid: state present but mode absent"
+  id: VAL-030d
   input: |
     oatf: "0.1"
     attack:
@@ -1266,15 +1266,15 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-033"
+      - rule: "V-030"
         path: "attack.execution.mode"
 
 # ---------------------------------------------------------------------------
-# V-034: Multi-actor constraints
+# V-031: Multi-actor constraints
 # ---------------------------------------------------------------------------
 
-- name: "V-034 valid: actors with unique names and modes"
-  id: VAL-034a
+- name: "V-031 valid: actors with unique names and modes"
+  id: VAL-031a
   input: |
     oatf: "0.1"
     attack:
@@ -1304,8 +1304,8 @@
   expected:
     valid: true
 
-- name: "V-034 invalid: duplicate actor names"
-  id: VAL-034b
+- name: "V-031 invalid: duplicate actor names"
+  id: VAL-031b
   input: |
     oatf: "0.1"
     attack:
@@ -1334,11 +1334,11 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-034"
+      - rule: "V-031"
         path: "attack.execution.actors[1].name"
 
-- name: "V-034 invalid: actor name does not match pattern"
-  id: VAL-034c
+- name: "V-031 invalid: actor name does not match pattern"
+  id: VAL-031c
   input: |
     oatf: "0.1"
     attack:
@@ -1352,15 +1352,15 @@
                   tools: []
   expected:
     errors:
-      - rule: "V-034"
+      - rule: "V-031"
         path: "attack.execution.actors[0].name"
 
 # ---------------------------------------------------------------------------
-# V-039: Mode pattern validation
+# V-036: Mode pattern validation
 # ---------------------------------------------------------------------------
 
-- name: "V-039 valid: standard mode pattern"
-  id: VAL-039a
+- name: "V-036 valid: standard mode pattern"
+  id: VAL-036a
   input: |
     oatf: "0.1"
     attack:
@@ -1371,8 +1371,8 @@
   expected:
     valid: true
 
-- name: "V-039 valid: unknown but valid mode pattern"
-  id: VAL-039b
+- name: "V-036 valid: unknown but valid mode pattern"
+  id: VAL-036b
   input: |
     oatf: "0.1"
     attack:
@@ -1384,11 +1384,11 @@
     valid: true
 
 # ---------------------------------------------------------------------------
-# V-023: No YAML anchors, aliases, or merge keys
+# V-020: No YAML anchors, aliases, or merge keys
 # ---------------------------------------------------------------------------
 
-- name: "V-023 invalid: document uses YAML alias"
-  id: VAL-023a
+- name: "V-020 invalid: document uses YAML alias"
+  id: VAL-020a
   # NOTE: Test runner must parse this as raw text and detect the alias &anchor/*anchor
   # before YAML resolution. SDKs whose parsers expose anchor info SHOULD flag this.
   input: |
@@ -1405,14 +1405,14 @@
     extra: *anchor
   expected:
     errors:
-      - rule: "V-023"
+      - rule: "V-020"
 
 # ---------------------------------------------------------------------------
-# V-024: Explicit target fields are valid wildcard dot-path syntax
+# V-021: Explicit target fields are valid wildcard dot-path syntax
 # ---------------------------------------------------------------------------
 
-- name: "V-024 valid: wildcard target tools[*].description"
-  id: VAL-024a
+- name: "V-021 valid: wildcard target tools[*].description"
+  id: VAL-021a
   input: |
     oatf: "0.1"
     attack:
@@ -1429,8 +1429,8 @@
   expected:
     valid: true
 
-- name: "V-024 invalid: target with numeric index tools[0].description"
-  id: VAL-024b
+- name: "V-021 invalid: target with numeric index tools[0].description"
+  id: VAL-021b
   input: |
     oatf: "0.1"
     attack:
@@ -1446,11 +1446,11 @@
               contains: "test"
   expected:
     errors:
-      - rule: "V-024"
+      - rule: "V-021"
         path: "attack.indicators[0].pattern.target"
 
-- name: "V-024 invalid: target with invalid characters"
-  id: VAL-024c
+- name: "V-021 invalid: target with invalid characters"
+  id: VAL-021c
   input: |
     oatf: "0.1"
     attack:
@@ -1466,15 +1466,15 @@
               contains: "test"
   expected:
     errors:
-      - rule: "V-024"
+      - rule: "V-021"
         path: "attack.indicators[0].pattern.target"
 
 # ---------------------------------------------------------------------------
-# V-025: semantic.threshold in range [0.0, 1.0]
+# V-022: semantic.threshold in range [0.0, 1.0]
 # ---------------------------------------------------------------------------
 
-- name: "V-025 valid: semantic.threshold 0.5"
-  id: VAL-025a
+- name: "V-022 valid: semantic.threshold 0.5"
+  id: VAL-022a
   input: |
     oatf: "0.1"
     attack:
@@ -1490,8 +1490,8 @@
   expected:
     valid: true
 
-- name: "V-025 invalid: semantic.threshold -0.1"
-  id: VAL-025b
+- name: "V-022 invalid: semantic.threshold -0.1"
+  id: VAL-022b
   input: |
     oatf: "0.1"
     attack:
@@ -1506,11 +1506,11 @@
             threshold: -0.1
   expected:
     errors:
-      - rule: "V-025"
+      - rule: "V-022"
         path: "attack.indicators[0].semantic.threshold"
 
-- name: "V-025 invalid: semantic.threshold 1.1"
-  id: VAL-025c
+- name: "V-022 invalid: semantic.threshold 1.1"
+  id: VAL-022c
   input: |
     oatf: "0.1"
     attack:
@@ -1525,11 +1525,11 @@
             threshold: 1.1
   expected:
     errors:
-      - rule: "V-025"
+      - rule: "V-022"
         path: "attack.indicators[0].semantic.threshold"
 
-- name: "V-025 valid: semantic.threshold 0.0 (lower boundary)"
-  id: VAL-025d
+- name: "V-022 valid: semantic.threshold 0.0 (lower boundary)"
+  id: VAL-022d
   input: |
     oatf: "0.1"
     attack:
@@ -1545,8 +1545,8 @@
   expected:
     valid: true
 
-- name: "V-025 valid: semantic.threshold 1.0 (upper boundary)"
-  id: VAL-025e
+- name: "V-022 valid: semantic.threshold 1.0 (upper boundary)"
+  id: VAL-022e
   input: |
     oatf: "0.1"
     attack:
@@ -1563,11 +1563,11 @@
     valid: true
 
 # ---------------------------------------------------------------------------
-# V-026: attack.id matches pattern ^[A-Z][A-Z0-9-]*-[0-9]{3,}$
+# V-023: attack.id matches pattern ^[A-Z][A-Z0-9-]*-[0-9]{3,}$
 # ---------------------------------------------------------------------------
 
-- name: "V-026 valid: attack.id OATF-001"
-  id: VAL-026a
+- name: "V-023 valid: attack.id OATF-001"
+  id: VAL-023a
   input: |
     oatf: "0.1"
     attack:
@@ -1579,8 +1579,8 @@
   expected:
     valid: true
 
-- name: "V-026 invalid: attack.id lowercase-001"
-  id: VAL-026b
+- name: "V-023 invalid: attack.id lowercase-001"
+  id: VAL-023b
   input: |
     oatf: "0.1"
     attack:
@@ -1591,11 +1591,11 @@
           tools: []
   expected:
     errors:
-      - rule: "V-026"
+      - rule: "V-023"
         path: "attack.id"
 
-- name: "V-026 invalid: attack.id OATF (missing numeric suffix)"
-  id: VAL-026c
+- name: "V-023 invalid: attack.id OATF (missing numeric suffix)"
+  id: VAL-023c
   input: |
     oatf: "0.1"
     attack:
@@ -1606,15 +1606,15 @@
           tools: []
   expected:
     errors:
-      - rule: "V-026"
+      - rule: "V-023"
         path: "attack.id"
 
 # ---------------------------------------------------------------------------
-# V-027: indicator.id matches pattern AND prefix equals attack.id
+# V-024: indicator.id matches pattern AND prefix equals attack.id
 # ---------------------------------------------------------------------------
 
-- name: "V-027 valid: indicator.id OATF-001-01 matching attack.id OATF-001"
-  id: VAL-027a
+- name: "V-024 valid: indicator.id OATF-001-01 matching attack.id OATF-001"
+  id: VAL-024a
   input: |
     oatf: "0.1"
     attack:
@@ -1631,8 +1631,8 @@
   expected:
     valid: true
 
-- name: "V-027 invalid: indicator.id OTHER-001-01 not matching attack.id OATF-001"
-  id: VAL-027b
+- name: "V-024 invalid: indicator.id OTHER-001-01 not matching attack.id OATF-001"
+  id: VAL-024b
   input: |
     oatf: "0.1"
     attack:
@@ -1648,11 +1648,11 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-027"
+      - rule: "V-024"
         path: "attack.indicators[0].id"
 
-- name: "V-027 invalid: indicator.id OATF-001 missing indicator suffix"
-  id: VAL-027c
+- name: "V-024 invalid: indicator.id OATF-001 missing indicator suffix"
+  id: VAL-024c
   input: |
     oatf: "0.1"
     attack:
@@ -1668,15 +1668,15 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-027"
+      - rule: "V-024"
         path: "attack.indicators[0].id"
 
 # ---------------------------------------------------------------------------
-# V-028: indicator.confidence in range 0–100
+# V-025: indicator.confidence in range 0–100
 # ---------------------------------------------------------------------------
 
-- name: "V-028 valid: indicator.confidence 50"
-  id: VAL-028a
+- name: "V-025 valid: indicator.confidence 50"
+  id: VAL-025a
   input: |
     oatf: "0.1"
     attack:
@@ -1692,8 +1692,8 @@
   expected:
     valid: true
 
-- name: "V-028 invalid: indicator.confidence -1"
-  id: VAL-028b
+- name: "V-025 invalid: indicator.confidence -1"
+  id: VAL-025b
   input: |
     oatf: "0.1"
     attack:
@@ -1708,11 +1708,11 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-028"
+      - rule: "V-025"
         path: "attack.indicators[0].confidence"
 
-- name: "V-028 invalid: indicator.confidence 101"
-  id: VAL-028c
+- name: "V-025 invalid: indicator.confidence 101"
+  id: VAL-025c
   input: |
     oatf: "0.1"
     attack:
@@ -1727,15 +1727,15 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-028"
+      - rule: "V-025"
         path: "attack.indicators[0].confidence"
 
 # ---------------------------------------------------------------------------
-# V-029: expression.variables values are valid simple dot-paths
+# V-026: expression.variables values are valid simple dot-paths
 # ---------------------------------------------------------------------------
 
-- name: "V-029 valid: expression variable value tools.name (simple dot-path)"
-  id: VAL-029a
+- name: "V-026 valid: expression variable value tools.name (simple dot-path)"
+  id: VAL-026a
   input: |
     oatf: "0.1"
     attack:
@@ -1752,8 +1752,8 @@
   expected:
     valid: true
 
-- name: "V-029 invalid: expression variable value with wildcard"
-  id: VAL-029b
+- name: "V-026 invalid: expression variable value with wildcard"
+  id: VAL-026b
   input: |
     oatf: "0.1"
     attack:
@@ -1769,15 +1769,15 @@
               desc: "tools[*].name"
   expected:
     errors:
-      - rule: "V-029"
+      - rule: "V-026"
         path: "attack.indicators[0].expression.variables.desc"
 
 # ---------------------------------------------------------------------------
-# V-030: MatchPredicate keys are valid simple dot-paths
+# V-027: MatchPredicate keys are valid simple dot-paths
 # ---------------------------------------------------------------------------
 
-- name: "V-030 valid: predicate key arguments.command (simple dot-path)"
-  id: VAL-030a
+- name: "V-027 valid: predicate key arguments.command (simple dot-path)"
+  id: VAL-027a
   input: |
     oatf: "0.1"
     attack:
@@ -1800,8 +1800,8 @@
   expected:
     valid: true
 
-- name: "V-030 invalid: predicate key with wildcard"
-  id: VAL-030b
+- name: "V-027 invalid: predicate key with wildcard"
+  id: VAL-027b
   input: |
     oatf: "0.1"
     attack:
@@ -1823,15 +1823,15 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-030"
+      - rule: "V-027"
         path: "attack.execution.phases[0].trigger.match.args[*].cmd"
 
 # ---------------------------------------------------------------------------
-# V-031: Mode-less multi-phase: every phase specifies mode, every indicator specifies protocol
+# V-028: Mode-less multi-phase: every phase specifies mode, every indicator specifies protocol
 # ---------------------------------------------------------------------------
 
-- name: "V-031 valid: mode-less multi-phase, all phases have mode, all indicators have protocol"
-  id: VAL-031a
+- name: "V-028 valid: mode-less multi-phase, all phases have mode, all indicators have protocol"
+  id: VAL-028a
   input: |
     oatf: "0.1"
     attack:
@@ -1859,8 +1859,8 @@
   expected:
     valid: true
 
-- name: "V-031 invalid: mode-less multi-phase, one phase missing mode"
-  id: VAL-031b
+- name: "V-028 invalid: mode-less multi-phase, one phase missing mode"
+  id: VAL-028b
   input: |
     oatf: "0.1"
     attack:
@@ -1882,11 +1882,11 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-031"
+      - rule: "V-028"
         path: "attack.execution.phases[1].mode"
 
-- name: "V-031 invalid: execution.mode absent, indicator missing protocol"
-  id: VAL-031c
+- name: "V-028 invalid: execution.mode absent, indicator missing protocol"
+  id: VAL-028c
   input: |
     oatf: "0.1"
     attack:
@@ -1902,15 +1902,15 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-031"
+      - rule: "V-028"
         path: "attack.indicators[0].protocol"
 
 # ---------------------------------------------------------------------------
-# V-032: Trigger event types valid per Event-Mode Validity Matrix
+# V-029: Trigger event types valid per Event-Mode Validity Matrix
 # ---------------------------------------------------------------------------
 
-- name: "V-032 valid: mcp_server trigger event tools/call"
-  id: VAL-032a
+- name: "V-029 valid: mcp_server trigger event tools/call"
+  id: VAL-029a
   input: |
     oatf: "0.1"
     attack:
@@ -1931,8 +1931,8 @@
   expected:
     valid: true
 
-- name: "V-032 invalid: mcp_server trigger event message/send (a2a event)"
-  id: VAL-032b
+- name: "V-029 invalid: mcp_server trigger event message/send (a2a event)"
+  id: VAL-029b
   input: |
     oatf: "0.1"
     attack:
@@ -1952,11 +1952,11 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-032"
+      - rule: "V-029"
         path: "attack.execution.phases[0].trigger.event"
 
-- name: "V-032 valid: unknown mode skips event validation"
-  id: VAL-032c
+- name: "V-029 valid: unknown mode skips event validation"
+  id: VAL-029c
   input: |
     oatf: "0.1"
     attack:
@@ -1974,11 +1974,11 @@
     valid: true
 
 # ---------------------------------------------------------------------------
-# V-035: Cross-actor template references resolve
+# V-032: Cross-actor template references resolve
 # ---------------------------------------------------------------------------
 
-- name: "V-035 valid: template references existing actor name"
-  id: VAL-035a
+- name: "V-032 valid: template references existing actor name"
+  id: VAL-032a
   input: |
     oatf: "0.1"
     attack:
@@ -2026,8 +2026,8 @@
   expected:
     valid: true
 
-- name: "V-035 invalid: template references nonexistent actor"
-  id: VAL-035b
+- name: "V-032 invalid: template references nonexistent actor"
+  id: VAL-032b
   input: |
     oatf: "0.1"
     attack:
@@ -2054,15 +2054,15 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-035"
+      - rule: "V-032"
         path: "attack.execution.actors[0].phases[0].state.tools[0].response.content[0].text"
 
 # ---------------------------------------------------------------------------
-# V-036: content/messages and synthesize mutually exclusive
+# V-033: content/messages and synthesize mutually exclusive
 # ---------------------------------------------------------------------------
 
-- name: "V-036 valid: MCP tool response with synthesize only"
-  id: VAL-036a
+- name: "V-033 valid: MCP tool response with synthesize only"
+  id: VAL-033a
   input: |
     oatf: "0.1"
     attack:
@@ -2080,8 +2080,8 @@
   expected:
     valid: true
 
-- name: "V-036 invalid: MCP tool response with content and synthesize"
-  id: VAL-036b
+- name: "V-033 invalid: MCP tool response with content and synthesize"
+  id: VAL-033b
   input: |
     oatf: "0.1"
     attack:
@@ -2101,15 +2101,15 @@
                   prompt: "Generate a plausible response"
   expected:
     errors:
-      - rule: "V-036"
+      - rule: "V-033"
         path: "attack.execution.state.tools[0].response"
 
 # ---------------------------------------------------------------------------
-# V-037: At most one catch-all response entry (omitting when)
+# V-034: At most one catch-all response entry (omitting when)
 # ---------------------------------------------------------------------------
 
-- name: "V-037 valid: responses with one catch-all at end"
-  id: VAL-037a
+- name: "V-034 valid: responses with one catch-all at end"
+  id: VAL-034a
   input: |
     oatf: "0.1"
     attack:
@@ -2133,8 +2133,8 @@
   expected:
     valid: true
 
-- name: "V-037 invalid: responses with two entries both omitting when"
-  id: VAL-037b
+- name: "V-034 invalid: responses with two entries both omitting when"
+  id: VAL-034b
   input: |
     oatf: "0.1"
     attack:
@@ -2155,15 +2155,15 @@
                       text: "second default"
   expected:
     errors:
-      - rule: "V-037"
+      - rule: "V-034"
         path: "attack.execution.state.tools[0].responses"
 
 # ---------------------------------------------------------------------------
-# V-038: synthesize.prompt non-empty string
+# V-035: synthesize.prompt non-empty string
 # ---------------------------------------------------------------------------
 
-- name: "V-038 valid: synthesize with non-empty prompt"
-  id: VAL-038a
+- name: "V-035 valid: synthesize with non-empty prompt"
+  id: VAL-035a
   input: |
     oatf: "0.1"
     attack:
@@ -2181,8 +2181,8 @@
   expected:
     valid: true
 
-- name: "V-038 invalid: synthesize with empty prompt"
-  id: VAL-038b
+- name: "V-035 invalid: synthesize with empty prompt"
+  id: VAL-035b
   input: |
     oatf: "0.1"
     attack:
@@ -2199,7 +2199,7 @@
                   prompt: ""
   expected:
     errors:
-      - rule: "V-038"
+      - rule: "V-035"
         path: "attack.execution.state.tools[0].response.synthesize.prompt"
 
 # ---------------------------------------------------------------------------
@@ -2230,11 +2230,11 @@
         path: "attack.execution.phases[1].name"
 
 # ---------------------------------------------------------------------------
-# V-040: attack.version, when present, MUST be a positive integer (>= 1)
+# V-037: attack.version, when present, MUST be a positive integer (>= 1)
 # ---------------------------------------------------------------------------
 
-- name: "V-040 valid: version is 1"
-  id: VAL-040a
+- name: "V-037 valid: version is 1"
+  id: VAL-037a
   input: |
     oatf: "0.1"
     attack:
@@ -2254,8 +2254,8 @@
   expected:
     valid: true
 
-- name: "V-040 valid: version is large positive integer"
-  id: VAL-040b
+- name: "V-037 valid: version is large positive integer"
+  id: VAL-037b
   input: |
     oatf: "0.1"
     attack:
@@ -2275,8 +2275,8 @@
   expected:
     valid: true
 
-- name: "V-040 invalid: version is 0"
-  id: VAL-040c
+- name: "V-037 invalid: version is 0"
+  id: VAL-037c
   input: |
     oatf: "0.1"
     attack:
@@ -2295,11 +2295,11 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-040"
+      - rule: "V-037"
         path: "attack.version"
 
-- name: "V-040 invalid: version is negative"
-  id: VAL-040d
+- name: "V-037 invalid: version is negative"
+  id: VAL-037d
   input: |
     oatf: "0.1"
     attack:
@@ -2318,15 +2318,15 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-040"
+      - rule: "V-037"
         path: "attack.version"
 
 # ---------------------------------------------------------------------------
-# V-041: trigger.after, when present, MUST be a valid duration
+# V-038: trigger.after, when present, MUST be a valid duration
 # ---------------------------------------------------------------------------
 
-- name: "V-041 valid: shorthand duration"
-  id: VAL-041a
+- name: "V-038 valid: shorthand duration"
+  id: VAL-038a
   input: |
     oatf: "0.1"
     attack:
@@ -2353,8 +2353,8 @@
   expected:
     valid: true
 
-- name: "V-041 valid: ISO 8601 duration"
-  id: VAL-041b
+- name: "V-038 valid: ISO 8601 duration"
+  id: VAL-038b
   input: |
     oatf: "0.1"
     attack:
@@ -2381,8 +2381,8 @@
   expected:
     valid: true
 
-- name: "V-041 invalid: malformed duration"
-  id: VAL-041c
+- name: "V-038 invalid: malformed duration"
+  id: VAL-038c
   input: |
     oatf: "0.1"
     attack:
@@ -2408,15 +2408,15 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-041"
+      - rule: "V-038"
         path: "attack.execution.phases[1].trigger.after"
 
 # ---------------------------------------------------------------------------
-# V-042: Extractor names MUST match [a-z][a-z0-9_]*
+# V-039: Extractor names MUST match [a-z][a-z0-9_]*
 # ---------------------------------------------------------------------------
 
-- name: "V-042 valid: lowercase extractor name with underscores"
-  id: VAL-042a
+- name: "V-039 valid: lowercase extractor name with underscores"
+  id: VAL-039a
   input: |
     oatf: "0.1"
     attack:
@@ -2445,8 +2445,8 @@
   expected:
     valid: true
 
-- name: "V-042 invalid: extractor name with uppercase"
-  id: VAL-042b
+- name: "V-039 invalid: extractor name with uppercase"
+  id: VAL-039b
   input: |
     oatf: "0.1"
     attack:
@@ -2474,11 +2474,11 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-042"
+      - rule: "V-039"
         path: "attack.execution.phases[0].extractors[0].name"
 
-- name: "V-042 invalid: extractor name starting with digit"
-  id: VAL-042c
+- name: "V-039 invalid: extractor name starting with digit"
+  id: VAL-039c
   input: |
     oatf: "0.1"
     attack:
@@ -2506,15 +2506,15 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-042"
+      - rule: "V-039"
         path: "attack.execution.phases[0].extractors[0].name"
 
 # ---------------------------------------------------------------------------
-# V-043: phase.extractors, when present, MUST contain at least one entry
+# V-040: phase.extractors, when present, MUST contain at least one entry
 # ---------------------------------------------------------------------------
 
-- name: "V-043 invalid: empty extractors array"
-  id: VAL-043a
+- name: "V-040 invalid: empty extractors array"
+  id: VAL-040a
   input: |
     oatf: "0.1"
     attack:
@@ -2538,5 +2538,5 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-043"
+      - rule: "V-040"
         path: "attack.execution.phases[0].extractors"

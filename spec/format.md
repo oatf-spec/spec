@@ -1913,7 +1913,7 @@ attack:
 
 A conforming OATF document:
 
-The SDK specification (sdk.md §3.2) assigns stable rule identifiers (V-001 through V-043) to each conformance requirement below. Conformance test suites reference these identifiers.
+The SDK specification (sdk.md §3.2) assigns stable rule identifiers (V-001 through V-040) to each conformance requirement below. Conformance test suites reference these identifiers.
 
 **Core structure**
 

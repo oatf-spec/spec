@@ -1068,7 +1068,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier within this document. Auto-generated when omitted. Format validated by SDK (see V-027).",
+          "description": "Unique identifier within this document. Auto-generated when omitted. Format validated by SDK (see V-024).",
           "examples": [
             "OATF-003-01",
             "OATF-027-03",

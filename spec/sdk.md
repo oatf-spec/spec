@@ -206,6 +206,27 @@ An entry action executed when a phase begins. Exactly one action key MUST be pre
 | `match` | `Optional<MatchPredicate>` | No | — | Content predicate on matching events. |
 | `after` | `Optional<Duration>` | No | — | Unconditional time-based advancement. |
 
+### 2.8a ProtocolEvent
+
+Represents a protocol-level event observed during execution. Used by `evaluate_trigger` (§5.8) to match against trigger conditions.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `event_type` | `String` | Yes | The base event type (e.g., `tools/call`, `message/send`, `run_started`). |
+| `qualifier` | `Optional<String>` | No | Event qualifier, if present (the portion after `:` in `tools/call:calculator`). |
+| `content` | `Value` | Yes | The event payload. Evaluated against `trigger.match` predicates via `evaluate_predicate`. |
+
+### 2.8b TriggerResult
+
+Returned by `evaluate_trigger` (§5.8) to indicate whether a phase should advance.
+
+| Variant | Fields | Description |
+|---|---|---|
+| `Advanced` | `reason: AdvanceReason` | The trigger condition is satisfied; advance to the next phase. |
+| `NotAdvanced` | — | The trigger condition is not yet satisfied; remain in the current phase. |
+
+`AdvanceReason` is one of: `event_matched` (the required number of matching events was reached), `timeout` (the `after` duration elapsed).
+
 ### 2.9 Extractor
 
 | Field | Type | Required | Description |
@@ -383,6 +404,7 @@ SDKs MUST define named types for the following enumerations. The canonical strin
 | `DiagnosticSeverity` | `error`, `warning` |
 | `LogLevel` | `info`, `warn`, `error` |
 | `ElicitationMode` | `form`, `url` |
+| `AdvanceReason` | `event_matched`, `timeout` |
 
 **Open vs closed enums:** `Protocol`, `Mode`, `Surface` (§2.21), and `Framework` are open strings — unknown values are accepted (with optional warnings for unrecognized bindings, per §3.2). All other enumerations in this table are closed: unknown values MUST be rejected during parsing (`ParseError` with `kind: unknown_variant`). This distinction ensures extensibility for protocol bindings and framework mappings while maintaining strict validation for lifecycle, verdict, and structural enums.
 
@@ -433,7 +455,7 @@ SDKs MUST maintain a registry mapping each `Surface` value to its protocol and d
 
 ### 2.22 Event-Mode Validity Registry
 
-SDKs MUST maintain a registry mapping each event type to the set of modes for which it is valid. This registry is used during validation (V-032) to reject trigger events that are invalid for the actor's resolved mode. Events are identified by their base name (without qualifier).
+SDKs MUST maintain a registry mapping each event type to the set of modes for which it is valid. This registry is used during validation (V-029) to reject trigger events that are invalid for the actor's resolved mode. Events are identified by their base name (without qualifier).
 
 SDKs MUST define this as a compile-time constant data structure. The complete mapping for v0.1 bindings is defined in the Event-Mode Validity Matrix (format specification §7). Event types with qualifiers are validated by stripping the qualifier (everything after the first `:`) and looking up the base event name. For modes not present in the registry (from unrecognized protocol bindings), SDKs MUST skip event type validation.
 
@@ -446,6 +468,17 @@ Defines an LLM-powered response generation request. See format specification §7
 | `prompt` | `String` | Yes | Free-text prompt for the LLM. Supports `{{template}}` interpolation from extractors and request fields. |
 
 `SynthesizeBlock` appears within response entries (MCP tool `responses`, MCP prompt `responses`, A2A `task_responses`) as a mutually exclusive alternative to static content, and within AG-UI `run_agent_input` as a mutually exclusive alternative to static `messages`. The SDK parses and validates `SynthesizeBlock` but does not execute LLM generation — that is a runtime concern handled by the consuming tool's `GenerationProvider` (§6.3).
+
+### 2.24 ResponseEntry
+
+A conditional response entry used for request-specific response dispatch. Appears in MCP tool/prompt `responses`, A2A `task_responses`, and AG-UI `run_agent_input.responses`.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `when` | `Optional<MatchPredicate>` | No | Predicate evaluated against the incoming request. Absent on the default (fallback) entry. |
+| `synthesize` | `Optional<SynthesizeBlock>` | No | LLM-generated response. Mutually exclusive with static content fields. |
+
+Static content fields are protocol-binding-specific: MCP tools use `content`, MCP prompts use `messages`, A2A uses `messages`/`artifacts`, AG-UI uses `messages`. See format specification §7 for the complete structure of each binding's response entries.
 
 ---
 
@@ -522,32 +555,32 @@ The following rules are checked. Each rule references the normative requirement 
 | V-014 | §5.7 | All CEL expressions are syntactically valid (parse without error). |
 | V-015 | §5.7 | All JSONPath expressions are syntactically valid. |
 | V-016 | §5.7 | All template references use valid syntax (no unclosed `{{`). Escaped sequences (`\{{`) are not template references and MUST NOT be flagged. |
-| V-019 | §4.3 | `severity.confidence` is in range 0–100 when present. |
-| V-021 | §7 | Indicator `surface` is valid for the indicator's resolved protocol. |
-| V-022 | §5.3 | Trigger `count` and `match` are only present when `event` is also present. |
-| V-023 | §11.1.1 | Document does not contain YAML anchors, aliases, or merge keys. SDKs that parse via a YAML library exposing anchor/alias information SHOULD check this; SDKs whose parsers silently resolve aliases MAY skip this check. |
-| V-024 | §6.2, §6.4 | All explicit `target` fields on `PatternMatch` and `SemanticMatch` are syntactically valid wildcard dot-path expressions per the grammar in SDK spec §5.1.2. Valid paths consist of identifiers (alphanumeric, underscores, hyphens) separated by `.`, with optional `[*]` (wildcard) suffix on any segment. The empty string `""` is valid (targets root). Numeric indices (`[0]`, `[1]`) are not valid in target paths. Invalid examples: `tools[*.description` (unclosed bracket), `tools..name` (empty segment), `tools[0]` (numeric index). |
-| V-025 | §6.4 | `semantic.threshold`, when explicitly present, is in range [0.0, 1.0] inclusive. The default threshold (0.7, applied at evaluation time per SDK spec §4.4) is not subject to this check. |
-| V-026 | §4.2 | `attack.id`, when present, matches the pattern `^[A-Z][A-Z0-9-]*-[0-9]{3,}$`. |
-| V-027 | §6.1 | Each explicitly specified `indicator.id`, when `attack.id` is present, matches the pattern `^[A-Z][A-Z0-9-]*-[0-9]{3,}-[0-9]{2,}$` AND its prefix (the portion before the final `-NN` segment) equals `attack.id`. For example, indicator `ACME-003-02` is valid in attack `ACME-003` but invalid in attack `ACME-007`. When `attack.id` is absent, explicitly specified indicator IDs are accepted without pattern constraints but MUST still be unique (V-010). |
-| V-028 | §6.1 | `indicator.confidence`, when explicitly present, is in range 0–100 inclusive. |
-| V-029 | §6.3 | All `expression.variables` values are syntactically valid simple dot-path expressions per the grammar in §5.1.1. No wildcards or indices. These values are resolved via `resolve_simple_path` at evaluation time (§4.3) and malformed paths should be caught early. |
-| V-030 | §5.4 | All dot-path keys in `MatchPredicate` entries are syntactically valid simple dot-path expressions per the grammar in SDK spec §5.1.1. No wildcards or indices. This applies to match predicates in `trigger.match` (phase advancement conditions) and in response entry `when` predicates within execution state (MCP tool/prompt `responses`, A2A `task_responses`). A typo in a predicate key (e.g., `argumens.command` instead of `arguments.command`) causes the predicate to silently never match; this rule catches such errors at validation time. |
-| V-031 | §5.1 | When `execution.mode` is absent and `execution.actors` is absent (mode-less multi-phase form), every phase MUST specify `phase.mode`. When `execution.mode` is absent — regardless of whether `execution.actors` is present — every indicator (when `indicators` is present) MUST specify `indicator.protocol`. In multi-actor form, `actor.mode` provides phase-level inheritance (so `phase.mode` is typically omitted), but indicators are document-level and `indicator.protocol` remains required. |
-| V-032 | §7 | For recognized modes (v0.1: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`), all trigger event types (after stripping qualifier) MUST be valid per the Event-Mode Validity Registry (§2.22). For unrecognized modes, skip event validation. |
-| V-033 | §5.1 | Exactly one of `execution.state`, `execution.phases`, or `execution.actors` MUST be present. A document with more than one is invalid. When `execution.state` is present, `execution.mode` MUST also be present. |
-| V-034 | §5.1 | In multi-actor form: all `actor.name` values MUST be unique. Each name MUST match `[a-z][a-z0-9_]*`. Each actor MUST declare `mode`. Each actor MUST have at least one phase. Phase names MUST be unique within each actor. |
-| V-035 | §5.5 | Cross-actor extractor references (`{{actor_name.extractor_name}}`) MUST reference an `actor.name` that exists in the document. |
-| V-036 | §11.1.14 | In MCP tool and prompt `responses` entries: `content` (or `messages` for prompts) and `synthesize` are mutually exclusive — each entry MUST specify at most one. In A2A `task_responses` entries: `messages`/`artifacts` and `synthesize` are mutually exclusive. In AG-UI `run_agent_input`: `messages` and `synthesize` are mutually exclusive. |
-| V-037 | §11.1.15 | In any `responses` or `task_responses` list, at most one entry MAY omit `when`. An entry without `when` following another entry without `when` is invalid. |
-| V-038 | §11.1.16 | `synthesize.prompt` MUST be a non-empty string when `synthesize` is present. |
-| V-039 | §5.1 | All mode values (`execution.mode`, `actor.mode`, `phase.mode`) MUST match the pattern `[a-z][a-z0-9_]*_(server\|client)`. All `indicator.protocol` values MUST match `[a-z][a-z0-9_]*`. |
-| V-040 | §4.2 | `attack.version`, when present, MUST be a positive integer (≥ 1). |
-| V-041 | §5.3 | `trigger.after`, when present, MUST be a valid duration (shorthand or ISO 8601). |
-| V-042 | §5.5 | Extractor names MUST match the pattern `[a-z][a-z0-9_]*`. |
-| V-043 | §11.1.8 | `phase.extractors`, when present, MUST contain at least one entry. |
+| V-017 | §4.3 | `severity.confidence` is in range 0–100 when present. |
+| V-018 | §7 | Indicator `surface` is valid for the indicator's resolved protocol. |
+| V-019 | §5.3 | Trigger `count` and `match` are only present when `event` is also present. |
+| V-020 | §11.1.1 | Document does not contain YAML anchors, aliases, or merge keys. SDKs that parse via a YAML library exposing anchor/alias information SHOULD check this; SDKs whose parsers silently resolve aliases MAY skip this check. |
+| V-021 | §6.2, §6.4 | All explicit `target` fields on `PatternMatch` and `SemanticMatch` are syntactically valid wildcard dot-path expressions per the grammar in SDK spec §5.1.2. Valid paths consist of identifiers (alphanumeric, underscores, hyphens) separated by `.`, with optional `[*]` (wildcard) suffix on any segment. The empty string `""` is valid (targets root). Numeric indices (`[0]`, `[1]`) are not valid in target paths. Invalid examples: `tools[*.description` (unclosed bracket), `tools..name` (empty segment), `tools[0]` (numeric index). |
+| V-022 | §6.4 | `semantic.threshold`, when explicitly present, is in range [0.0, 1.0] inclusive. The default threshold (0.7, applied at evaluation time per SDK spec §4.4) is not subject to this check. |
+| V-023 | §4.2 | `attack.id`, when present, matches the pattern `^[A-Z][A-Z0-9-]*-[0-9]{3,}$`. |
+| V-024 | §6.1 | Each explicitly specified `indicator.id`, when `attack.id` is present, matches the pattern `^[A-Z][A-Z0-9-]*-[0-9]{3,}-[0-9]{2,}$` AND its prefix (the portion before the final `-NN` segment) equals `attack.id`. For example, indicator `ACME-003-02` is valid in attack `ACME-003` but invalid in attack `ACME-007`. When `attack.id` is absent, explicitly specified indicator IDs are accepted without pattern constraints but MUST still be unique (V-010). |
+| V-025 | §6.1 | `indicator.confidence`, when explicitly present, is in range 0–100 inclusive. |
+| V-026 | §6.3 | All `expression.variables` values are syntactically valid simple dot-path expressions per the grammar in §5.1.1. No wildcards or indices. These values are resolved via `resolve_simple_path` at evaluation time (§4.3) and malformed paths should be caught early. |
+| V-027 | §5.4 | All dot-path keys in `MatchPredicate` entries are syntactically valid simple dot-path expressions per the grammar in SDK spec §5.1.1. No wildcards or indices. This applies to match predicates in `trigger.match` (phase advancement conditions) and in response entry `when` predicates within execution state (MCP tool/prompt `responses`, A2A `task_responses`). A typo in a predicate key (e.g., `argumens.command` instead of `arguments.command`) causes the predicate to silently never match; this rule catches such errors at validation time. |
+| V-028 | §5.1 | When `execution.mode` is absent and `execution.actors` is absent (mode-less multi-phase form), every phase MUST specify `phase.mode`. When `execution.mode` is absent — regardless of whether `execution.actors` is present — every indicator (when `indicators` is present) MUST specify `indicator.protocol`. In multi-actor form, `actor.mode` provides phase-level inheritance (so `phase.mode` is typically omitted), but indicators are document-level and `indicator.protocol` remains required. |
+| V-029 | §7 | For recognized modes (v0.1: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`), all trigger event types (after stripping qualifier) MUST be valid per the Event-Mode Validity Registry (§2.22). For unrecognized modes, skip event validation. |
+| V-030 | §5.1 | Exactly one of `execution.state`, `execution.phases`, or `execution.actors` MUST be present. A document with more than one is invalid. When `execution.state` is present, `execution.mode` MUST also be present. |
+| V-031 | §5.1 | In multi-actor form: all `actor.name` values MUST be unique. Each name MUST match `[a-z][a-z0-9_]*`. Each actor MUST declare `mode`. Each actor MUST have at least one phase. Phase names MUST be unique within each actor. |
+| V-032 | §5.5 | Cross-actor extractor references (`{{actor_name.extractor_name}}`) MUST reference an `actor.name` that exists in the document. |
+| V-033 | §11.1.14 | In MCP tool and prompt `responses` entries: `content` (or `messages` for prompts) and `synthesize` are mutually exclusive — each entry MUST specify at most one. In A2A `task_responses` entries: `messages`/`artifacts` and `synthesize` are mutually exclusive. In AG-UI `run_agent_input`: `messages` and `synthesize` are mutually exclusive. |
+| V-034 | §11.1.15 | In any `responses` or `task_responses` list, at most one entry MAY omit `when`. An entry without `when` following another entry without `when` is invalid. |
+| V-035 | §11.1.16 | `synthesize.prompt` MUST be a non-empty string when `synthesize` is present. |
+| V-036 | §5.1 | All mode values (`execution.mode`, `actor.mode`, `phase.mode`) MUST match the pattern `[a-z][a-z0-9_]*_(server\|client)`. All `indicator.protocol` values MUST match `[a-z][a-z0-9_]*`. |
+| V-037 | §4.2 | `attack.version`, when present, MUST be a positive integer (≥ 1). |
+| V-038 | §5.3 | `trigger.after`, when present, MUST be a valid duration (shorthand or ISO 8601). |
+| V-039 | §5.5 | Extractor names MUST match the pattern `[a-z][a-z0-9_]*`. |
+| V-040 | §11.1.8 | `phase.extractors`, when present, MUST contain at least one entry. |
 
-**Unrecognized binding diagnostics:** SDKs SHOULD expose a `known_modes()` function returning the set of modes defined by included protocol bindings (v0.1: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`) and a `known_protocols()` function returning the corresponding protocols (v0.1: `mcp`, `a2a`, `ag_ui`). When a mode or protocol passes V-039 pattern validation but is not in the known set, `validate` SHOULD emit a warning (not an error) indicating the value is unrecognized. This catches typos like `mpc_server` while allowing intentional use of custom bindings. Tools MAY provide a mechanism to suppress these warnings.
+**Unrecognized binding diagnostics:** SDKs SHOULD expose a `known_modes()` function returning the set of modes defined by included protocol bindings (v0.1: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`) and a `known_protocols()` function returning the corresponding protocols (v0.1: `mcp`, `a2a`, `ag_ui`). When a mode or protocol passes V-036 pattern validation but is not in the known set, `validate` SHOULD emit a warning (not an error) indicating the value is unrecognized. This catches typos like `mpc_server` while allowing intentional use of custom bindings. Tools MAY provide a mechanism to suppress these warnings.
 
 **Error conditions:** Each failed rule produces a `ValidationError` (§7.2).
 
@@ -1009,7 +1042,7 @@ Evaluates whether a trigger condition is satisfied for phase advancement.
    c. If the event matches (and predicate passes, if present), increment the event count. If `event_count + 1` ≥ `trigger.count` (resolved, default `1`), return `TriggerResult::Advanced { reason: event_matched }`.
 3. Return `TriggerResult::NotAdvanced`.
 
-`TriggerResult` is an enum: `Advanced { reason: AdvanceReason }` or `NotAdvanced`. `AdvanceReason` is one of: `event_matched`, `timeout`.
+`TriggerResult` and `AdvanceReason` are defined in §2.8b.
 
 ### 5.9 parse_event_qualifier
 
@@ -1041,7 +1074,7 @@ Extracts the protocol identifier from a mode string by stripping the `_server` o
 
 1. If `mode` ends with `_server`, return the prefix before `_server`.
 2. If `mode` ends with `_client`, return the prefix before `_client`.
-3. Otherwise, return `mode` unchanged (this case should not occur for valid modes per V-039).
+3. Otherwise, return `mode` unchanged (this case should not occur for valid modes per V-036).
 
 **Examples:**
 - `"mcp_server"` → `"mcp"`
@@ -1244,6 +1277,16 @@ The `GenerationProvider.generate` interface does not receive `phase_name` — th
 SDKs SHOULD order errors by their location in the source document (by line number for parse errors, by dot-path for validation errors). Diagnostics (warnings) SHOULD follow the same ordering.
 
 The `load` convenience entry point (§3.5) returns the first applicable error list: if parsing fails, parse errors are returned and validation is not attempted. If parsing succeeds but validation finds errors, validation errors are returned. If both succeed, the normalized document and any warnings are returned together. A tool that needs fine-grained control over parse warnings and validation diagnostics should call the steps individually.
+
+### 7.5 OATFError
+
+Union type returned by `load` (§3.5). Represents any error that can occur during the combined parse-validate-normalize pipeline.
+
+`OATFError` is one of:
+- `ParseError` (§7.1) — YAML deserialization or structural typing failure.
+- `ValidationError` (§7.2) — conformance rule violation.
+
+SDKs MAY represent this as a tagged union, trait object, sum type, or language-appropriate equivalent.
 
 ---
 
