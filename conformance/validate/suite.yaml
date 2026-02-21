@@ -94,7 +94,7 @@
   expected:
     valid: true
 
-- name: "V-002 invalid: attack appears before oatf"
+- name: "V-002 warning: attack appears before oatf"
   id: VAL-002b
   input: |
     attack:
@@ -112,8 +112,9 @@
             contains: "test"
     oatf: "0.1"
   expected:
-    errors:
-      - rule: "V-002"
+    valid: true
+    warnings:
+      - rule: "W-001"
         path: "oatf"
 
 # ---------------------------------------------------------------------------

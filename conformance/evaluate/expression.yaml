@@ -53,9 +53,9 @@
     indicator:
       surface: "tool_description"
       expression:
-        cel: "desc.contains('inject')"
+        cel: "tools[0].description.contains('inject')"
         variables:
-          desc: "tools[0].description"
+          tools: "tools"
     message:
       tools:
         - description: "inject code here"

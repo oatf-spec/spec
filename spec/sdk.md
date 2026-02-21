@@ -513,7 +513,7 @@ The following rules are checked. Each rule references the normative requirement 
 | V-006 | §11.1.6 | `indicators`, when present, contains at least one entry. |
 | V-007 | §11.1.8 | In multi-phase form: `execution.phases` contains at least one entry. In multi-actor form: each actor's `phases` contains at least one entry. (Single-phase form always has exactly one implicit phase.) |
 | V-008 | §11.1.8 | At most one terminal phase per actor (no `trigger`), and it is the last phase in the actor's list. |
-| V-009 | §11.1.8 | First phase in each actor includes `state` (after normalization — single-phase form always satisfies this). |
+| V-009 | §11.1.8 | First phase in each actor includes `state`. In single-phase form, `execution.state` is present, which always satisfies this. In multi-phase and multi-actor forms, check `phases[0].state` directly. |
 | V-010 | §11.1.10 | All explicitly specified `indicator.id` values are unique. |
 | V-011 | §11.1.8 | In multi-phase form: all explicitly specified `phase.name` values are unique. In multi-actor form: explicitly specified phase names are unique within each actor (but MAY duplicate across actors). Omitted names (auto-generated) are guaranteed unique by their positional generation. |
 | V-012 | §11.1.11 | Each indicator has exactly one detection key (`pattern`, `expression`, or `semantic`). |
@@ -541,6 +541,9 @@ The following rules are checked. Each rule references the normative requirement 
 | V-037 | §11.1.15 | In any `responses` or `task_responses` list, at most one entry MAY omit `when`. An entry without `when` following another entry without `when` is invalid. |
 | V-038 | §11.1.16 | `synthesize.prompt` MUST be a non-empty string when `synthesize` is present. |
 | V-039 | §5.1 | All mode values (`execution.mode`, `actor.mode`, `phase.mode`) MUST match the pattern `[a-z][a-z0-9_]*_(server\|client)`. All `indicator.protocol` values MUST match `[a-z][a-z0-9_]*`. |
+| V-040 | §4.2 | `attack.version`, when present, MUST be a positive integer (≥ 1). |
+| V-041 | §5.3 | `trigger.after`, when present, MUST be a valid duration (shorthand or ISO 8601). |
+| V-042 | §5.5 | Extractor names MUST match the pattern `[a-z][a-z0-9_]*`. |
 
 **Unrecognized binding diagnostics:** SDKs SHOULD expose a `known_modes()` function returning the set of modes defined by included protocol bindings (v0.1: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`) and a `known_protocols()` function returning the corresponding protocols (v0.1: `mcp`, `a2a`, `ag_ui`). When a mode or protocol passes V-039 pattern validation but is not in the known set, `validate` SHOULD emit a warning (not an error) indicating the value is unrecognized. This catches typos like `mpc_server` while allowing intentional use of custom bindings. Tools MAY provide a mechanism to suppress these warnings.
 
@@ -668,7 +671,7 @@ SDKs MUST NOT require messages to conform to any particular protocol schema. Ind
 ### 4.2 evaluate_pattern
 
 ```
-evaluate_pattern(pattern: PatternMatch, message: Value) → Boolean
+evaluate_pattern(pattern: PatternMatch, message: Value) → Result<Boolean, EvaluationError>
 ```
 
 Evaluates a pattern indicator against a protocol message.
@@ -678,8 +681,8 @@ Evaluates a pattern indicator against a protocol message.
 **Behavior:**
 
 1. Resolve `pattern.target` against `message` using `resolve_wildcard_path` (§5.1.2). This may produce zero, one, or many values (when the path contains wildcards).
-2. For each resolved value, evaluate the condition (§5.3) against the value.
-3. Return `true` if any resolved value matches the condition. Return `false` if no values match or if the target path resolves to nothing.
+2. For each resolved value, evaluate the condition (§5.3) against the value. If a regex condition exceeds the tool's match time limit, return `Err(EvaluationError { kind: regex_timeout })`.
+3. Return `Ok(true)` if any resolved value matches the condition. Return `Ok(false)` if no values match or if the target path resolves to nothing.
 
 ### 4.3 evaluate_expression
 
@@ -723,7 +726,7 @@ Top-level indicator evaluation. Dispatches to the appropriate method evaluator a
 **Behavior:**
 
 1. Dispatch on the present detection key:
-   - `pattern` → call `evaluate_pattern(indicator.pattern, message)`. Result is boolean.
+   - `pattern` → call `evaluate_pattern(indicator.pattern, message)`. If it returns `Ok(bool)`, the verdict result is `matched`/`not_matched` accordingly. If it returns `Err(EvaluationError)`, return verdict with `result: error` and the error message as evidence.
    - `expression` → if `cel_evaluator` is absent, return verdict with `result: skipped` and evidence indicating CEL support is unavailable. Otherwise call `evaluate_expression(indicator.expression, message, cel_evaluator)`. If it returns `Ok(bool)`, the result is that boolean. If it returns `Err(EvaluationError)`, return verdict with `result: error` and the error as evidence.
    - `semantic` → if `semantic_evaluator` is absent, return verdict with `result: skipped` and evidence indicating semantic evaluation is unavailable. Otherwise:
      a. Resolve `indicator.semantic.target` against `message` using `resolve_wildcard_path` (§5.1.2). If the path resolves to nothing, return verdict with `result: not_matched`.
@@ -962,7 +965,88 @@ Applies an extractor to a message, capturing a value.
 
 When the extracted value is a non-scalar (object or array), it MUST be serialized to its compact JSON string representation.
 
-### 5.7 compute_effective_state
+### 5.7 select_response
+
+```
+select_response(
+    entries: List<ResponseEntry>,
+    request: Value
+) → Optional<ResponseEntry>
+```
+
+Selects the first matching response entry from an ordered list, using `when` predicates for conditional dispatch.
+
+**Behavior:**
+
+1. Iterate `entries` in order.
+2. For each entry that has a `when` predicate, evaluate the predicate against `request` using `evaluate_predicate` (§5.4). If the predicate matches, return that entry.
+3. If no predicate-bearing entry matches and an entry without `when` exists (the default entry), return it.
+4. If no entry matches, return `None`.
+
+First-match-wins: the first entry whose `when` predicate matches is returned, regardless of subsequent entries. The default entry (no `when`) is only considered as a fallback after all predicate-bearing entries have been tried.
+
+### 5.8 evaluate_trigger
+
+```
+evaluate_trigger(
+    trigger: Trigger,
+    event: ProtocolEvent,
+    elapsed: Duration,
+    event_count: Integer
+) → TriggerResult
+```
+
+Evaluates whether a trigger condition is satisfied for phase advancement.
+
+**Behavior:**
+
+1. If `trigger.after` is present and `elapsed` ≥ `trigger.after`, return `TriggerResult::Advanced { reason: timeout }`.
+2. If `trigger.event` is present:
+   a. Check if `event` matches `trigger.event` (after stripping qualifier, if present).
+   b. If the event matches and `trigger.match` is present, evaluate the match predicate against the event content using `evaluate_predicate` (§5.4). If the predicate does not match, return `TriggerResult::NotAdvanced`.
+   c. If the event matches (and predicate passes, if present), increment the event count. If `event_count + 1` ≥ `trigger.count` (resolved, default `1`), return `TriggerResult::Advanced { reason: event_matched }`.
+3. Return `TriggerResult::NotAdvanced`.
+
+`TriggerResult` is an enum: `Advanced { reason: AdvanceReason }` or `NotAdvanced`. `AdvanceReason` is one of: `event_matched`, `timeout`.
+
+### 5.9 parse_event_qualifier
+
+```
+parse_event_qualifier(event_string: String) → (String, Optional<String>)
+```
+
+Splits an event type string on the first `:` separator, returning the base event type and an optional qualifier.
+
+**Behavior:**
+
+1. If `event_string` contains `:`, split on the first occurrence. Return `(base, Some(qualifier))`.
+2. Otherwise, return `(event_string, None)`.
+
+**Examples:**
+- `"tools/call:calculator"` → `("tools/call", Some("calculator"))`
+- `"tools/call"` → `("tools/call", None)`
+- `"resources/read"` → `("resources/read", None)`
+
+### 5.10 extract_protocol
+
+```
+extract_protocol(mode: String) → String
+```
+
+Extracts the protocol identifier from a mode string by stripping the `_server` or `_client` suffix.
+
+**Behavior:**
+
+1. If `mode` ends with `_server`, return the prefix before `_server`.
+2. If `mode` ends with `_client`, return the prefix before `_client`.
+3. Otherwise, return `mode` unchanged (this case should not occur for valid modes per V-039).
+
+**Examples:**
+- `"mcp_server"` → `"mcp"`
+- `"a2a_client"` → `"a2a"`
+- `"ag_ui_client"` → `"ag_ui"`
+
+### 5.11 compute_effective_state
 
 ```
 compute_effective_state(phases: List<Phase>, phase_index: Integer) → Value
@@ -1197,7 +1281,7 @@ SDKs SHOULD make the document model immutable after construction. `normalize` re
 
 ### 8.4 Extension Fields
 
-OATF documents may contain fields prefixed with `x-`. SDKs MUST preserve these through parse → normalize → serialize round-trips. The following core types include an `extensions: Optional<Map<String, Value>>` field for this purpose: `Attack` (§2.3), `Execution` (§2.6), `Phase` (§2.7), `Indicator` (§2.12). During parsing, the SDK MUST collect any `x-` prefixed keys from each object and store them in the corresponding `extensions` map. During serialization, the SDK MUST emit these keys back into the output. Key names are preserved exactly (including the `x-` prefix); relative ordering of extension fields among themselves is preserved where the language's map type supports it. Ordering relative to standard fields is not guaranteed.
+OATF documents may contain fields prefixed with `x-`. SDKs MUST preserve these through parse → normalize → serialize round-trips. The following core types include an `extensions: Optional<Map<String, Value>>` field for this purpose: `Attack` (§2.3), `Execution` (§2.6), `Actor` (§2.5), `Phase` (§2.7), `Indicator` (§2.12). During parsing, the SDK MUST collect any `x-` prefixed keys from each object and store them in the corresponding `extensions` map. During serialization, the SDK MUST emit these keys back into the output. Key names are preserved exactly (including the `x-` prefix); relative ordering of extension fields among themselves is preserved where the language's map type supports it. Ordering relative to standard fields is not guaranteed.
 
 ### 8.5 Performance Considerations
 

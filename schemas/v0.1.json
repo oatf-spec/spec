@@ -79,7 +79,7 @@
     },
     "Surface": {
       "type": "string",
-      "description": "Protocol-specific attack surface being examined. Values for v0.1 bindings are defined in the protocol binding sections (spec \u00a77). Surfaces for unrecognized bindings are structurally valid; tools MUST skip surface validation for unrecognized protocols.",
+      "description": "Protocol-specific attack surface being examined. Values for v0.1 bindings are defined in the protocol binding sections (spec §7). Surfaces for unrecognized bindings are structurally valid; tools MUST skip surface validation for unrecognized protocols.",
       "examples": [
         "tool_description",
         "tool_input_schema",
@@ -156,9 +156,6 @@
         }
       },
       "additionalProperties": false,
-      "patternProperties": {
-        "^x-": {}
-      },
       "anyOf": [
         {
           "required": [
@@ -351,9 +348,6 @@
               "default": "any",
               "description": "How indicator verdicts combine. any: at least one indicator matched means exploited. all: every indicator must match."
             }
-          },
-          "patternProperties": {
-            "^x-": {}
           }
         }
       }
@@ -382,9 +376,6 @@
               "default": 50,
               "description": "Confidence in the assigned severity level (0-100, STIX scale). 0 = no confidence, 100 = certain."
             }
-          },
-          "patternProperties": {
-            "^x-": {}
           }
         }
       ]
@@ -393,9 +384,6 @@
       "type": "object",
       "description": "Maps the attack to external security frameworks and the OATF category taxonomy.",
       "additionalProperties": false,
-      "patternProperties": {
-        "^x-": {}
-      },
       "properties": {
         "category": {
           "type": "string",
@@ -490,9 +478,6 @@
           "default": "primary",
           "description": "How closely this attack maps to the referenced entry. Primary = directly implements; related = associated but not a direct implementation."
         }
-      },
-      "patternProperties": {
-        "^x-": {}
       }
     },
     "Reference": {
@@ -516,9 +501,6 @@
           "type": "string",
           "description": "Brief description of the reference's relevance."
         }
-      },
-      "patternProperties": {
-        "^x-": {}
       }
     },
     "ExecutionProfile": {
@@ -683,7 +665,7 @@
         },
         "state": {
           "type": "object",
-          "description": "Protocol state for this phase. Structure is protocol-specific and defined by the relevant binding (spec \u00a77). Note: this schema validates the protocol-agnostic document core only. Binding-specific state validation (MCP tools/resources/prompts structure, A2A agent card, AG-UI run input) is the responsibility of binding-aware tools."
+          "description": "Protocol state for this phase. Structure is protocol-specific and defined by the relevant binding (spec §7). Note: this schema validates the protocol-agnostic document core only. Binding-specific state validation (MCP tools/resources/prompts structure, A2A agent card, AG-UI run input) is the responsibility of binding-aware tools."
         },
         "extractors": {
           "type": "array",
@@ -723,7 +705,8 @@
           "examples": [
             "admin_tool_name",
             "session_id"
-          ]
+          ],
+          "pattern": "^[a-z][a-z0-9_]*$"
         },
         "source": {
           "type": "string",
@@ -750,9 +733,6 @@
             "Authorization"
           ]
         }
-      },
-      "patternProperties": {
-        "^x-": {}
       }
     },
     "Action": {
@@ -779,9 +759,6 @@
               "type": "object",
               "description": "Notification parameters."
             }
-          },
-          "patternProperties": {
-            "^x-": {}
           }
         },
         "log": {
@@ -805,9 +782,6 @@
               ],
               "description": "Log severity level."
             }
-          },
-          "patternProperties": {
-            "^x-": {}
           }
         },
         "send_elicitation": {
@@ -817,9 +791,6 @@
             "message"
           ],
           "additionalProperties": false,
-          "patternProperties": {
-            "^x-": {}
-          },
           "properties": {
             "message": {
               "type": "string",
@@ -845,18 +816,12 @@
           }
         }
       },
-      "patternProperties": {
-        "^x-": {}
-      },
       "oneOf": [
         {
           "required": [
             "send_notification"
           ],
           "additionalProperties": false,
-          "patternProperties": {
-            "^x-": {}
-          },
           "properties": {
             "send_notification": {
               "type": "object",
@@ -878,9 +843,6 @@
                   "type": "object",
                   "description": "Notification parameters."
                 }
-              },
-              "patternProperties": {
-                "^x-": {}
               }
             }
           }
@@ -890,9 +852,6 @@
             "log"
           ],
           "additionalProperties": false,
-          "patternProperties": {
-            "^x-": {}
-          },
           "properties": {
             "log": {
               "type": "object",
@@ -915,9 +874,6 @@
                   ],
                   "description": "Log severity level."
                 }
-              },
-              "patternProperties": {
-                "^x-": {}
               }
             }
           }
@@ -927,9 +883,6 @@
             "send_elicitation"
           ],
           "additionalProperties": false,
-          "patternProperties": {
-            "^x-": {}
-          },
           "properties": {
             "send_elicitation": {
               "type": "object",
@@ -938,9 +891,6 @@
                 "message"
               ],
               "additionalProperties": false,
-              "patternProperties": {
-                "^x-": {}
-              },
               "properties": {
                 "message": {
                   "type": "string",
@@ -953,7 +903,7 @@
                     "url"
                   ],
                   "default": "form",
-              "description": "Elicitation mode."
+                  "description": "Elicitation mode."
                 },
                 "requestedSchema": {
                   "type": "object",
@@ -994,10 +944,7 @@
             ]
           },
           "minProperties": 1,
-          "additionalProperties": {},
-          "patternProperties": {
-            "^x-": {}
-          }
+          "additionalProperties": {}
         }
       ]
     },
@@ -1016,7 +963,7 @@
       "properties": {
         "event": {
           "type": "string",
-          "description": "Protocol event type to match. Uses protocol-native naming (slash-separated for MCP/A2A, snake_case for AG-UI). Supports qualifier via colon syntax for simple filtering. Must be valid for the actor's mode per the Event-Mode Validity Matrix (spec \u00a77).",
+          "description": "Protocol event type to match. Uses protocol-native naming (slash-separated for MCP/A2A, snake_case for AG-UI). Supports qualifier via colon syntax for simple filtering. Must be valid for the actor's mode per the Event-Mode Validity Matrix (spec §7).",
           "pattern": "^[a-z][a-zA-Z0-9_/]*(:[a-zA-Z0-9_-]+)?$",
           "examples": [
             "tools/call",
@@ -1050,9 +997,6 @@
           "$ref": "#/$defs/Duration",
           "description": "Advance unconditionally after this duration from phase entry."
         }
-      },
-      "patternProperties": {
-        "^x-": {}
       },
       "anyOf": [
         {
@@ -1092,12 +1036,9 @@
           }
         ]
       },
-      "patternProperties": {
-        "^x-": {}
-      },
       "propertyNames": {
-        "pattern": "^(x-[a-zA-Z0-9_-]+|[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)*)$",
-        "description": "Simple dot-path field references (e.g., arguments.command). No wildcards or array indices. Extension keys (x-) also allowed."
+        "pattern": "^[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)*$",
+        "description": "Simple dot-path field references (e.g., arguments.command). No wildcards or array indices."
       }
     },
     "Indicator": {
@@ -1183,7 +1124,7 @@
       "properties": {
         "target": {
           "type": "string",
-          "description": "Dot-path to the field to inspect. Supports wildcards (tools[*].description). Defaults to surface's canonical target (spec \u00a77).",
+          "description": "Dot-path to the field to inspect. Supports wildcards (tools[*].description). Defaults to surface's canonical target (spec §7).",
           "examples": [
             "tools[*].description",
             "content[*]",
@@ -1268,9 +1209,6 @@
         }
       },
       "additionalProperties": false,
-      "patternProperties": {
-        "^x-": {}
-      },
       "oneOf": [
         {
           "description": "Standard form: explicit target and condition.",
@@ -1800,7 +1738,7 @@
       "properties": {
         "cel": {
           "type": "string",
-          "description": "Common Expression Language expression evaluating to boolean. Must be side-effect-free. Available context is protocol-specific (spec \u00a77.1.3, \u00a77.2.3, \u00a77.3.3).",
+          "description": "Common Expression Language expression evaluating to boolean. Must be side-effect-free. Available context is protocol-specific (spec §7.1.3, §7.2.3, §7.3.3).",
           "examples": [
             "message.tools.exists(t, size(t.description) > 500 && t.description.contains(\"IMPORTANT:\"))",
             "message.method == \"notifications/tools/list_changed\""
@@ -1809,13 +1747,11 @@
         "variables": {
           "type": "object",
           "additionalProperties": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^([a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)*)?$"
           },
           "description": "Named variables pre-extracted via dot-path, available to the CEL expression beyond the root message context."
         }
-      },
-      "patternProperties": {
-        "^x-": {}
       }
     },
     "SemanticMatch": {
@@ -1828,7 +1764,7 @@
       "properties": {
         "target": {
           "type": "string",
-          "description": "Dot-path to the field to analyze. Defaults to surface's canonical target (spec \u00a77).",
+          "description": "Dot-path to the field to analyze. Defaults to surface's canonical target (spec §7).",
           "examples": [
             "tools[*].description",
             "skills[*].description"
@@ -1879,9 +1815,6 @@
             }
           }
         }
-      },
-      "patternProperties": {
-        "^x-": {}
       }
     }
   }

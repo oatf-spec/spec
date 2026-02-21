@@ -242,10 +242,9 @@ attack:
       description: "Expression indicator with variables."
       expression:
         cel: >
-          size(first_desc) > 200 && first_desc.contains("IMPORTANT")
+          size(tools[0].description) > 200 && tools[0].description.contains("IMPORTANT")
         variables:
-          first_desc: "tools[0].description"
-          tool_count: "tools"
+          tools: "tools"
 
     - id: OATF-904-03
       protocol: mcp

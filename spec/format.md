@@ -74,7 +74,7 @@ Schema definitions in this specification use YAML syntax. Type annotations follo
 - `number`: A floating-point number.
 - `boolean`: `true` or `false`.
 - `datetime`: An ISO 8601 date-time string (e.g., `2026-02-15T10:30:00Z`). Bare dates (`2026-02-15`) are accepted and interpreted as midnight UTC.
-- `duration`: A time span. ISO 8601 format (`PT30S`, `PT5M`) or shorthand with units: `s` (seconds), `m` (minutes), `h` (hours), `d` (days) — e.g., `30s`, `5m`, `1h`.
+- `duration`: A time span. ISO 8601 format (`PT30S`, `PT5M`) or shorthand with units: `s` (seconds), `m` (minutes), `h` (hours), `d` (days) — e.g., `30s`, `5m`, `1h`. Shorthand supports exactly one numeric-unit pair. For compound durations, use ISO 8601 form (e.g., `PT1H30M`). `0s` is a valid duration meaning zero elapsed time.
 - `enum(a, b, c)`: One of the listed values.
 - `T[]`: An ordered list of values of type T.
 - `T?`: An optional value of type T. When absent, the field is omitted entirely.
@@ -566,6 +566,8 @@ Actions executed when this phase begins, before any client interaction is proces
 
 The condition that triggers advancement to the next phase. If omitted, this is a **terminal phase** that persists indefinitely. A document MUST have at most one terminal phase, and it MUST be the last phase in the list.
 
+A trigger object MUST specify at least one of `event` or `after`. An empty trigger object is invalid. To designate a terminal phase, omit `trigger` entirely. Tools SHOULD enforce a configurable maximum terminal phase duration (RECOMMENDED default: 5 minutes) to prevent indefinite resource consumption.
+
 ### 5.3 Triggers
 
 Triggers define conditions for phase advancement. Trigger events are **per-actor scoped** — a trigger on an actor matches only events observed on that actor's own protocol connection. There is no global event bus and no cross-actor event observation.
@@ -682,6 +684,8 @@ Missing fields never match. A predicate referencing a field that does not exist 
 
 All string operators (`contains`, `starts_with`, `ends_with`, `any_of`, and equality) are case-sensitive. Case-insensitive matching is available via the `regex` operator with inline flags (e.g., `regex: "(?i)error"`).
 
+Type mismatches evaluate to `false`, not errors. String operators (`contains`, `starts_with`, `ends_with`, `regex`) applied to non-string values produce `false`. Numeric operators (`gt`, `lt`, `gte`, `lte`) applied to non-numeric values produce `false`. Equality comparison is strict and type-aware: integer `42` does not equal string `"42"`, but integer `42` equals float `42.0`.
+
 ### 5.5 Extractors
 
 Extractors capture values from protocol messages for use in subsequent phases or in dynamic response content. Extractors are defined within a phase (see §5.2) and apply to messages observed during that phase.
@@ -696,7 +700,7 @@ extractors:
 
 #### `extractor.name` (REQUIRED)
 
-The variable name. Extracted values are referenced in subsequent phases and response templates as `{{variable_name}}`. In multi-actor documents, extractors are scoped per-actor by default — `{{name}}` resolves to the current actor's extractor. To reference an extractor from a different actor, use the qualified syntax `{{actor_name.extractor_name}}`.
+The variable name. The name MUST match the pattern `[a-z][a-z0-9_]*`. Extracted values are referenced in subsequent phases and response templates as `{{variable_name}}`. In multi-actor documents, extractors are scoped per-actor by default — `{{name}}` resolves to the current actor's extractor. To reference an extractor from a different actor, use the qualified syntax `{{actor_name.extractor_name}}`.
 
 #### `extractor.source` (REQUIRED)
 
@@ -706,8 +710,8 @@ Whether to extract from incoming requests or outgoing responses. The terms `requ
 
 The extraction method:
 
-- `json_path`: A JSONPath expression conforming to [RFC 9535](https://www.rfc-editor.org/rfc/rfc9535) evaluated against the message body. When the expression matches multiple nodes, the **first node** in document order is extracted. When the expression matches no nodes, the extractor captures an empty string.
-- `regex`: A regular expression with a capture group. The **first match** in the input string is used, and the first capture group's value from that match is extracted. When the regex does not match, the extractor captures an empty string.
+- `json_path`: A JSONPath expression conforming to [RFC 9535](https://www.rfc-editor.org/rfc/rfc9535) evaluated against the message body. When the expression matches multiple nodes, the **first node** in document order is extracted. When the expression matches no nodes, the extractor produces no value (absent). An absent extractor resolves to empty string during template interpolation.
+- `regex`: A regular expression with a capture group. The **first match** in the input string is used, and the first capture group's value from that match is extracted. When the regex does not match, the extractor produces no value (absent). An absent extractor resolves to empty string during template interpolation.
 
 #### `extractor.selector` (REQUIRED)
 
@@ -717,13 +721,14 @@ Extracted values are available in all subsequent phases via `{{name}}` template 
 
 ### 5.6 Response Templates
 
-String fields within `phase.state` and `phase.on_enter` support template interpolation:
+String fields within `phase.state` and `phase.on_enter` support template interpolation. Template expressions in `phase.state` are resolved lazily when the state is consumed to construct a protocol response, not at phase entry. This allows `{{request.*}}` and `{{response.*}}` references in tool descriptions and response content to resolve against the actual request/response being processed.
 
 - `{{extractor_name}}`: Replaced with the value captured by the named extractor (current actor scope).
 - `{{actor_name.extractor_name}}`: Replaced with the value captured by a named extractor from a different actor. The actor name MUST match an `actor.name` in the document.
 - `{{request.field.path}}`: Replaced with a value from the current incoming request, using dot notation.
+- `{{response.field.path}}`: Replaced with a value from the current outgoing response, using dot notation.
 
-Template expressions that reference undefined extractors or missing request fields MUST be replaced with an empty string. Tools SHOULD emit a warning when this occurs. To include a literal `{{` in a payload without triggering interpolation, escape it as `\{{`.
+Template expressions that reference undefined extractors or missing request fields MUST be replaced with an empty string. Tools SHOULD emit a warning when this occurs. To include a literal `{{` in a payload without triggering interpolation, escape it as `\{{`. For example, `\{{name}}` produces the literal string `{{name}}`. The escape applies only to the opening `\{{`; no escape chaining is defined.
 
 ### 5.7 Expression Evaluation
 
@@ -733,7 +738,7 @@ OATF documents use five expression systems across execution profiles and indicat
 
 Expression systems are evaluated in a fixed order within any single processing step:
 
-1. **Template interpolation** resolves first. All `{{extractor_name}}` and `{{request.field.path}}` references in string fields are replaced with their values (or empty strings for undefined references) before any further evaluation.
+1. **Template interpolation** resolves first. All `{{extractor_name}}`, `{{request.field.path}}`, and `{{response.field.path}}` references in string fields are replaced with their values (or empty strings for undefined references) before any further evaluation.
 2. **JSONPath expressions** in extractors evaluate against the resolved message to capture values.
 3. **Match predicates** evaluate against the resolved message content. Each field-path is resolved, then each condition operator is applied to the resolved value.
 4. **CEL expressions** evaluate last. When `expression.variables` is present, the variable values are extracted from the message via dot-path resolution before the CEL expression is evaluated.
@@ -755,7 +760,7 @@ Expression errors fall into two categories:
 
 - A match predicate referencing a field path that does not exist in the message evaluates to `false` (as defined in §5.4).
 - A CEL expression that references a missing field, produces a type error, or divides by zero produces an indicator verdict of `error` (not `matched`) with a diagnostic message. The expression does not count as a match for correlation purposes.
-- A JSONPath expression that matches no nodes produces an empty extraction (the extractor captures an empty string).
+- A JSONPath expression that matches no nodes produces an empty extraction (no value captured).
 - A regular expression that does not match produces an empty extraction (no capture group value).
 
 Tools SHOULD log runtime evaluation errors at a diagnostic level to aid debugging without disrupting operation.
@@ -946,7 +951,7 @@ The class of malicious intent, used by classification-based inference engines. W
 
 #### `semantic.threshold` (OPTIONAL)
 
-The minimum confidence or similarity score for a positive match. Defaults to `0.7` if omitted.
+The minimum confidence or similarity score for a positive match. When omitted, SDKs apply a default threshold of `0.7` at evaluation time. The threshold is not materialized during normalization, preserving the distinction between an author-specified threshold and the SDK default.
 
 The threshold is a tool-relative calibration target, not an absolute or cross-tool-comparable score. A threshold of `0.75` means "this tool, using its own inference engine, should consider scores at or above 0.75 as matches." The same threshold value will produce different match boundaries across tools using different models, embedding spaces, or classification architectures. This is inherent to semantic analysis and is the reason `semantic` is a distinct method from `pattern` and `expression`, which are deterministic.
 
@@ -1907,6 +1912,8 @@ attack:
 ### 11.1 Document Conformance
 
 A conforming OATF document:
+
+The SDK specification (sdk.md §3.2) assigns stable rule identifiers (V-001 through V-042) to each conformance requirement below. Conformance test suites reference these identifiers.
 
 **Core structure**
 

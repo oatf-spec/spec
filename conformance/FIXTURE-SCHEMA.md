@@ -139,7 +139,7 @@ Test runners parse both the expected output and the actual `normalize()` result,
           - name: default
             mode: mcp_server
             phases:
-              - name: default
+              - name: phase-1
                 state:
                   tools:
                     - name: test

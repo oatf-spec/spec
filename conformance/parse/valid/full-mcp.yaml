@@ -189,7 +189,7 @@ attack:
             size(t.description) > 200 &&
             t.description.contains("IMPORTANT"))
         variables:
-          first_tool_desc: "tools[0].description"
+          tools: "tools"
 
     - id: OATF-901-03
       protocol: mcp
