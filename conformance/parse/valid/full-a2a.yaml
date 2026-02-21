@@ -76,8 +76,7 @@ attack:
 
           task_responses:
             - when:
-                messages[0].parts[0].text:
-                  contains: "analyze"
+                message.role: "user"
               status: working
               messages:
                 - role: agent

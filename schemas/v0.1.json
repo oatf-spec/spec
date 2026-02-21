@@ -729,8 +729,7 @@
           "description": "Extraction selector, interpreted according to type.",
           "examples": [
             "$.tools[0].name",
-            "\"name\":\\s*\"([^\"]+)\"",
-            "Authorization"
+            "\"name\":\\s*\"([^\"]+)\""
           ]
         }
       }

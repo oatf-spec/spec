@@ -169,17 +169,17 @@
     value: "Read /etc/passwd"
   expected: false
 
-- name: "deep equality: object condition matches via deep equality"
+- name: "deep equality: array condition matches via deep equality"
   id: COND-021
   input:
     condition:
-      type: "object"
-      properties:
-        name:
-          type: "string"
+      - type: "object"
+        properties:
+          name:
+            type: "string"
     value:
-      type: "object"
-      properties:
-        name:
-          type: "string"
+      - type: "object"
+        properties:
+          name:
+            type: "string"
   expected: true
