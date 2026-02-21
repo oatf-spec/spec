@@ -159,6 +159,7 @@ Extension fields (`x-` prefixed) on `Execution` are stored in an `extensions: Op
 | `name` | `String` | Yes | — | Unique identifier. Must match `[a-z][a-z0-9_]*`. |
 | `mode` | `String` | Yes | — | Attacker posture for this actor. Must match `{protocol}_{role}` convention. |
 | `phases` | `List<Phase>` | Yes | — | Ordered phase sequence. At least one required. |
+| `extensions` | `Optional<Map<String, Value>>` | No | — | Extension fields (`x-` prefixed). Preserved through round-trips. |
 
 ### 2.7 Phase
 
@@ -181,9 +182,9 @@ An entry action executed when a phase begins. Exactly one action key MUST be pre
 
 | Key | Required Fields | Description |
 |---|---|---|
-| `send_notification` | `method: String` | Send a protocol notification. Optional `params: Value` for notification parameters. |
+| `send_notification` | `method: String` | Send a protocol notification. Optional `params: Map<String, Value>` for notification parameters. |
 | `log` | `message: String` | Emit a log message. `message` supports `{{template}}` interpolation. Optional `level: LogLevel`. |
-| `send_elicitation` | `message: String` | Send an elicitation request to the client (MCP server-mode only). Optional `mode: ElicitationMode` (default: `form`), `requestedSchema: Value` (for form mode), `url: String` (for url mode). |
+| `send_elicitation` | `message: String` | Send an elicitation request to the client (MCP server-mode only). Optional `mode: ElicitationMode` (default: `form`), `requestedSchema: Map<String, Value>` (JSON Schema object, for form mode), `url: String` (for url mode). |
 
 **Associated enums:**
 
@@ -209,7 +210,7 @@ An entry action executed when a phase begins. Exactly one action key MUST be pre
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `name` | `String` | Yes | Variable name for interpolation. |
+| `name` | `String` | Yes | Variable name for interpolation. Must match `[a-z][a-z0-9_]*`. |
 | `source` | `ExtractorSource` | Yes | `request` or `response`. |
 | `type` | `ExtractorType` | Yes | `json_path` or `regex`. |
 | `selector` | `String` | Yes | The extraction selector. |
@@ -268,7 +269,7 @@ A condition applied to a resolved field value. At least one operator MUST be pre
 | `condition` | `Optional<Condition>` | No | — | Absent in shorthand form. Always present after normalization. |
 
 A `Condition` is either:
-- A bare `Value` (string, number, boolean, array) for equality matching, or
+- A bare `Value` (string, number, boolean, array, null) for equality matching, or
 - A `MatchCondition` object containing one or more operator keys.
 
 Languages without algebraic types may represent `Condition` as an untyped `Value` with runtime type checking: if it's an object with operator keys, treat as `MatchCondition`; otherwise treat as equality.
@@ -544,6 +545,7 @@ The following rules are checked. Each rule references the normative requirement 
 | V-040 | §4.2 | `attack.version`, when present, MUST be a positive integer (≥ 1). |
 | V-041 | §5.3 | `trigger.after`, when present, MUST be a valid duration (shorthand or ISO 8601). |
 | V-042 | §5.5 | Extractor names MUST match the pattern `[a-z][a-z0-9_]*`. |
+| V-043 | §11.1.8 | `phase.extractors`, when present, MUST contain at least one entry. |
 
 **Unrecognized binding diagnostics:** SDKs SHOULD expose a `known_modes()` function returning the set of modes defined by included protocol bindings (v0.1: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`) and a `known_protocols()` function returning the corresponding protocols (v0.1: `mcp`, `a2a`, `ag_ui`). When a mode or protocol passes V-039 pattern validation but is not in the known set, `validate` SHOULD emit a warning (not an error) indicating the value is unrecognized. This catches typos like `mpc_server` while allowing intentional use of custom bindings. Tools MAY provide a mechanism to suppress these warnings.
 
@@ -760,7 +762,7 @@ Computes the attack-level verdict from a set of indicator verdicts according to 
 **`all`:**
 - If any indicator verdict is `error`, return `error`.
 - If all indicator verdicts are `matched`, return `exploited`.
-- If at least one is `matched` and at least one is `not_matched`, return `partial`.
+- If at least one is `matched` and at least one is `not_matched` or `skipped`, return `partial`.
 - If all are `not_matched` or `skipped`, return `not_exploited`.
 
 **Treatment of `skipped` verdicts:** A `skipped` verdict means the indicator could not be evaluated (absent evaluator, unsupported method). For verdict computation purposes, `skipped` is treated equivalently to `not_matched`: the indicator did not produce evidence of agent compliance. This is semantically correct: the agent was not shown to be exploited by that indicator, regardless of why. Consuming tools that need to distinguish between "evaluated and not matched" versus "not evaluated" SHOULD inspect the individual `IndicatorVerdict` results or the `evaluation_summary` in the returned `AttackVerdict`.
@@ -779,7 +781,7 @@ OATF defines two path variants with different capabilities, matching the format 
 
 #### 5.1.1 Simple Dot-Path
 
-Used for: `MatchPredicate` keys (§2.10), `{{request.*}}` and `{{response.*}}` template references (§5.3), `expression.variables` values (§2.14).
+Used for: `MatchPredicate` keys (§2.10), `{{request.*}}` and `{{response.*}}` template references (§5.5), `expression.variables` values (§2.14).
 
 ```
 resolve_simple_path(path: String, value: Value) → Optional<Value>
@@ -863,7 +865,7 @@ Parses a duration string in either shorthand or ISO 8601 format.
 | `PT{N}H{N}M{N}S` | `PT1H30M15S` | 1 hour 30 minutes 15 seconds (ISO 8601 composite) |
 | `P{N}DT{...}` | `P1DT12H` | 1 day 12 hours (ISO 8601 composite) |
 
-`N` is a positive integer. Fractional values are not supported. Any ISO 8601 duration composed of integer D, H, M, and S components is accepted; the components must appear in descending order (days → hours → minutes → seconds) and the `T` separator is required before any time components.
+`N` is a non-negative integer (≥ 0); `0s` is a valid duration meaning zero elapsed time. Fractional values are not supported. Any ISO 8601 duration composed of integer D, H, M, and S components is accepted; the components must appear in descending order (days → hours → minutes → seconds) and the `T` separator is required before any time components.
 
 ### 5.3 evaluate_condition
 
@@ -1281,7 +1283,7 @@ SDKs SHOULD make the document model immutable after construction. `normalize` re
 
 ### 8.4 Extension Fields
 
-OATF documents may contain fields prefixed with `x-`. SDKs MUST preserve these through parse → normalize → serialize round-trips. The following core types include an `extensions: Optional<Map<String, Value>>` field for this purpose: `Attack` (§2.3), `Execution` (§2.6), `Actor` (§2.5), `Phase` (§2.7), `Indicator` (§2.12). During parsing, the SDK MUST collect any `x-` prefixed keys from each object and store them in the corresponding `extensions` map. During serialization, the SDK MUST emit these keys back into the output. Key names are preserved exactly (including the `x-` prefix); relative ordering of extension fields among themselves is preserved where the language's map type supports it. Ordering relative to standard fields is not guaranteed.
+OATF documents may contain fields prefixed with `x-`. SDKs MUST preserve these through parse → normalize → serialize round-trips. The following core types include an `extensions: Optional<Map<String, Value>>` field for this purpose: `Attack` (§2.3), `Execution` (§2.6), `Actor` (§2.6a), `Phase` (§2.7), `Action` (§2.7a), `Indicator` (§2.12). During parsing, the SDK MUST collect any `x-` prefixed keys from each object and store them in the corresponding `extensions` map. During serialization, the SDK MUST emit these keys back into the output. Key names are preserved exactly (including the `x-` prefix); relative ordering of extension fields among themselves is preserved where the language's map type supports it. Ordering relative to standard fields is not guaranteed.
 
 ### 8.5 Performance Considerations
 

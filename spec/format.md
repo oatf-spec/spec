@@ -651,7 +651,7 @@ field.path:
 
 Field paths use dot notation for nested access (for example, `arguments.command`, `metadata.agent_id`). OATF defines two dot-path variants:
 
-**Simple dot-path** (used in match predicates §5.4 and `{{request.*}}` templates §5.6):
+**Simple dot-path** (used in match predicates §5.4 and `{{request.*}}`/`{{response.*}}` templates §5.6):
 
 ```
 simple-path  = segment *( "." segment )
@@ -728,7 +728,7 @@ String fields within `phase.state` and `phase.on_enter` support template interpo
 - `{{request.field.path}}`: Replaced with a value from the current incoming request, using dot notation.
 - `{{response.field.path}}`: Replaced with a value from the current outgoing response, using dot notation.
 
-Template expressions that reference undefined extractors or missing request fields MUST be replaced with an empty string. Tools SHOULD emit a warning when this occurs. To include a literal `{{` in a payload without triggering interpolation, escape it as `\{{`. For example, `\{{name}}` produces the literal string `{{name}}`. The escape applies only to the opening `\{{`; no escape chaining is defined.
+Template expressions that reference undefined extractors or missing request or response fields MUST be replaced with an empty string. Tools SHOULD emit a warning when this occurs. To include a literal `{{` in a payload without triggering interpolation, escape it as `\{{`. For example, `\{{name}}` produces the literal string `{{name}}`. The escape applies only to the opening `\{{`; no escape chaining is defined.
 
 ### 5.7 Expression Evaluation
 
@@ -1913,7 +1913,7 @@ attack:
 
 A conforming OATF document:
 
-The SDK specification (sdk.md §3.2) assigns stable rule identifiers (V-001 through V-042) to each conformance requirement below. Conformance test suites reference these identifiers.
+The SDK specification (sdk.md §3.2) assigns stable rule identifiers (V-001 through V-043) to each conformance requirement below. Conformance test suites reference these identifiers.
 
 **Core structure**
 
@@ -1949,7 +1949,7 @@ All conforming tools (adversarial and evaluation):
 
 **Defaults and shorthand expansion**
 
-1. MUST apply default values for omitted optional fields as defined in this specification: `name` → `"Untitled"`, `version` → `1`, `status` → `"draft"`, `severity.confidence` → `50` (when `severity` is present), `phase.name` → `"phase-{N}"` (1-based index within actor), `phase.mode` → `execution.mode` (when present), `indicator.protocol` → protocol component of `execution.mode` (when both `indicators` and `execution.mode` are present), `correlation.logic` → `any` (when `indicators` is present).
+1. MUST apply default values for omitted optional fields as defined in this specification: `name` → `"Untitled"`, `version` → `1`, `status` → `"draft"`, `severity.confidence` → `50` (when `severity` is present), `phase.name` → `"phase-{N}"` (1-based index within actor), `phase.mode` → `execution.mode` (when present), `trigger.count` → `1` (when `trigger.event` is present and `trigger.count` is absent), `indicator.protocol` → protocol component of `execution.mode` (when both `indicators` and `execution.mode` are present), `correlation.logic` → `any` (when `indicators` is present).
 2. MUST expand severity scalar form (`severity: "high"`) to the object form (`{level: "high", confidence: 50}`) before processing, when `severity` is present.
 3. MUST auto-generate `indicator.id` values for indicators that omit `id`. When `attack.id` is present, the format is `{attack.id}-{NN}`. When `attack.id` is absent, the format is `indicator-{NN}`. `NN` is the 1-based, zero-padded position of the indicator in the `indicators` array.
 4. MUST resolve `pattern.target` and `semantic.target` from the surface's default target path (as defined in §7 surface tables) when the target is omitted. If a surface does not define a default target path, the `target` field is REQUIRED for indicators using that surface. Tools MUST reject such indicators when `target` is absent.

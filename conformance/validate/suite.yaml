@@ -2228,3 +2228,315 @@
         path: "attack.indicators"
       - rule: "V-011"
         path: "attack.execution.phases[1].name"
+
+# ---------------------------------------------------------------------------
+# V-040: attack.version, when present, MUST be a positive integer (>= 1)
+# ---------------------------------------------------------------------------
+
+- name: "V-040 valid: version is 1"
+  id: VAL-040a
+  input: |
+    oatf: "0.1"
+    attack:
+      version: 1
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test-tool
+              description: "A test tool"
+              inputSchema:
+                type: object
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-040 valid: version is large positive integer"
+  id: VAL-040b
+  input: |
+    oatf: "0.1"
+    attack:
+      version: 99
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test-tool
+              description: "A test tool"
+              inputSchema:
+                type: object
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-040 invalid: version is 0"
+  id: VAL-040c
+  input: |
+    oatf: "0.1"
+    attack:
+      version: 0
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test-tool
+              description: "A test tool"
+              inputSchema:
+                type: object
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-040"
+        path: "attack.version"
+
+- name: "V-040 invalid: version is negative"
+  id: VAL-040d
+  input: |
+    oatf: "0.1"
+    attack:
+      version: -1
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test-tool
+              description: "A test tool"
+              inputSchema:
+                type: object
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-040"
+        path: "attack.version"
+
+# ---------------------------------------------------------------------------
+# V-041: trigger.after, when present, MUST be a valid duration
+# ---------------------------------------------------------------------------
+
+- name: "V-041 valid: shorthand duration"
+  id: VAL-041a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            trigger:
+              event: tools/call
+          - name: phase-2
+            trigger:
+              after: 30s
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-041 valid: ISO 8601 duration"
+  id: VAL-041b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            trigger:
+              event: tools/call
+          - name: phase-2
+            trigger:
+              after: PT1H30M
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-041 invalid: malformed duration"
+  id: VAL-041c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            trigger:
+              event: tools/call
+          - name: phase-2
+            trigger:
+              after: "not-a-duration"
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-041"
+        path: "attack.execution.phases[1].trigger.after"
+
+# ---------------------------------------------------------------------------
+# V-042: Extractor names MUST match [a-z][a-z0-9_]*
+# ---------------------------------------------------------------------------
+
+- name: "V-042 valid: lowercase extractor name with underscores"
+  id: VAL-042a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            extractors:
+              - name: tool_name
+                source: request
+                type: json_path
+                selector: "$.name"
+            trigger:
+              event: tools/call
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-042 invalid: extractor name with uppercase"
+  id: VAL-042b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            extractors:
+              - name: ToolName
+                source: request
+                type: json_path
+                selector: "$.name"
+            trigger:
+              event: tools/call
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-042"
+        path: "attack.execution.phases[0].extractors[0].name"
+
+- name: "V-042 invalid: extractor name starting with digit"
+  id: VAL-042c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            extractors:
+              - name: 1tool
+                source: request
+                type: json_path
+                selector: "$.name"
+            trigger:
+              event: tools/call
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-042"
+        path: "attack.execution.phases[0].extractors[0].name"
+
+# ---------------------------------------------------------------------------
+# V-043: phase.extractors, when present, MUST contain at least one entry
+# ---------------------------------------------------------------------------
+
+- name: "V-043 invalid: empty extractors array"
+  id: VAL-043a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            extractors: []
+            trigger:
+              event: tools/call
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-043"
+        path: "attack.execution.phases[0].extractors"
