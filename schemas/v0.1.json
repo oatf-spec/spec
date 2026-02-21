@@ -1000,7 +1000,7 @@
     },
     "Trigger": {
       "type": "object",
-      "description": "Condition for phase advancement. Combines event matching, counting, content predicates, and timeouts.",
+      "description": "Condition for phase advancement. Combines event matching, counting, content predicates, and duration-based advancement.",
       "additionalProperties": false,
       "dependentRequired": {
         "count": [

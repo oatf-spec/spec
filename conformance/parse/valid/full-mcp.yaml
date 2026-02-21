@@ -154,7 +154,7 @@ attack:
 
         trigger:
           event: tools/list
-          timeout: 30s
+          after: 30s
 
       - name: exploit
         description: "Poisoned tool is active. Persist indefinitely."

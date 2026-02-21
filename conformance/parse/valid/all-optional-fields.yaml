@@ -176,7 +176,7 @@ attack:
                 arguments.command:
                   starts_with: "safe"
                 arguments.mode: "standard"
-              timeout: 1m
+              after: 1m
 
           - name: phase_two
             description: "Second phase with cross-protocol switch."
