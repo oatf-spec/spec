@@ -858,6 +858,51 @@
       correlation:
         logic: any
 
+- name: "N-005 regex shorthand expands to condition wrapper"
+  id: NORM-005b
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      severity: high
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          pattern:
+            regex: "(passwd|shadow|id_rsa)"
+  expected: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      version: 1
+      status: draft
+      severity:
+        level: high
+        confidence: 50
+      execution:
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
+      indicators:
+        - id: OATF-TEST-001-01
+          protocol: mcp
+          surface: tool_description
+          pattern:
+            target: "tools[*].description"
+            condition:
+              regex: "(passwd|shadow|id_rsa)"
+      correlation:
+        logic: any
+
 # ---------------------------------------------------------------------------
 # N-006: Single-phase form normalizes to multi-actor form
 # ---------------------------------------------------------------------------

@@ -589,6 +589,8 @@ The following rules are checked. Each rule references the normative requirement 
 | V-041 | §11.1.17 | All `expression.variables` keys MUST be valid CEL identifiers, matching `^[_a-zA-Z][_a-zA-Z0-9]*$`. Names containing hyphens, dots, or other non-identifier characters are rejected because CEL would parse them as operators rather than variable references. |
 | V-042 | §5.2, §5.3 | Trigger MUST specify at least one of `event` or `after`. An empty trigger object is invalid. |
 | V-043 | §5.2 | Binding-specific action objects (those containing no known action key) MUST contain exactly one non-`x-` key. |
+| V-044 | §5.5 | Extractor selectors of type `regex` MUST contain at least one capture group. A regex extractor without a capture group can never produce a value and is always an author error. |
+| V-045 | §5.2 | `phase.on_enter`, when present, MUST contain at least one action. |
 
 **Unrecognized binding diagnostics:** SDKs SHOULD expose a `known_modes()` function returning the set of modes defined by included protocol bindings (v0.1: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`) and a `known_protocols()` function returning the corresponding protocols (v0.1: `mcp`, `a2a`, `ag_ui`). When a mode or protocol passes V-036 pattern validation but is not in the known set, `validate` SHOULD emit a warning (not an error) indicating the value is unrecognized. This catches typos like `mpc_server` while allowing intentional use of custom bindings. Tools MAY provide a mechanism to suppress these warnings.
 
@@ -1011,7 +1013,7 @@ Applies an extractor to a message, capturing a value.
 **Behavior by type:**
 
 - `json_path`: Evaluate the JSONPath expression against `message`. If the expression matches one or more nodes, return the first match in document order (per RFC 9535 §2.6) serialized to its compact JSON string representation. If no match, return `None`.
-- `regex`: Convert `message` to its string representation, evaluate the regular expression. If the regex matches and has at least one capture group, return the first capture group's value. If no match, return `None`.
+- `regex`: Convert `message` to its string representation, evaluate the regular expression. If the regex matches, return the first capture group's value. If no match, return `None`. (V-044 guarantees at least one capture group is present.)
 
 `None` means "no match" (the extractor did not find the targeted content). `Some("")` is a valid result when the extractor matched but the captured value is genuinely an empty string. Downstream template interpolation treats `None` as an undefined extractor (triggering W-004 warnings), while `Some("")` substitutes the empty string silently.
 
