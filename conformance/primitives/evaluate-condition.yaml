@@ -183,3 +183,27 @@
           name:
             type: "string"
   expected: true
+
+- name: "exists: true when field is present"
+  id: COND-022
+  input:
+    condition:
+      exists: true
+    value: "any value"
+  expected: true
+
+- name: "exists: true when field is present with null value"
+  id: COND-023
+  input:
+    condition:
+      exists: true
+    value: null
+  expected: true
+
+- name: "exists: false when field is absent (evaluate_condition receives no value)"
+  id: COND-024
+  input:
+    condition:
+      exists: false
+    value: "any value"
+  expected: true

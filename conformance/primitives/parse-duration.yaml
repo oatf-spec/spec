@@ -80,3 +80,15 @@
   input: "1.5h"
   expected:
     error: true
+
+- name: "Zero seconds shorthand"
+  id: DUR-014
+  input: "0s"
+  expected:
+    seconds: 0
+
+- name: "Zero seconds ISO 8601"
+  id: DUR-015
+  input: "PT0S"
+  expected:
+    seconds: 0

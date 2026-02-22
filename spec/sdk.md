@@ -590,6 +590,7 @@ The following rules are checked. Each rule references the normative requirement 
 | V-042 | §5.2, §5.3 | Trigger MUST specify at least one of `event` or `after`. An empty trigger object is invalid. |
 | V-043 | §5.2 | Binding-specific action objects (those containing no known action key) MUST contain exactly one non-`x-` key. |
 | V-044 | §5.5 | Extractor selectors of type `regex` MUST contain at least one capture group. A regex extractor without a capture group can never produce a value and is always an author error. |
+| V-045 | §5.2 | `phase.on_enter`, when present, MUST contain at least one action. |
 
 **Unrecognized binding diagnostics:** SDKs SHOULD expose a `known_modes()` function returning the set of modes defined by included protocol bindings (v0.1: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`) and a `known_protocols()` function returning the corresponding protocols (v0.1: `mcp`, `a2a`, `ag_ui`). When a mode or protocol passes V-036 pattern validation but is not in the known set, `validate` SHOULD emit a warning (not an error) indicating the value is unrecognized. This catches typos like `mpc_server` while allowing intentional use of custom bindings. Tools MAY provide a mechanism to suppress these warnings.
 

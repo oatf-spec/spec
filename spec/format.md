@@ -322,7 +322,7 @@ impact:
 
 #### `attack.impact` (OPTIONAL)
 
-An array of impact categories. Impact values MUST be unique (duplicates are invalid). Multiple values indicate an attack with several consequence types:
+An array of impact categories. When present, MUST contain at least one category. Impact values MUST be unique (duplicates are invalid). Multiple values indicate an attack with several consequence types:
 
 - `behavior_manipulation`: The agent's reasoning or decisions are corrupted by attacker-controlled inputs without modifying persistent data. The agent processes normal protocol content (tool descriptions, task messages, conversation history) that has been crafted to alter its behaviour. This is the dominant impact category for prompt injection and capability poisoning attacks.
 - `data_exfiltration`: Sensitive data is actively sent to an attacker-controlled destination such as a webhook URL, external email address, paste site, or remote tool endpoint.
@@ -576,7 +576,7 @@ Extractors that capture values from protocol messages during this phase. Extract
 
 #### `phase.on_enter` (OPTIONAL)
 
-Actions executed when this phase begins, before any client interaction is processed. Actions are protocol-specific and defined in the protocol binding sections (§7). Common actions include sending notifications and emitting log events.
+Actions executed when this phase begins, before any client interaction is processed. Actions are protocol-specific and defined in the protocol binding sections (§7). Common actions include sending notifications and emitting log events. When present, MUST contain at least one action (V-045).
 
 #### `phase.trigger` (OPTIONAL)
 
@@ -608,7 +608,7 @@ A trigger's event type MUST be valid for the actor's resolved mode. An event typ
 
 #### `trigger.count` (OPTIONAL)
 
-The number of matching events required before advancing. When omitted and `event` is specified, treated as `1` at evaluation time. The counter accumulates matching events for this actor within the current phase. The counter resets to zero when the actor transitions into a new phase. For the initial phase, the counter starts at zero when the actor becomes active.
+The number of matching events required before advancing. Defaults to `1` when omitted and `event` is present (materialized during normalization per §11.2, N-001). The counter accumulates matching events for this actor within the current phase. The counter resets to zero when the actor transitions into a new phase. For the initial phase, the counter starts at zero when the actor becomes active.
 
 #### `trigger.match` (OPTIONAL)
 
@@ -1937,7 +1937,7 @@ attack:
 
 A conforming OATF document:
 
-The SDK specification (sdk.md §3.2) assigns stable rule identifiers (V-001 through V-044) to conformance requirements across this specification. Conformance test suites reference these identifiers. The numbered rules below define the structural requirements; additional V-rules cover field-level validation constraints defined in their respective sections (§4–§7).
+The SDK specification (sdk.md §3.2) assigns stable rule identifiers (V-001 through V-045) to conformance requirements across this specification. Conformance test suites reference these identifiers. The numbered rules below define the structural requirements; additional V-rules cover field-level validation constraints defined in their respective sections (§4–§7).
 
 **Core structure**
 

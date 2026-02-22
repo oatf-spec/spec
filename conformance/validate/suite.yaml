@@ -389,7 +389,7 @@
       - rule: "V-005"
         path: "attack.correlation.logic"
 
-- name: "V-005 invalid: indicator has no detection key"
+- name: "V-012 invalid: indicator has no detection key"
   id: VAL-005h
   input: |
     oatf: "0.1"
@@ -2540,3 +2540,285 @@
     errors:
       - rule: "V-040"
         path: "attack.execution.phases[0].extractors"
+
+# ---------------------------------------------------------------------------
+# V-041: expression.variables keys must be valid CEL identifiers
+# ---------------------------------------------------------------------------
+
+- name: "V-041 valid: variables key is a valid CEL identifier"
+  id: VAL-041a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          expression:
+            cel: "size(tools) > 0"
+            variables:
+              tools: "tools"
+  expected:
+    valid: true
+
+- name: "V-041 invalid: variables key contains a hyphen"
+  id: VAL-041b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          expression:
+            cel: "true"
+            variables:
+              my-var: "tools"
+  expected:
+    errors:
+      - rule: "V-041"
+        path: "attack.indicators[0].expression.variables.my-var"
+
+- name: "V-041 invalid: variables key contains a dot"
+  id: VAL-041c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          expression:
+            cel: "true"
+            variables:
+              my.var: "tools"
+  expected:
+    errors:
+      - rule: "V-041"
+        path: "attack.indicators[0].expression.variables.my.var"
+
+- name: "V-041 valid: underscore-prefixed identifier"
+  id: VAL-041d
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          expression:
+            cel: "_tools != null"
+            variables:
+              _tools: "tools"
+  expected:
+    valid: true
+
+# ---------------------------------------------------------------------------
+# V-042: trigger must specify at least one of event or after
+# ---------------------------------------------------------------------------
+
+- name: "V-042 valid: trigger with event only"
+  id: VAL-042a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            trigger:
+              event: tools/call
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-042 valid: trigger with after only"
+  id: VAL-042b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            trigger:
+              after: 30s
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-042 invalid: empty trigger object"
+  id: VAL-042c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            trigger: {}
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-042"
+        path: "attack.execution.phases[0].trigger"
+
+# ---------------------------------------------------------------------------
+# V-043: binding-specific action objects must have exactly one non-x- key
+# ---------------------------------------------------------------------------
+
+- name: "V-043 valid: known action send_notification"
+  id: VAL-043a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            on_enter:
+              - send_notification:
+                  method: "notifications/tools/list_changed"
+            trigger:
+              event: tools/call
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-043 invalid: action object with two non-x- keys"
+  id: VAL-043b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            on_enter:
+              - send_notification:
+                  method: "notifications/tools/list_changed"
+                log:
+                  message: "Triggered"
+                  level: info
+            trigger:
+              event: tools/call
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-043"
+        path: "attack.execution.phases[0].on_enter[0]"
+
+- name: "V-043 valid: binding-specific action with single custom key"
+  id: VAL-043c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            on_enter:
+              - custom_action:
+                  param: "value"
+            trigger:
+              event: tools/call
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-043 valid: action with x- extension key alongside action key"
+  id: VAL-043d
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            on_enter:
+              - send_notification:
+                  method: "notifications/tools/list_changed"
+                x-metadata: "extra info"
+            trigger:
+              event: tools/call
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true

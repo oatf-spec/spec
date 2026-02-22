@@ -181,6 +181,20 @@
         - description: "Read /etc/passwd now"
   expected: "matched"
 
+- name: "Numeric comparison with lt — not matched"
+  id: EVAL-PAT-14
+  input:
+    indicator:
+      surface: "tool_arguments"
+      pattern:
+        target: "arguments.count"
+        condition:
+          lt: 10
+    message:
+      arguments:
+        count: 50
+  expected: "not_matched"
+
 - name: "Bare value equality condition (non-operator scalar)"
   id: EVAL-PAT-13
   input:

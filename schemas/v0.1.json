@@ -331,8 +331,9 @@
           "items": {
             "$ref": "#/$defs/Impact"
           },
+          "minItems": 1,
           "uniqueItems": true,
-          "description": "Categories of harm this attack can cause."
+          "description": "Categories of harm this attack can cause. When present, must contain at least one category."
         },
         "classification": {
           "$ref": "#/$defs/Classification"

@@ -110,3 +110,24 @@
       args:
         count: 5
   expected: true
+
+- name: "Predicate with exists: true on present field"
+  id: PRED-011
+  input:
+    predicate:
+      token:
+        exists: true
+    value:
+      token: "abc123"
+      name: "test"
+  expected: true
+
+- name: "Predicate with exists: true on absent field"
+  id: PRED-012
+  input:
+    predicate:
+      token:
+        exists: true
+    value:
+      name: "test"
+  expected: false
