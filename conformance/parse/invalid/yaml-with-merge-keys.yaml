@@ -3,7 +3,6 @@ oatf: "0.1"
 _base_indicator: &base
   protocol: mcp
   surface: tool_description
-  method: pattern
 
 attack:
   id: OATF-992
@@ -12,8 +11,7 @@ attack:
   severity: low
 
   execution:
-    protocol: mcp
-    role: server
+    mode: mcp_server
     phases:
       - name: deliver
         state:

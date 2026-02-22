@@ -11,7 +11,7 @@ Fixtures are organized by SDK entry point, matching the operations defined in th
 | Directory | SDK Entry Point | What It Tests |
 |---|---|---|
 | `parse/` | `parse()` | YAML deserialization into typed document model |
-| `validate/` | `validate()` | Conformance rule checking (V-001 through V-023) |
+| `validate/` | `validate()` | Conformance rule checking (V-001 through V-040) |
 | `normalize/` | `normalize()` | Default materialization and shorthand expansion |
 | `evaluate/` | `evaluate_indicator()` | Indicator evaluation against protocol messages |
 | `verdict/` | `compute_verdict()` | Attack-level verdict computation from indicator results |

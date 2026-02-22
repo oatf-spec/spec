@@ -2,7 +2,7 @@
 # OATF Conformance: evaluate_pattern Evaluation Tests
 # Tests SDK evaluate_pattern(pattern, message) per SDK spec §4.2.
 #
-# All indicators are in normalized form (explicit target, condition, scope).
+# All indicators are in normalized form (explicit target, condition).
 # =============================================================================
 
 - name: "Contains match on tool description"
@@ -10,10 +10,8 @@
   input:
     indicator:
       surface: "tool_description"
-      method: pattern
       pattern:
         target: "tools[*].description"
-        scope: "value"
         condition:
           contains: "read /etc/passwd"
     message:
@@ -27,10 +25,8 @@
   input:
     indicator:
       surface: "tool_description"
-      method: pattern
       pattern:
         target: "tools[*].description"
-        scope: "value"
         condition:
           contains: "read /etc/passwd"
     message:
@@ -44,10 +40,8 @@
   input:
     indicator:
       surface: "tool_description"
-      method: pattern
       pattern:
         target: "tools[*].description"
-        scope: "value"
         condition:
           regex: "(id_rsa|passwd)"
     message:
@@ -61,10 +55,8 @@
   input:
     indicator:
       surface: "tool_description"
-      method: pattern
       pattern:
         target: "tools[*].description"
-        scope: "value"
         condition:
           regex: "^malicious$"
     message:
@@ -78,10 +70,8 @@
   input:
     indicator:
       surface: "tool_description"
-      method: pattern
       pattern:
         target: "tools[*].description"
-        scope: "value"
         condition:
           starts_with: "IMPORTANT:"
     message:
@@ -95,10 +85,8 @@
   input:
     indicator:
       surface: "tool_arguments"
-      method: pattern
       pattern:
         target: "arguments.role"
-        scope: "value"
         condition:
           any_of:
             - "admin"
@@ -109,49 +97,13 @@
         role: "admin"
   expected: "matched"
 
-- name: "Scope key matches against field key names"
+- name: "Wildcard with multiple values, only one matches"
   id: EVAL-PAT-07
   input:
     indicator:
-      surface: "tool_arguments"
-      method: pattern
-      pattern:
-        target: "data"
-        scope: "key"
-        condition:
-          contains: "secret"
-    message:
-      data:
-        secret_key: "abc"
-        public: "xyz"
-  expected: "matched"
-
-- name: "Scope any matches on key or value"
-  id: EVAL-PAT-08
-  input:
-    indicator:
-      surface: "tool_arguments"
-      method: pattern
-      pattern:
-        target: "data"
-        scope: "any"
-        condition:
-          contains: "secret"
-    message:
-      data:
-        secret_key: "abc"
-        public: "xyz"
-  expected: "matched"
-
-- name: "Wildcard with multiple values, only one matches"
-  id: EVAL-PAT-09
-  input:
-    indicator:
       surface: "tool_description"
-      method: pattern
       pattern:
         target: "tools[*].description"
-        scope: "value"
         condition:
           contains: "inject"
     message:
@@ -161,14 +113,12 @@
   expected: "matched"
 
 - name: "Target resolves to nothing"
-  id: EVAL-PAT-10
+  id: EVAL-PAT-08
   input:
     indicator:
       surface: "tool_arguments"
-      method: pattern
       pattern:
         target: "nonexistent.path"
-        scope: "value"
         condition:
           contains: "anything"
     message:
@@ -176,14 +126,12 @@
   expected: "not_matched"
 
 - name: "Empty tools array produces no resolved values"
-  id: EVAL-PAT-11
+  id: EVAL-PAT-09
   input:
     indicator:
       surface: "tool_description"
-      method: pattern
       pattern:
         target: "tools[*].description"
-        scope: "value"
         condition:
           contains: "anything"
     message:
@@ -191,17 +139,57 @@
   expected: "not_matched"
 
 - name: "Numeric comparison with gt"
-  id: EVAL-PAT-12
+  id: EVAL-PAT-10
   input:
     indicator:
       surface: "tool_arguments"
-      method: pattern
       pattern:
         target: "arguments.count"
-        scope: "value"
         condition:
           gt: 1000
     message:
       arguments:
         count: 5000
+  expected: "matched"
+
+- name: "Ends_with match on tool description"
+  id: EVAL-PAT-11
+  input:
+    indicator:
+      surface: "tool_description"
+      pattern:
+        target: "tools[*].description"
+        condition:
+          ends_with: "override"
+    message:
+      tools:
+        - description: "System admin override"
+  expected: "matched"
+
+- name: "Multiple operators combined with AND: contains + starts_with"
+  id: EVAL-PAT-12
+  input:
+    indicator:
+      surface: "tool_description"
+      pattern:
+        target: "tools[*].description"
+        condition:
+          contains: "passwd"
+          starts_with: "Read"
+    message:
+      tools:
+        - description: "Read /etc/passwd now"
+  expected: "matched"
+
+- name: "Bare value equality condition (non-operator scalar)"
+  id: EVAL-PAT-13
+  input:
+    indicator:
+      surface: "tool_name"
+      pattern:
+        target: "tools[*].name"
+        condition: "evil_tool"
+    message:
+      tools:
+        - name: "evil_tool"
   expected: "matched"

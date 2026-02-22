@@ -1,6 +1,6 @@
 # =============================================================================
 # OATF Conformance: Validation Test Suite
-# Tests SDK validate() entry point against rules V-001 through V-023.
+# Tests SDK validate() entry point against rules from §11.1.
 # =============================================================================
 
 # ---------------------------------------------------------------------------
@@ -12,21 +12,14 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools:
+            - name: test-tool
+              description: "A test tool"
+              inputSchema:
+                type: object
       indicators:
         - surface: tool_description
           pattern:
@@ -38,21 +31,14 @@
   id: VAL-001b
   input: |
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools:
+            - name: test-tool
+              description: "A test tool"
+              inputSchema:
+                type: object
       indicators:
         - surface: tool_description
           pattern:
@@ -67,21 +53,14 @@
   input: |
     oatf: "9.9"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools:
+            - name: test-tool
+              description: "A test tool"
+              inputSchema:
+                type: object
       indicators:
         - surface: tool_description
           pattern:
@@ -100,21 +79,14 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools:
+            - name: test-tool
+              description: "A test tool"
+              inputSchema:
+                type: object
       indicators:
         - surface: tool_description
           pattern:
@@ -122,33 +94,27 @@
   expected:
     valid: true
 
-- name: "V-002 invalid: attack appears before oatf"
+- name: "V-002 warning: attack appears before oatf"
   id: VAL-002b
   input: |
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools:
+            - name: test-tool
+              description: "A test tool"
+              inputSchema:
+                type: object
       indicators:
         - surface: tool_description
           pattern:
             contains: "test"
     oatf: "0.1"
   expected:
-    errors:
-      - rule: "V-002"
+    valid: true
+    warnings:
+      - rule: "W-001"
         path: "oatf"
 
 # ---------------------------------------------------------------------------
@@ -160,21 +126,14 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools:
+            - name: test-tool
+              description: "A test tool"
+              inputSchema:
+                type: object
       indicators:
         - surface: tool_description
           pattern:
@@ -197,147 +156,78 @@
         path: "attack"
 
 # ---------------------------------------------------------------------------
-# V-004: Required fields present
+# V-004: Required fields present (only execution is required)
 # ---------------------------------------------------------------------------
 
-- name: "V-004 valid: all required fields present"
+- name: "V-004 valid: minimal document with only execution"
   id: VAL-004a
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - surface: tool_description
-          pattern:
-            contains: "test"
+        mode: mcp_server
+        state:
+          tools:
+            - name: test-tool
+              description: "A test tool"
+              inputSchema:
+                type: object
   expected:
     valid: true
 
-- name: "V-004 invalid: missing attack.id"
+- name: "V-004 valid: missing attack.id (now optional)"
   id: VAL-004b
   input: |
     oatf: "0.1"
     attack:
       name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - surface: tool_description
-          pattern:
-            contains: "test"
+        mode: mcp_server
+        state:
+          tools: []
   expected:
-    errors:
-      - rule: "V-004"
-        path: "attack.id"
+    valid: true
 
-- name: "V-004 invalid: missing attack.name"
+- name: "V-004 valid: missing attack.name (now optional)"
   id: VAL-004c
   input: |
     oatf: "0.1"
     attack:
       id: OATF-TEST-001
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - surface: tool_description
-          pattern:
-            contains: "test"
+        mode: mcp_server
+        state:
+          tools: []
   expected:
-    errors:
-      - rule: "V-004"
-        path: "attack.name"
+    valid: true
 
-- name: "V-004 invalid: missing attack.description"
+- name: "V-004 valid: missing attack.description (now optional)"
   id: VAL-004d
   input: |
     oatf: "0.1"
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - surface: tool_description
-          pattern:
-            contains: "test"
+        mode: mcp_server
+        state:
+          tools: []
   expected:
-    errors:
-      - rule: "V-004"
-        path: "attack.description"
+    valid: true
 
-- name: "V-004 invalid: missing attack.severity"
+- name: "V-004 valid: missing severity (now optional)"
   id: VAL-004e
   input: |
     oatf: "0.1"
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack for conformance testing."
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - surface: tool_description
-          pattern:
-            contains: "test"
+        mode: mcp_server
+        state:
+          tools: []
   expected:
-    errors:
-      - rule: "V-004"
-        path: "attack.severity"
+    valid: true
 
 - name: "V-004 invalid: missing execution"
   id: VAL-004f
@@ -346,7 +236,6 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack for conformance testing."
       severity: high
       indicators:
         - surface: tool_description
@@ -357,30 +246,20 @@
       - rule: "V-004"
         path: "attack.execution"
 
-- name: "V-004 invalid: missing indicators"
+- name: "V-004 valid: missing indicators (now optional)"
   id: VAL-004g
   input: |
     oatf: "0.1"
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack for conformance testing."
       severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools: []
   expected:
-    errors:
-      - rule: "V-004"
-        path: "attack.indicators"
+    valid: true
 
 # ---------------------------------------------------------------------------
 # V-005: All enumeration values are valid
@@ -393,20 +272,16 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack for conformance testing."
       severity: high
       status: experimental
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools:
+            - name: test-tool
+              description: "A test tool"
+              inputSchema:
+                type: object
       indicators:
         - surface: tool_description
           pattern:
@@ -419,138 +294,72 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
       severity: extreme
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - surface: tool_description
-          pattern:
-            contains: "test"
+        mode: mcp_server
+        state:
+          tools: []
   expected:
     errors:
       - rule: "V-005"
         path: "attack.severity"
 
-- name: "V-005 invalid: execution.protocol 'grpc' is not a valid enum value"
+- name: "V-005 invalid: execution.mode does not match pattern"
   id: VAL-005c
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
       severity: high
       execution:
-        protocol: grpc
-        role: server
+        mode: grpc_attacker
         phases:
           - name: phase-1
             state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - surface: tool_description
-          pattern:
-            contains: "test"
+              tools: []
   expected:
     errors:
       - rule: "V-005"
-        path: "attack.execution.protocol"
+        path: "attack.execution.mode"
 
-- name: "V-005 invalid: execution.role 'attacker' is not a valid enum value"
+- name: "V-005 invalid: execution.mode missing _{role} suffix"
   id: VAL-005d
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: attacker
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - surface: tool_description
-          pattern:
-            contains: "test"
+        mode: mcp
+        state:
+          tools: []
   expected:
     errors:
       - rule: "V-005"
-        path: "attack.execution.role"
+        path: "attack.execution.mode"
 
 - name: "V-005 invalid: status 'published' is not a valid enum value"
   id: VAL-005e
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
       severity: high
       status: published
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - surface: tool_description
-          pattern:
-            contains: "test"
+        mode: mcp_server
+        state:
+          tools: []
   expected:
     errors:
       - rule: "V-005"
         path: "attack.status"
 
-- name: "V-005 invalid: indicator surface 'invalid_surface' is not a valid enum value"
+- name: "V-005 invalid: indicator surface 'invalid_surface' for MCP protocol"
   id: VAL-005f
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: invalid_surface
           pattern:
@@ -560,68 +369,44 @@
       - rule: "V-005"
         path: "attack.indicators[0].surface"
 
-- name: "V-005 invalid: indicator_logic 'majority' is not a valid enum value"
+- name: "V-005 invalid: correlation.logic 'majority' is not a valid enum value"
   id: VAL-005g
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           pattern:
             contains: "test"
-      indicator_logic: majority
+      correlation:
+        logic: majority
   expected:
     errors:
       - rule: "V-005"
-        path: "attack.indicator_logic"
+        path: "attack.correlation.logic"
 
-- name: "V-005 invalid: explicit method 'heuristic' is not a valid enum value"
+- name: "V-005 invalid: indicator has no detection key"
   id: VAL-005h
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
-          method: heuristic
-          pattern:
-            contains: "test"
   expected:
     errors:
-      - rule: "V-005"
-        path: "attack.indicators[0].method"
+      - rule: "V-012"
+        path: "attack.indicators[0]"
 
 # ---------------------------------------------------------------------------
-# V-006: indicators contains at least one entry
+# V-006: indicators contains at least one entry when present
 # ---------------------------------------------------------------------------
 
 - name: "V-006 invalid: indicators is empty array"
@@ -629,21 +414,10 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools: []
       indicators: []
   expected:
     errors:
@@ -659,13 +433,8 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases: []
       indicators:
         - surface: tool_description
@@ -685,13 +454,8 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: phase-1
             state:
@@ -700,10 +464,10 @@
                   description: "A test tool"
                   inputSchema:
                     type: object
-            advance:
+            trigger:
               event: tools/call
           - name: phase-2
-            description: "Terminal phase, no advance."
+            description: "Terminal phase, no trigger."
       indicators:
         - surface: tool_description
           pattern:
@@ -716,13 +480,8 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: phase-1
             state:
@@ -732,7 +491,7 @@
                   inputSchema:
                     type: object
           - name: phase-2
-            advance:
+            trigger:
               event: tools/call
       indicators:
         - surface: tool_description
@@ -743,18 +502,13 @@
       - rule: "V-008"
         path: "attack.execution.phases[0]"
 
-- name: "V-008 invalid: two terminal phases (neither has advance)"
+- name: "V-008 invalid: two terminal phases (neither has trigger)"
   id: VAL-008c
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: phase-1
             state:
@@ -763,7 +517,7 @@
                   description: "A test tool"
                   inputSchema:
                     type: object
-            advance:
+            trigger:
               event: tools/call
           - name: phase-2
             description: "First terminal phase."
@@ -778,18 +532,13 @@
       - rule: "V-008"
         path: "attack.execution.phases"
 
-- name: "V-008 valid: single phase with no advance (terminal-only document)"
+- name: "V-008 valid: single phase with no trigger (terminal-only document)"
   id: VAL-008d
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: only-phase
             state:
@@ -814,13 +563,8 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: phase-1
             state:
@@ -841,13 +585,8 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: phase-1
             description: "No state defined."
@@ -869,27 +608,16 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
-        - id: OATF-TEST-001-01
+        - id: IND-01
           surface: tool_description
           pattern:
             contains: "test"
-        - id: OATF-TEST-001-02
+        - id: IND-02
           surface: tool_name
           pattern:
             contains: "evil"
@@ -901,27 +629,16 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
-        - id: OATF-TEST-001-01
+        - id: IND-01
           surface: tool_description
           pattern:
             contains: "test"
-        - id: OATF-TEST-001-01
+        - id: IND-01
           surface: tool_name
           pattern:
             contains: "evil"
@@ -939,22 +656,13 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: setup
             state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-            advance:
+              tools: []
+            trigger:
               event: tools/call
           - name: exploit
             description: "Terminal phase."
@@ -970,22 +678,13 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: setup
             state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-            advance:
+              tools: []
+            trigger:
               event: tools/call
           - name: setup
             description: "Duplicate name."
@@ -999,29 +698,18 @@
         path: "attack.execution.phases[1].name"
 
 # ---------------------------------------------------------------------------
-# V-012: Each indicator has exactly one method key; method matches present key
+# V-012: Each indicator has exactly one detection key (pattern/expression/semantic)
 # ---------------------------------------------------------------------------
 
-- name: "V-012 valid: indicator has pattern key, method inferred"
+- name: "V-012 valid: indicator has pattern key"
   id: VAL-012a
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           pattern:
@@ -1029,91 +717,55 @@
   expected:
     valid: true
 
-- name: "V-012 invalid: indicator has both pattern and schema keys"
+- name: "V-012 invalid: indicator has both pattern and expression keys"
   id: VAL-012b
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           pattern:
             contains: "test"
-          schema:
-            checks:
-              - type: type_check
-                expected_type: string
+          expression:
+            cel: "true"
   expected:
     errors:
       - rule: "V-012"
         path: "attack.indicators[0]"
 
-- name: "V-012 invalid: method says pattern but schema key is present"
+- name: "V-012 invalid: indicator has both pattern and semantic keys"
   id: VAL-012c
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
-          method: pattern
-          schema:
-            checks:
-              - type: type_check
-                expected_type: string
+          pattern:
+            contains: "test"
+          semantic:
+            intent: "detect injection"
   expected:
     errors:
       - rule: "V-012"
         path: "attack.indicators[0]"
 
-- name: "V-012 invalid: indicator with no method key at all"
+- name: "V-012 invalid: indicator with no detection key at all"
   id: VAL-012d
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
   expected:
@@ -1130,21 +782,10 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           pattern:
@@ -1157,21 +798,10 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           pattern:
@@ -1181,27 +811,18 @@
       - rule: "V-013"
         path: "attack.indicators[0].pattern.regex"
 
-- name: "V-013 invalid: regex in advance.match predicate is also validated"
+- name: "V-013 invalid: regex in trigger.match predicate is also validated"
   id: VAL-013c
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: phase-1
             state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-            advance:
+              tools: []
+            trigger:
               event: tools/call
               match:
                 arguments.command:
@@ -1215,7 +836,7 @@
   expected:
     errors:
       - rule: "V-013"
-        path: "attack.execution.phases[0].advance.match.arguments.command.regex"
+        path: "attack.execution.phases[0].trigger.match.arguments.command.regex"
 
 # ---------------------------------------------------------------------------
 # V-014: All CEL expressions are syntactically valid
@@ -1226,21 +847,10 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           expression:
@@ -1253,21 +863,10 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           expression:
@@ -1286,26 +885,17 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: phase-1
             state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+              tools: []
             extractors:
               - name: tool_name
                 source: request
                 type: json_path
-                expression: "$.tools[0].name"
+                selector: "$.tools[0].name"
       indicators:
         - surface: tool_description
           pattern:
@@ -1318,26 +908,17 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: phase-1
             state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+              tools: []
             extractors:
               - name: broken_path
                 source: request
                 type: json_path
-                expression: "$.tools["
+                selector: "$.tools["
       indicators:
         - surface: tool_description
           pattern:
@@ -1345,7 +926,7 @@
   expected:
     errors:
       - rule: "V-015"
-        path: "attack.execution.phases[0].extractors[0].expression"
+        path: "attack.execution.phases[0].extractors[0].selector"
 
 # ---------------------------------------------------------------------------
 # V-016: All template references use valid syntax
@@ -1356,13 +937,8 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: phase-1
             state:
@@ -1387,13 +963,8 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: phase-1
             state:
@@ -1420,13 +991,8 @@
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: phase-1
             state:
@@ -1447,288 +1013,101 @@
     valid: true
 
 # ---------------------------------------------------------------------------
-# V-017: indicator_window required when indicator_logic is ordered
+# V-017: severity.confidence is in range 0-100
 # ---------------------------------------------------------------------------
 
-- name: "V-017 valid: ordered logic with indicator_window present"
+- name: "V-017 valid: severity.confidence is 75"
   id: VAL-017a
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
-      execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - id: OATF-TEST-001-01
-          surface: tool_description
-          pattern:
-            contains: "test"
-        - id: OATF-TEST-001-02
-          surface: tool_name
-          pattern:
-            contains: "evil"
-      indicator_logic: ordered
-      indicator_window: "5m"
-  expected:
-    valid: true
-
-- name: "V-017 invalid: ordered logic without indicator_window"
-  id: VAL-017b
-  input: |
-    oatf: "0.1"
-    attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
-      execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - id: OATF-TEST-001-01
-          surface: tool_description
-          pattern:
-            contains: "test"
-        - id: OATF-TEST-001-02
-          surface: tool_name
-          pattern:
-            contains: "evil"
-      indicator_logic: ordered
-  expected:
-    errors:
-      - rule: "V-017"
-        path: "attack.indicator_window"
-
-# ---------------------------------------------------------------------------
-# V-018: indicator_expression required when indicator_logic is custom
-# ---------------------------------------------------------------------------
-
-- name: "V-018 valid: custom logic with indicator_expression present"
-  id: VAL-018a
-  input: |
-    oatf: "0.1"
-    attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
-      execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - id: OATF-TEST-001-01
-          surface: tool_description
-          pattern:
-            contains: "test"
-      indicator_logic: custom
-      indicator_expression: 'indicators["OATF-TEST-001-01"].matched'
-  expected:
-    valid: true
-
-- name: "V-018 invalid: custom logic without indicator_expression"
-  id: VAL-018b
-  input: |
-    oatf: "0.1"
-    attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
-      execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - surface: tool_description
-          pattern:
-            contains: "test"
-      indicator_logic: custom
-  expected:
-    errors:
-      - rule: "V-018"
-        path: "attack.indicator_expression"
-
-# ---------------------------------------------------------------------------
-# V-019: severity.confidence is in range 0-100
-# ---------------------------------------------------------------------------
-
-- name: "V-019 valid: severity.confidence is 75"
-  id: VAL-019a
-  input: |
-    oatf: "0.1"
-    attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
       severity:
         level: high
         confidence: 75
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - surface: tool_description
-          pattern:
-            contains: "test"
+        mode: mcp_server
+        state:
+          tools: []
   expected:
     valid: true
 
-- name: "V-019 invalid: severity.confidence is -1 (below range)"
-  id: VAL-019b
+- name: "V-017 invalid: severity.confidence is -1 (below range)"
+  id: VAL-017b
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
       severity:
         level: high
         confidence: -1
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - surface: tool_description
-          pattern:
-            contains: "test"
+        mode: mcp_server
+        state:
+          tools: []
   expected:
     errors:
-      - rule: "V-019"
+      - rule: "V-017"
         path: "attack.severity.confidence"
 
-- name: "V-019 invalid: severity.confidence is 101 (above range)"
-  id: VAL-019c
+- name: "V-017 invalid: severity.confidence is 101 (above range)"
+  id: VAL-017c
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
       severity:
         level: high
         confidence: 101
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - surface: tool_description
-          pattern:
-            contains: "test"
+        mode: mcp_server
+        state:
+          tools: []
   expected:
     errors:
-      - rule: "V-019"
+      - rule: "V-017"
         path: "attack.severity.confidence"
 
-- name: "V-019 valid: severity.confidence at lower boundary (0)"
-  id: VAL-019d
+- name: "V-017 valid: severity.confidence at lower boundary (0)"
+  id: VAL-017d
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
       severity:
         level: low
         confidence: 0
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - surface: tool_description
-          pattern:
-            contains: "test"
+        mode: mcp_server
+        state:
+          tools: []
   expected:
     valid: true
 
-- name: "V-019 valid: severity.confidence at upper boundary (100)"
-  id: VAL-019e
+- name: "V-017 valid: severity.confidence at upper boundary (100)"
+  id: VAL-017e
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
       severity:
         level: high
         confidence: 100
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools: []
+  expected:
+    valid: true
+
+# ---------------------------------------------------------------------------
+# V-018: Indicator surface is valid for the indicator's resolved protocol
+# ---------------------------------------------------------------------------
+
+- name: "V-018 valid: MCP indicator with MCP surface"
+  id: VAL-018a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           pattern:
@@ -1736,153 +1115,40 @@
   expected:
     valid: true
 
-# ---------------------------------------------------------------------------
-# V-020: Each SchemaMatch has at least one check
-# ---------------------------------------------------------------------------
-
-- name: "V-020 valid: schema indicator with at least one check"
-  id: VAL-020b
+- name: "V-018 invalid: MCP execution with A2A surface agent_card"
+  id: VAL-018b
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - surface: tool_input_schema
-          schema:
-            checks:
-              - type: type_check
-                expected_type: object
-  expected:
-    valid: true
-
-- name: "V-020 invalid: schema indicator with empty checks array"
-  id: VAL-020a
-  input: |
-    oatf: "0.1"
-    attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
-      execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - surface: tool_input_schema
-          schema:
-            checks: []
-  expected:
-    errors:
-      - rule: "V-020"
-        path: "attack.indicators[0].schema.checks"
-
-# ---------------------------------------------------------------------------
-# V-021: Indicator surface is valid for the indicator's resolved protocol
-# ---------------------------------------------------------------------------
-
-- name: "V-021 valid: MCP indicator with MCP surface"
-  id: VAL-021a
-  input: |
-    oatf: "0.1"
-    attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
-      execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-      indicators:
-        - surface: tool_description
-          pattern:
-            contains: "test"
-  expected:
-    valid: true
-
-- name: "V-021 invalid: MCP indicator with A2A surface agent_card"
-  id: VAL-021b
-  input: |
-    oatf: "0.1"
-    attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
-      execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: agent_card
           pattern:
             contains: "malicious"
   expected:
     errors:
-      - rule: "V-021"
+      - rule: "V-018"
         path: "attack.indicators[0].surface"
 
 # ---------------------------------------------------------------------------
-# V-022: Trigger count and match only present when event is also present
+# V-019: Trigger count and match only present when event is also present
 # ---------------------------------------------------------------------------
 
-- name: "V-022 invalid: trigger has count but no event"
-  id: VAL-022a
+- name: "V-019 invalid: trigger has count but no event"
+  id: VAL-019a
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: phase-1
             state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-            advance:
+              tools: []
+            trigger:
               count: 3
           - name: phase-2
             description: "Terminal phase."
@@ -1892,30 +1158,21 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-022"
-        path: "attack.execution.phases[0].advance"
+      - rule: "V-019"
+        path: "attack.execution.phases[0].trigger"
 
-- name: "V-022 invalid: trigger has match but no event"
-  id: VAL-022b
+- name: "V-019 invalid: trigger has match but no event"
+  id: VAL-019b
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
-      severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: phase-1
             state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-            advance:
+              tools: []
+            trigger:
               match:
                 arguments.command: "run"
           - name: phase-2
@@ -1926,42 +1183,1360 @@
             contains: "test"
   expected:
     errors:
+      - rule: "V-019"
+        path: "attack.execution.phases[0].trigger"
+
+# ---------------------------------------------------------------------------
+# V-030: Execution form mutual exclusivity (state/phases/actors)
+# ---------------------------------------------------------------------------
+
+- name: "V-030 invalid: both state and phases present"
+  id: VAL-030a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+        phases:
+          - name: phase-1
+            state:
+              tools: []
+  expected:
+    errors:
+      - rule: "V-030"
+        path: "attack.execution"
+
+- name: "V-030 invalid: both state and actors present"
+  id: VAL-030b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
+  expected:
+    errors:
+      - rule: "V-030"
+        path: "attack.execution"
+
+- name: "V-030 invalid: both phases and actors present"
+  id: VAL-030c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools: []
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
+  expected:
+    errors:
+      - rule: "V-030"
+        path: "attack.execution"
+
+- name: "V-030 invalid: state present but mode absent"
+  id: VAL-030d
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-030"
+        path: "attack.execution.mode"
+
+# ---------------------------------------------------------------------------
+# V-031: Multi-actor constraints
+# ---------------------------------------------------------------------------
+
+- name: "V-031 valid: actors with unique names and modes"
+  id: VAL-031a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        actors:
+          - name: attacker
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
+          - name: observer
+            mode: a2a_server
+            phases:
+              - name: phase-1
+                state:
+                  agent_card:
+                    name: "Agent"
+                    description: "An agent"
+                    url: "https://example.com"
+                    skills: []
+      indicators:
+        - protocol: mcp
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-031 invalid: duplicate actor names"
+  id: VAL-031b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        actors:
+          - name: attacker
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
+          - name: attacker
+            mode: a2a_server
+            phases:
+              - name: phase-1
+                state:
+                  agent_card:
+                    name: "Agent"
+                    description: "An agent"
+                    url: "https://example.com"
+                    skills: []
+      indicators:
+        - protocol: mcp
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-031"
+        path: "attack.execution.actors[1].name"
+
+- name: "V-031 invalid: actor name does not match pattern"
+  id: VAL-031c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        actors:
+          - name: "Invalid-Name"
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
+  expected:
+    errors:
+      - rule: "V-031"
+        path: "attack.execution.actors[0].name"
+
+# ---------------------------------------------------------------------------
+# V-036: Mode pattern validation
+# ---------------------------------------------------------------------------
+
+- name: "V-036 valid: standard mode pattern"
+  id: VAL-036a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+  expected:
+    valid: true
+
+- name: "V-036 valid: unknown but valid mode pattern"
+  id: VAL-036b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: custom_proto_server
+        state:
+          tools: []
+  expected:
+    valid: true
+
+# ---------------------------------------------------------------------------
+# V-020: No YAML anchors, aliases, or merge keys
+# ---------------------------------------------------------------------------
+
+- name: "V-020 invalid: document uses YAML alias"
+  id: VAL-020a
+  # NOTE: Test runner must parse this as raw text and detect the alias &anchor/*anchor
+  # before YAML resolution. SDKs whose parsers expose anchor info SHOULD flag this.
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state: &anchor
+          tools: []
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+    extra: *anchor
+  expected:
+    errors:
+      - rule: "V-020"
+
+# ---------------------------------------------------------------------------
+# V-021: Explicit target fields are valid wildcard dot-path syntax
+# ---------------------------------------------------------------------------
+
+- name: "V-021 valid: wildcard target tools[*].description"
+  id: VAL-021a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          pattern:
+            target: "tools[*].description"
+            condition:
+              contains: "test"
+  expected:
+    valid: true
+
+- name: "V-021 invalid: target with numeric index tools[0].description"
+  id: VAL-021b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          pattern:
+            target: "tools[0].description"
+            condition:
+              contains: "test"
+  expected:
+    errors:
+      - rule: "V-021"
+        path: "attack.indicators[0].pattern.target"
+
+- name: "V-021 invalid: target with invalid characters"
+  id: VAL-021c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          pattern:
+            target: "tools[*].desc!!ion"
+            condition:
+              contains: "test"
+  expected:
+    errors:
+      - rule: "V-021"
+        path: "attack.indicators[0].pattern.target"
+
+# ---------------------------------------------------------------------------
+# V-022: semantic.threshold in range [0.0, 1.0]
+# ---------------------------------------------------------------------------
+
+- name: "V-022 valid: semantic.threshold 0.5"
+  id: VAL-022a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          semantic:
+            intent: "Detect injection"
+            threshold: 0.5
+  expected:
+    valid: true
+
+- name: "V-022 invalid: semantic.threshold -0.1"
+  id: VAL-022b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          semantic:
+            intent: "Detect injection"
+            threshold: -0.1
+  expected:
+    errors:
       - rule: "V-022"
-        path: "attack.execution.phases[0].advance"
+        path: "attack.indicators[0].semantic.threshold"
+
+- name: "V-022 invalid: semantic.threshold 1.1"
+  id: VAL-022c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          semantic:
+            intent: "Detect injection"
+            threshold: 1.1
+  expected:
+    errors:
+      - rule: "V-022"
+        path: "attack.indicators[0].semantic.threshold"
+
+- name: "V-022 valid: semantic.threshold 0.0 (lower boundary)"
+  id: VAL-022d
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          semantic:
+            intent: "Detect injection"
+            threshold: 0.0
+  expected:
+    valid: true
+
+- name: "V-022 valid: semantic.threshold 1.0 (upper boundary)"
+  id: VAL-022e
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          semantic:
+            intent: "Detect injection"
+            threshold: 1.0
+  expected:
+    valid: true
+
+# ---------------------------------------------------------------------------
+# V-023: attack.id matches pattern ^[A-Z][A-Z0-9-]*-[0-9]{3,}$
+# ---------------------------------------------------------------------------
+
+- name: "V-023 valid: attack.id OATF-001"
+  id: VAL-023a
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-001
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+  expected:
+    valid: true
+
+- name: "V-023 invalid: attack.id lowercase-001"
+  id: VAL-023b
+  input: |
+    oatf: "0.1"
+    attack:
+      id: lowercase-001
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+  expected:
+    errors:
+      - rule: "V-023"
+        path: "attack.id"
+
+- name: "V-023 invalid: attack.id OATF (missing numeric suffix)"
+  id: VAL-023c
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+  expected:
+    errors:
+      - rule: "V-023"
+        path: "attack.id"
+
+# ---------------------------------------------------------------------------
+# V-024: indicator.id matches pattern AND prefix equals attack.id
+# ---------------------------------------------------------------------------
+
+- name: "V-024 valid: indicator.id OATF-001-01 matching attack.id OATF-001"
+  id: VAL-024a
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-001
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - id: OATF-001-01
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-024 invalid: indicator.id OTHER-001-01 not matching attack.id OATF-001"
+  id: VAL-024b
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-001
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - id: OTHER-001-01
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-024"
+        path: "attack.indicators[0].id"
+
+- name: "V-024 invalid: indicator.id OATF-001 missing indicator suffix"
+  id: VAL-024c
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-001
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - id: OATF-001
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-024"
+        path: "attack.indicators[0].id"
+
+# ---------------------------------------------------------------------------
+# V-025: indicator.confidence in range 0–100
+# ---------------------------------------------------------------------------
+
+- name: "V-025 valid: indicator.confidence 50"
+  id: VAL-025a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          confidence: 50
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-025 invalid: indicator.confidence -1"
+  id: VAL-025b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          confidence: -1
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-025"
+        path: "attack.indicators[0].confidence"
+
+- name: "V-025 invalid: indicator.confidence 101"
+  id: VAL-025c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          confidence: 101
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-025"
+        path: "attack.indicators[0].confidence"
+
+# ---------------------------------------------------------------------------
+# V-026: expression.variables values are valid simple dot-paths
+# ---------------------------------------------------------------------------
+
+- name: "V-026 valid: expression variable value tools.name (simple dot-path)"
+  id: VAL-026a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          expression:
+            cel: "desc.contains('inject')"
+            variables:
+              desc: "tools.name"
+  expected:
+    valid: true
+
+- name: "V-026 invalid: expression variable value with wildcard"
+  id: VAL-026b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          expression:
+            cel: "desc.contains('inject')"
+            variables:
+              desc: "tools[*].name"
+  expected:
+    errors:
+      - rule: "V-026"
+        path: "attack.indicators[0].expression.variables.desc"
+
+# ---------------------------------------------------------------------------
+# V-027: MatchPredicate keys are valid simple dot-paths
+# ---------------------------------------------------------------------------
+
+- name: "V-027 valid: predicate key arguments.command (simple dot-path)"
+  id: VAL-027a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools: []
+            trigger:
+              event: tools/call
+              match:
+                arguments.command: "run"
+          - name: phase-2
+            description: "Terminal phase."
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-027 invalid: predicate key with wildcard"
+  id: VAL-027b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools: []
+            trigger:
+              event: tools/call
+              match:
+                "args[*].cmd": "run"
+          - name: phase-2
+            description: "Terminal phase."
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-027"
+        path: "attack.execution.phases[0].trigger.match.args[*].cmd"
+
+# ---------------------------------------------------------------------------
+# V-028: Mode-less multi-phase: every phase specifies mode, every indicator specifies protocol
+# ---------------------------------------------------------------------------
+
+- name: "V-028 valid: mode-less multi-phase, all phases have mode, all indicators have protocol"
+  id: VAL-028a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        phases:
+          - name: phase-1
+            mode: mcp_server
+            state:
+              tools: []
+            trigger:
+              event: tools/call
+          - name: phase-2
+            mode: a2a_server
+            state:
+              agent_card:
+                name: "Agent"
+                description: "An agent"
+                url: "https://example.com"
+                skills: []
+      indicators:
+        - protocol: mcp
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-028 invalid: mode-less multi-phase, one phase missing mode"
+  id: VAL-028b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        phases:
+          - name: phase-1
+            mode: mcp_server
+            state:
+              tools: []
+            trigger:
+              event: tools/call
+          - name: phase-2
+            state:
+              tools: []
+      indicators:
+        - protocol: mcp
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-028"
+        path: "attack.execution.phases[1].mode"
+
+- name: "V-028 invalid: execution.mode absent, indicator missing protocol"
+  id: VAL-028c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        phases:
+          - name: phase-1
+            mode: mcp_server
+            state:
+              tools: []
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-028"
+        path: "attack.indicators[0].protocol"
+
+# ---------------------------------------------------------------------------
+# V-029: Trigger event types valid per Event-Mode Validity Matrix
+# ---------------------------------------------------------------------------
+
+- name: "V-029 valid: mcp_server trigger event tools/call"
+  id: VAL-029a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools: []
+            trigger:
+              event: tools/call
+          - name: phase-2
+            description: "Terminal phase."
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-029 invalid: mcp_server trigger event message/send (a2a event)"
+  id: VAL-029b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools: []
+            trigger:
+              event: message/send
+          - name: phase-2
+            description: "Terminal phase."
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-029"
+        path: "attack.execution.phases[0].trigger.event"
+
+- name: "V-029 valid: unknown mode skips event validation"
+  id: VAL-029c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: custom_proto_server
+        phases:
+          - name: phase-1
+            state:
+              tools: []
+            trigger:
+              event: custom/event
+          - name: phase-2
+            description: "Terminal phase."
+  expected:
+    valid: true
+
+# ---------------------------------------------------------------------------
+# V-032: Cross-actor template references resolve
+# ---------------------------------------------------------------------------
+
+- name: "V-032 valid: template references existing actor name"
+  id: VAL-032a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        actors:
+          - name: actor_a
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: "test"
+                      description: "A test tool"
+                      inputSchema:
+                        type: object
+                      response:
+                        content:
+                          - type: text
+                            text: "Result: {{actor_b.extracted_val}}"
+                extractors:
+                  - name: local_var
+                    source: request
+                    type: json_path
+                    selector: "$.name"
+          - name: actor_b
+            mode: a2a_server
+            phases:
+              - name: phase-1
+                state:
+                  agent_card:
+                    name: "Agent"
+                    description: "An agent"
+                    url: "https://example.com"
+                    skills: []
+                extractors:
+                  - name: extracted_val
+                    source: request
+                    type: json_path
+                    selector: "$.task_id"
+      indicators:
+        - protocol: mcp
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-032 invalid: template references nonexistent actor"
+  id: VAL-032b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        actors:
+          - name: actor_a
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: "test"
+                      description: "A test tool"
+                      inputSchema:
+                        type: object
+                      response:
+                        content:
+                          - type: text
+                            text: "Result: {{nonexistent.var}}"
+      indicators:
+        - protocol: mcp
+          surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-032"
+        path: "attack.execution.actors[0].phases[0].state.tools[0].response.content[0].text"
+
+# ---------------------------------------------------------------------------
+# V-033: content/messages and synthesize mutually exclusive
+# ---------------------------------------------------------------------------
+
+- name: "V-033 valid: MCP tool response with synthesize only"
+  id: VAL-033a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: "test"
+              description: "A test tool"
+              inputSchema:
+                type: object
+              response:
+                synthesize:
+                  prompt: "Generate a plausible response"
+  expected:
+    valid: true
+
+- name: "V-033 invalid: MCP tool response with content and synthesize"
+  id: VAL-033b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: "test"
+              description: "A test tool"
+              inputSchema:
+                type: object
+              response:
+                content:
+                  - type: text
+                    text: "static"
+                synthesize:
+                  prompt: "Generate a plausible response"
+  expected:
+    errors:
+      - rule: "V-033"
+        path: "attack.execution.state.tools[0].response"
+
+# ---------------------------------------------------------------------------
+# V-034: At most one catch-all response entry (omitting when)
+# ---------------------------------------------------------------------------
+
+- name: "V-034 valid: responses with one catch-all at end"
+  id: VAL-034a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: "test"
+              description: "A test tool"
+              inputSchema:
+                type: object
+              responses:
+                - when:
+                    arguments.command: "safe"
+                  content:
+                    - type: text
+                      text: "safe response"
+                - content:
+                    - type: text
+                      text: "default response"
+  expected:
+    valid: true
+
+- name: "V-034 invalid: responses with two entries both omitting when"
+  id: VAL-034b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: "test"
+              description: "A test tool"
+              inputSchema:
+                type: object
+              responses:
+                - content:
+                    - type: text
+                      text: "first default"
+                - content:
+                    - type: text
+                      text: "second default"
+  expected:
+    errors:
+      - rule: "V-034"
+        path: "attack.execution.state.tools[0].responses"
+
+# ---------------------------------------------------------------------------
+# V-035: synthesize.prompt non-empty string
+# ---------------------------------------------------------------------------
+
+- name: "V-035 valid: synthesize with non-empty prompt"
+  id: VAL-035a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: "test"
+              description: "A test tool"
+              inputSchema:
+                type: object
+              response:
+                synthesize:
+                  prompt: "Generate a convincing response"
+  expected:
+    valid: true
+
+- name: "V-035 invalid: synthesize with empty prompt"
+  id: VAL-035b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: "test"
+              description: "A test tool"
+              inputSchema:
+                type: object
+              response:
+                synthesize:
+                  prompt: ""
+  expected:
+    errors:
+      - rule: "V-035"
+        path: "attack.execution.state.tools[0].response.synthesize.prompt"
 
 # ---------------------------------------------------------------------------
 # Multi-error: document violating multiple rules simultaneously
 # ---------------------------------------------------------------------------
 
-- name: "Multiple violations: missing severity, empty indicators, duplicate phase names"
+- name: "Multiple violations: empty indicators, duplicate phase names"
   id: VAL-MULTI-001
   input: |
     oatf: "0.1"
     attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack for conformance testing."
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: setup
             state:
-              tools:
-                - name: test-tool
-                  description: "A test tool"
-                  inputSchema:
-                    type: object
-            advance:
+              tools: []
+            trigger:
               event: tools/call
           - name: setup
             description: "Duplicate phase name."
       indicators: []
   expected:
     errors:
-      - rule: "V-004"
-        path: "attack.severity"
       - rule: "V-006"
         path: "attack.indicators"
       - rule: "V-011"
         path: "attack.execution.phases[1].name"
+
+# ---------------------------------------------------------------------------
+# V-037: attack.version, when present, MUST be a positive integer (>= 1)
+# ---------------------------------------------------------------------------
+
+- name: "V-037 valid: version is 1"
+  id: VAL-037a
+  input: |
+    oatf: "0.1"
+    attack:
+      version: 1
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test-tool
+              description: "A test tool"
+              inputSchema:
+                type: object
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-037 valid: version is large positive integer"
+  id: VAL-037b
+  input: |
+    oatf: "0.1"
+    attack:
+      version: 99
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test-tool
+              description: "A test tool"
+              inputSchema:
+                type: object
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-037 invalid: version is 0"
+  id: VAL-037c
+  input: |
+    oatf: "0.1"
+    attack:
+      version: 0
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test-tool
+              description: "A test tool"
+              inputSchema:
+                type: object
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-037"
+        path: "attack.version"
+
+- name: "V-037 invalid: version is negative"
+  id: VAL-037d
+  input: |
+    oatf: "0.1"
+    attack:
+      version: -1
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test-tool
+              description: "A test tool"
+              inputSchema:
+                type: object
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-037"
+        path: "attack.version"
+
+# ---------------------------------------------------------------------------
+# V-038: trigger.after, when present, MUST be a valid duration
+# ---------------------------------------------------------------------------
+
+- name: "V-038 valid: shorthand duration"
+  id: VAL-038a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            trigger:
+              event: tools/call
+          - name: phase-2
+            trigger:
+              after: 30s
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-038 valid: ISO 8601 duration"
+  id: VAL-038b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            trigger:
+              event: tools/call
+          - name: phase-2
+            trigger:
+              after: PT1H30M
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-038 invalid: malformed duration"
+  id: VAL-038c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            trigger:
+              event: tools/call
+          - name: phase-2
+            trigger:
+              after: "not-a-duration"
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-038"
+        path: "attack.execution.phases[1].trigger.after"
+
+# ---------------------------------------------------------------------------
+# V-039: Extractor names MUST match [a-z][a-z0-9_]*
+# ---------------------------------------------------------------------------
+
+- name: "V-039 valid: lowercase extractor name with underscores"
+  id: VAL-039a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            extractors:
+              - name: tool_name
+                source: request
+                type: json_path
+                selector: "$.name"
+            trigger:
+              event: tools/call
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-039 invalid: extractor name with uppercase"
+  id: VAL-039b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            extractors:
+              - name: ToolName
+                source: request
+                type: json_path
+                selector: "$.name"
+            trigger:
+              event: tools/call
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-039"
+        path: "attack.execution.phases[0].extractors[0].name"
+
+- name: "V-039 invalid: extractor name starting with digit"
+  id: VAL-039c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            extractors:
+              - name: 1tool
+                source: request
+                type: json_path
+                selector: "$.name"
+            trigger:
+              event: tools/call
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-039"
+        path: "attack.execution.phases[0].extractors[0].name"
+
+# ---------------------------------------------------------------------------
+# V-040: phase.extractors, when present, MUST contain at least one entry
+# ---------------------------------------------------------------------------
+
+- name: "V-040 invalid: empty extractors array"
+  id: VAL-040a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            extractors: []
+            trigger:
+              event: tools/call
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-040"
+        path: "attack.execution.phases[0].extractors"

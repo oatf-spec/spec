@@ -4,11 +4,11 @@
   "title": "Open Agent Threat Format (OATF) v0.1",
   "description": "Schema for validating OATF documents that describe security threats against AI agent communication protocols (MCP, A2A, AG-UI).",
   "type": "object",
-  "required": ["oatf", "attack"],
+  "required": [
+    "oatf",
+    "attack"
+  ],
   "additionalProperties": false,
-  "patternProperties": {
-    "^x-": {}
-  },
   "properties": {
     "$schema": {
       "type": "string",
@@ -25,51 +25,59 @@
       "description": "The attack definition. Exactly one per document."
     }
   },
-
   "$defs": {
-
     "SeverityLevel": {
       "type": "string",
-      "enum": ["informational", "low", "medium", "high", "critical"],
+      "enum": [
+        "informational",
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
       "description": "Severity classification from informational (observation only) to critical (full compromise)."
     },
-
     "Protocol": {
       "type": "string",
-      "enum": ["mcp", "a2a", "ag_ui"],
-      "description": "Agent communication protocol identifier."
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Agent communication protocol identifier. Open string; v0.1 defines: mcp, a2a, ag_ui. Used by indicators to specify which protocol's traffic to match against."
     },
-
-    "Role": {
+    "Mode": {
       "type": "string",
-      "enum": ["server", "client", "peer"],
-      "description": "Role the adversarial tool assumes. server: malicious server. client: malicious client. peer: malicious peer agent."
+      "pattern": "^[a-z][a-z0-9_]*_(server|client)$",
+      "description": "Attacker posture: {protocol}_{role} convention. Open string; v0.1 defines: mcp_server, mcp_client, a2a_server, a2a_client, ag_ui_client. The protocol component (before _server/_client) identifies the binding; the role determines client vs server behavior."
     },
-
     "Impact": {
       "type": "string",
       "enum": [
+        "behavior_manipulation",
         "data_exfiltration",
+        "data_tampering",
         "unauthorized_actions",
-        "service_disruption",
-        "privilege_escalation",
         "information_disclosure",
-        "credential_theft"
+        "credential_theft",
+        "service_disruption",
+        "privilege_escalation"
       ],
       "description": "Category of harm: what happens when the attack succeeds."
     },
-
     "Duration": {
       "type": "string",
       "pattern": "^([0-9]+[smhd]|P[0-9]+D(T([0-9]+H([0-9]+M)?([0-9]+S)?|[0-9]+M([0-9]+S)?|[0-9]+S))?|PT([0-9]+H([0-9]+M)?([0-9]+S)?|[0-9]+M([0-9]+S)?|[0-9]+S))$",
       "description": "Time duration. Shorthand (30s, 5m, 1h, 2d) or ISO 8601 (PT30S, PT5M30S, P1DT12H).",
-      "examples": ["30s", "5m", "1h", "PT30S", "PT5M30S", "P1DT12H"]
+      "examples": [
+        "30s",
+        "5m",
+        "1h",
+        "PT30S",
+        "PT5M30S",
+        "P1DT12H"
+      ]
     },
-
     "Surface": {
       "type": "string",
-      "description": "Protocol-specific attack surface being examined. Valid values are defined in the protocol binding sections (spec §7).",
-      "enum": [
+      "description": "Protocol-specific attack surface being examined. Values for v0.1 bindings are defined in the protocol binding sections (spec §7). Surfaces for unrecognized bindings are structurally valid; tools MUST skip surface validation for unrecognized protocols.",
+      "examples": [
         "tool_description",
         "tool_input_schema",
         "tool_name",
@@ -77,54 +85,148 @@
         "tool_arguments",
         "resource_content",
         "resource_uri",
-        "resource_description",
-        "prompt_template",
-        "prompt_arguments",
-        "prompt_description",
-        "notification",
-        "capability",
-        "server_info",
-        "sampling_request",
-        "roots_response",
+        "prompt_content",
         "agent_card",
-        "agent_card_name",
-        "agent_card_description",
         "skill_description",
-        "skill_name",
         "task_message",
-        "task_artifact",
-        "task_status",
         "message_history",
-        "tool_definitions",
         "tool_result",
-        "state",
-        "forwarded_props",
-        "agent_event",
-        "agent_tool_call"
+        "agent_state"
       ]
     },
-
     "MatchCondition": {
       "type": "object",
-      "description": "Condition operator applied to a field value. All string operators are case-sensitive; use regex with (?i) for case-insensitive matching.",
+      "description": "A single condition operator or combination of operators (AND logic). At least one operator key (contains, starts_with, ends_with, regex, any_of, gt, lt, gte, lte, exists) MUST be present.",
       "properties": {
-        "contains": { "type": "string", "description": "Substring match (case-sensitive)." },
-        "starts_with": { "type": "string", "description": "Prefix match (case-sensitive)." },
-        "ends_with": { "type": "string", "description": "Suffix match (case-sensitive)." },
-        "regex": { "type": "string", "description": "RE2-compatible regular expression. No lookarounds, no backreferences." },
-        "any_of": { "type": "array", "description": "Match any of the listed values (OR logic)." },
-        "gt": { "type": "number", "description": "Greater than." },
-        "lt": { "type": "number", "description": "Less than." },
-        "gte": { "type": "number", "description": "Greater than or equal." },
-        "lte": { "type": "number", "description": "Less than or equal." }
+        "contains": {
+          "type": "string",
+          "description": "Substring match (case-sensitive)."
+        },
+        "starts_with": {
+          "type": "string",
+          "description": "Prefix match (case-sensitive)."
+        },
+        "ends_with": {
+          "type": "string",
+          "description": "Suffix match (case-sensitive)."
+        },
+        "regex": {
+          "type": "string",
+          "description": "RE2-compatible regular expression. No lookarounds, no backreferences."
+        },
+        "any_of": {
+          "type": "array",
+          "description": "Match any of the listed values (OR logic). Deep equality: arrays compare element-wise, objects compare key-value pairs ignoring key order.",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              }
+            ]
+          }
+        },
+        "gt": {
+          "type": "number",
+          "description": "Greater than."
+        },
+        "lt": {
+          "type": "number",
+          "description": "Less than."
+        },
+        "gte": {
+          "type": "number",
+          "description": "Greater than or equal."
+        },
+        "lte": {
+          "type": "number",
+          "description": "Less than or equal."
+        },
+        "exists": {
+          "type": "boolean",
+          "description": "Field presence check. true: matches if the path resolved to a value (including null). false: matches if the path did not resolve."
+        }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "contains"
+          ]
+        },
+        {
+          "required": [
+            "starts_with"
+          ]
+        },
+        {
+          "required": [
+            "ends_with"
+          ]
+        },
+        {
+          "required": [
+            "regex"
+          ]
+        },
+        {
+          "required": [
+            "any_of"
+          ]
+        },
+        {
+          "required": [
+            "gt"
+          ]
+        },
+        {
+          "required": [
+            "lt"
+          ]
+        },
+        {
+          "required": [
+            "gte"
+          ]
+        },
+        {
+          "required": [
+            "lte"
+          ]
+        },
+        {
+          "required": [
+            "exists"
+          ]
+        }
+      ]
     },
-
     "Attack": {
       "type": "object",
-      "description": "A single attack definition containing metadata, execution profile, and detection indicators.",
-      "required": ["id", "name", "description", "severity", "execution", "indicators"],
+      "description": "A single attack definition containing metadata, execution profile, and optionally detection indicators.",
+      "required": [
+        "execution"
+      ],
+      "dependentRequired": {
+        "correlation": [
+          "indicators"
+        ]
+      },
       "additionalProperties": false,
       "patternProperties": {
         "^x-": {}
@@ -132,57 +234,103 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^OATF-[0-9]{3,}$",
-          "description": "Unique stable identifier. Assigned sequentially, never reused.",
-          "examples": ["OATF-001", "OATF-027", "OATF-1042"]
+          "pattern": "^[A-Z][A-Z0-9-]*-[0-9]{3,}$",
+          "description": "Unique stable identifier. Format: {PREFIX}-{NUMBER}. The OATF- prefix is reserved for the official public registry. Optional for local development.",
+          "examples": [
+            "OATF-001",
+            "OATF-027",
+            "ACME-001"
+          ]
         },
         "name": {
           "type": "string",
-          "maxLength": 80,
-          "description": "Human-readable name for the attack. Should be concise and descriptive.",
-          "examples": ["Tool Description Prompt Injection", "Tool Definition Rug Pull"]
+          "default": "Untitled",
+          "description": "Human-readable name for the attack. SHOULD be concise (under 80 characters). Defaults to \"Untitled\" when omitted.",
+          "examples": [
+            "Tool Description Prompt Injection",
+            "Tool Definition Rug Pull"
+          ]
         },
         "version": {
-          "type": "string",
-          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$",
-          "default": "1.0.0",
-          "description": "SemVer version. MAJOR for breaking changes, MINOR for additions, PATCH for fixes.",
-          "examples": ["1.0.0", "1.2.0", "2.0.0"]
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Document version. Monotonically increasing positive integer. Higher is newer.",
+          "examples": [
+            1,
+            2,
+            3
+          ]
         },
         "status": {
           "type": "string",
-          "enum": ["draft", "experimental", "stable", "deprecated"],
+          "enum": [
+            "draft",
+            "experimental",
+            "stable",
+            "deprecated"
+          ],
           "default": "draft",
           "description": "Lifecycle status: draft -> experimental -> stable -> deprecated."
         },
         "created": {
-          "type": "string",
-          "format": "date",
-          "description": "Date first published (YYYY-MM-DD). May be populated from version control.",
-          "examples": ["2026-01-15"]
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "string",
+              "format": "date"
+            }
+          ],
+          "description": "Date/time first published. ISO 8601 datetime (2026-01-15T10:30:00Z) or bare date (2026-01-15).",
+          "examples": [
+            "2026-01-15T10:30:00Z",
+            "2026-01-15"
+          ]
         },
         "modified": {
-          "type": "string",
-          "format": "date",
-          "description": "Date last modified (YYYY-MM-DD). May be populated from version control.",
-          "examples": ["2026-02-15"]
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "string",
+              "format": "date"
+            }
+          ],
+          "description": "Date/time last modified. ISO 8601 datetime or bare date.",
+          "examples": [
+            "2026-02-15T14:00:00Z",
+            "2026-02-15"
+          ]
         },
         "author": {
           "type": "string",
           "description": "Author or organization that created this document.",
-          "examples": ["ThoughtJack Project"]
+          "examples": [
+            "ThoughtJack Project"
+          ]
         },
         "description": {
           "type": "string",
           "description": "Prose description of the attack: what it does, why it matters, what conditions enable it."
         },
+        "grace_period": {
+          "$ref": "#/$defs/Duration",
+          "description": "Post-terminal-phase observation window. Duration to continue observing after all terminal phases complete before computing the final verdict."
+        },
         "severity": {
           "$ref": "#/$defs/Severity",
-          "description": "Threat level. Accepts scalar string (\"high\") or full object with level, confidence, and CVSS."
+          "description": "Threat level. Accepts scalar string (\"high\") or full object with level and confidence. Optional; absent when not assessed."
         },
         "impact": {
           "type": "array",
-          "items": { "$ref": "#/$defs/Impact" },
+          "items": {
+            "$ref": "#/$defs/Impact"
+          },
           "uniqueItems": true,
           "description": "Categories of harm this attack can cause."
         },
@@ -191,7 +339,9 @@
         },
         "references": {
           "type": "array",
-          "items": { "$ref": "#/$defs/Reference" },
+          "items": {
+            "$ref": "#/$defs/Reference"
+          },
           "description": "External references: research papers, blog posts, CVE entries, related OATF documents."
         },
         "execution": {
@@ -200,35 +350,29 @@
         "indicators": {
           "type": "array",
           "minItems": 1,
-          "items": { "$ref": "#/$defs/Indicator" },
-          "description": "Detection patterns for identifying this attack in observed protocol traffic."
+          "items": {
+            "$ref": "#/$defs/Indicator"
+          },
+          "description": "Patterns for determining whether the agent complied with this attack. Optional; when absent the document is valid for simulation only."
         },
-        "indicator_logic": {
-          "type": "string",
-          "enum": ["any", "all", "ordered", "custom"],
-          "default": "any",
-          "description": "How indicator verdicts combine. any: at least one. all: every indicator. ordered: in sequence within window. custom: CEL expression."
-        },
-        "indicator_window": {
-          "$ref": "#/$defs/Duration",
-          "description": "Maximum time span for correlated indicators (first to last matched timestamp)."
-        },
-        "indicator_expression": {
-          "type": "string",
-          "description": "CEL expression for custom indicator logic. Required when indicator_logic is 'custom'."
+        "correlation": {
+          "type": "object",
+          "description": "How indicator verdicts combine to produce the attack-level verdict.",
+          "additionalProperties": false,
+          "properties": {
+            "logic": {
+              "type": "string",
+              "enum": [
+                "any",
+                "all"
+              ],
+              "default": "any",
+              "description": "How indicator verdicts combine. any: at least one indicator matched means exploited. all: every indicator must match."
+            }
+          }
         }
-      },
-      "if": {
-        "properties": {
-          "indicator_logic": { "const": "custom" }
-        },
-        "required": ["indicator_logic"]
-      },
-      "then": {
-        "required": ["indicator_expression"]
       }
     },
-
     "Severity": {
       "oneOf": [
         {
@@ -237,8 +381,10 @@
         },
         {
           "type": "object",
-          "description": "Full severity specification with confidence and optional CVSS vector.",
-          "required": ["level"],
+          "description": "Full severity specification with confidence.",
+          "required": [
+            "level"
+          ],
           "additionalProperties": false,
           "properties": {
             "level": {
@@ -249,26 +395,16 @@
               "minimum": 0,
               "maximum": 100,
               "default": 50,
-              "description": "Confidence this attack represents a real threat (0-100, STIX scale). 0 = no confidence, 100 = certain."
-            },
-            "cvss": {
-              "type": "string",
-              "pattern": "^CVSS:3\\.1/",
-              "description": "CVSS 3.1 vector string.",
-              "examples": ["CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:N"]
+              "description": "Confidence in the assigned severity level (0-100, STIX scale). 0 = no confidence, 100 = certain."
             }
           }
         }
       ]
     },
-
     "Classification": {
       "type": "object",
       "description": "Maps the attack to external security frameworks and the OATF category taxonomy.",
       "additionalProperties": false,
-      "patternProperties": {
-        "^x-": {}
-      },
       "properties": {
         "category": {
           "type": "string",
@@ -276,7 +412,6 @@
             "capability_poisoning",
             "response_fabrication",
             "context_manipulation",
-            "discovery_exploitation",
             "oversight_bypass",
             "temporal_manipulation",
             "availability_disruption",
@@ -284,104 +419,95 @@
           ],
           "description": "Cross-protocol attack category. Describes type of attack independent of which protocol it targets."
         },
-        "protocols": {
+        "mappings": {
           "type": "array",
-          "items": { "$ref": "#/$defs/Protocol" },
-          "minItems": 1,
-          "uniqueItems": true,
-          "description": "Targeted protocols. Inferred from execution profile and indicators when omitted."
-        },
-        "atlas": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/ATLASMapping" },
-          "description": "MITRE ATLAS technique mappings for AI-specific threat classification."
-        },
-        "mitre_attack": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/ATTACKMapping" },
-          "description": "MITRE ATT&CK tactic and technique mappings."
-        },
-        "owasp_mcp": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "OWASP MCP Top 10 identifiers.",
-          "examples": [["MCP-03", "MCP-06"]]
-        },
-        "owasp_agentic": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "OWASP Agentic AI Top 10 identifiers."
+          "items": {
+            "$ref": "#/$defs/FrameworkMapping"
+          },
+          "description": "Mappings to external security frameworks (ATLAS, ATT&CK, OWASP, CWE, etc.)."
         },
         "tags": {
           "type": "array",
-          "items": { "type": "string" },
-          "description": "Free-form tags for filtering and discovery.",
-          "examples": [["injection", "rug-pull", "multi-phase"]]
+          "items": {
+            "type": "string"
+          },
+          "description": "Free-form tags for filtering and discovery. Should be lowercase and hyphenated.",
+          "examples": [
+            [
+              "injection",
+              "rug-pull",
+              "multi-phase"
+            ]
+          ]
         }
       }
     },
-
-    "ATLASMapping": {
+    "FrameworkMapping": {
       "type": "object",
-      "description": "Mapping to a MITRE ATLAS technique.",
-      "required": ["technique"],
+      "description": "Mapping to an entry in an external security framework.",
+      "required": [
+        "framework",
+        "id"
+      ],
       "additionalProperties": false,
       "properties": {
-        "technique": {
+        "framework": {
           "type": "string",
-          "pattern": "^AML\\.T[0-9]{4}$",
-          "description": "ATLAS technique identifier.",
-          "examples": ["AML.T0051"]
+          "minLength": 1,
+          "description": "The external framework being referenced. Recommended values: atlas, mitre_attack, owasp_llm, owasp_mcp, owasp_agentic, cwe. Any string is accepted for custom or future frameworks.",
+          "examples": [
+            "atlas",
+            "mitre_attack",
+            "owasp_llm",
+            "owasp_mcp",
+            "owasp_agentic",
+            "cwe",
+            "other"
+          ]
         },
-        "sub_technique": {
+        "id": {
           "type": "string",
-          "pattern": "^AML\\.T[0-9]{4}\\.[0-9]{3}$",
-          "description": "ATLAS sub-technique identifier.",
-          "examples": ["AML.T0051.001", "AML.T0051.002"]
+          "description": "The identifier of the specific entry within the framework.",
+          "examples": [
+            "AML.T0051.002",
+            "T1195.002",
+            "TA0001",
+            "MCP-03",
+            "ASI-01",
+            "LLM01",
+            "CWE-74"
+          ]
         },
         "name": {
           "type": "string",
-          "description": "Human-readable technique name.",
-          "examples": ["Direct Prompt Injection", "Indirect Prompt Injection"]
+          "description": "Human-readable name of the referenced entry.",
+          "examples": [
+            "Indirect Prompt Injection",
+            "Supply Chain Compromise"
+          ]
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Permalink to the referenced entry in the framework's documentation."
+        },
+        "relationship": {
+          "type": "string",
+          "enum": [
+            "primary",
+            "related"
+          ],
+          "default": "primary",
+          "description": "How closely this attack maps to the referenced entry. Primary = directly implements; related = associated but not a direct implementation."
         }
       }
     },
-
-    "ATTACKMapping": {
-      "type": "object",
-      "description": "Mapping to a MITRE ATT&CK tactic and technique.",
-      "required": ["tactic", "technique"],
-      "additionalProperties": false,
-      "properties": {
-        "tactic": {
-          "type": "string",
-          "pattern": "^TA[0-9]{4}$",
-          "description": "ATT&CK tactic identifier.",
-          "examples": ["TA0001"]
-        },
-        "tactic_name": {
-          "type": "string",
-          "description": "Human-readable tactic name.",
-          "examples": ["Initial Access", "Execution", "Persistence"]
-        },
-        "technique": {
-          "type": "string",
-          "pattern": "^T[0-9]{4}(\\.[0-9]{3})?$",
-          "description": "ATT&CK technique identifier, optionally with sub-technique.",
-          "examples": ["T1195", "T1195.002"]
-        },
-        "technique_name": {
-          "type": "string",
-          "description": "Human-readable technique name.",
-          "examples": ["Supply Chain Compromise"]
-        }
-      }
-    },
-
     "Reference": {
       "type": "object",
       "description": "External reference providing context for the attack.",
-      "required": ["url"],
+      "required": [
+        "url"
+      ],
       "additionalProperties": false,
       "properties": {
         "url": {
@@ -399,105 +525,124 @@
         }
       }
     },
-
     "ExecutionProfile": {
       "type": "object",
-      "description": "Specifies the protocol messages an adversarial tool must produce to simulate the attack.",
-      "required": ["protocol", "role", "phases"],
+      "description": "Specifies the protocol messages an adversarial tool must produce. Supports three mutually exclusive forms: single-phase (mode + state), multi-phase (phases, mode optional), or multi-actor (actors array).",
       "additionalProperties": false,
       "patternProperties": {
         "^x-": {}
       },
+      "oneOf": [
+        {
+          "description": "Single-phase form: mode + state, no phases/actors.",
+          "required": [
+            "mode",
+            "state"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "phases"
+                ]
+              },
+              {
+                "required": [
+                  "actors"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "description": "Multi-phase form: phases (mode optional), no state/actors.",
+          "required": [
+            "phases"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "state"
+                ]
+              },
+              {
+                "required": [
+                  "actors"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "description": "Multi-actor form: actors, no mode/state/phases.",
+          "required": [
+            "actors"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "mode"
+                ]
+              },
+              {
+                "required": [
+                  "state"
+                ]
+              },
+              {
+                "required": [
+                  "phases"
+                ]
+              }
+            ]
+          }
+        }
+      ],
       "properties": {
-        "protocol": {
-          "$ref": "#/$defs/Protocol",
-          "description": "Primary protocol targeted. Cross-protocol attacks set per-phase overrides."
+        "mode": {
+          "$ref": "#/$defs/Mode",
+          "description": "Attacker posture. Required in single-phase form."
         },
-        "role": {
-          "$ref": "#/$defs/Role",
-          "description": "Default role the adversarial tool assumes. Individual phases may override."
-        },
-        "setup": {
-          "$ref": "#/$defs/Setup"
+        "state": {
+          "type": "object",
+          "description": "Protocol-specific state for this single-phase attack."
         },
         "phases": {
           "type": "array",
           "minItems": 1,
-          "items": { "$ref": "#/$defs/Phase" },
-          "description": "Ordered sequence of attack phases. The last phase without an advance trigger is the terminal phase."
-        }
-      }
-    },
-
-    "Setup": {
-      "type": "object",
-      "description": "One-time initialization before the first phase. Declares capabilities sent during protocol handshake.",
-      "additionalProperties": false,
-      "properties": {
-        "capabilities": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "mcp": { "$ref": "#/$defs/MCPCapabilities" },
-            "a2a": {
-              "type": "object",
-              "description": "A2A setup capabilities (provisional binding)."
-            },
-            "ag_ui": {
-              "type": "object",
-              "description": "AG-UI setup capabilities (provisional binding)."
+          "prefixItems": [
+            {
+              "allOf": [
+                { "$ref": "#/$defs/Phase" },
+                { "required": ["state"] }
+              ]
             }
-          }
-        }
-      }
-    },
-
-    "MCPCapabilities": {
-      "type": "object",
-      "description": "MCP server capabilities declared during initialize handshake.",
-      "additionalProperties": false,
-      "properties": {
-        "tools": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "listChanged": {
-              "type": "boolean",
-              "description": "Server supports tools/list_changed notifications."
-            }
-          }
+          ],
+          "items": {
+            "$ref": "#/$defs/Phase"
+          },
+          "description": "Ordered sequence of attack phases."
         },
-        "resources": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "subscribe": {
-              "type": "boolean",
-              "description": "Server supports resource subscriptions."
-            },
-            "listChanged": {
-              "type": "boolean",
-              "description": "Server supports resources/list_changed notifications."
-            }
-          }
-        },
-        "prompts": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "listChanged": {
-              "type": "boolean",
-              "description": "Server supports prompts/list_changed notifications."
-            }
-          }
+        "actors": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/Actor"
+          },
+          "description": "Named concurrent actors, each targeting a protocol endpoint."
         }
       }
     },
-
-    "Phase": {
+    "Actor": {
       "type": "object",
-      "description": "A distinct stage of the attack. Phases execute in declared order.",
-      "required": ["name"],
+      "description": "A named concurrent protocol endpoint in a multi-actor execution profile.",
+      "required": [
+        "name",
+        "mode",
+        "phases"
+      ],
       "additionalProperties": false,
       "patternProperties": {
         "^x-": {}
@@ -505,132 +650,312 @@
       "properties": {
         "name": {
           "type": "string",
-          "description": "Human-readable label for this phase. Must be unique within the document.",
-          "examples": ["trust_building", "payload_delivery", "exploit", "exfiltration"]
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Unique actor identifier. Used in cross-actor extractor references ({{actor_name.extractor_name}})."
+        },
+        "mode": {
+          "$ref": "#/$defs/Mode",
+          "description": "Attacker posture for this actor."
+        },
+        "phases": {
+          "type": "array",
+          "minItems": 1,
+          "prefixItems": [
+            {
+              "allOf": [
+                { "$ref": "#/$defs/Phase" },
+                { "required": ["state"] }
+              ]
+            }
+          ],
+          "items": {
+            "$ref": "#/$defs/Phase"
+          },
+          "description": "Ordered phase sequence for this actor."
+        }
+      }
+    },
+    "Phase": {
+      "type": "object",
+      "description": "A distinct stage of the attack. Phases execute in declared order.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human-readable label for this phase. Auto-generated as 'phase-{N}' (1-based) when omitted. Must be unique within the actor when specified.",
+          "examples": [
+            "trust_building",
+            "payload_delivery",
+            "exploit",
+            "exfiltration"
+          ]
         },
         "description": {
           "type": "string",
           "description": "Prose describing the purpose of this phase."
         },
-        "protocol": {
-          "$ref": "#/$defs/Protocol",
-          "description": "Protocol targeted in this phase. Defaults to execution.protocol. Set explicitly for cross-protocol attacks."
-        },
-        "role": {
-          "$ref": "#/$defs/Role",
-          "description": "Role assumed during this phase. Defaults to execution.role."
+        "mode": {
+          "$ref": "#/$defs/Mode",
+          "description": "Attacker posture for this phase. Defaults to execution.mode. Required when execution.mode is absent."
         },
         "state": {
           "type": "object",
-          "description": "Protocol-specific state presented during this phase. Structure varies by protocol (spec §7.1.4 MCP, §7.2.4 A2A, §7.3.4 AG-UI). First phase must include state; subsequent phases inherit when omitted."
+          "description": "Protocol state for this phase. When omitted, inherits the entire state from the preceding phase (full replacement, no merging). Required on the first phase of each actor. Structure is protocol-specific and defined by the relevant binding (spec §7). Binding-specific state validation is the responsibility of binding-aware tools."
         },
         "extractors": {
           "type": "array",
-          "items": { "$ref": "#/$defs/Extractor" },
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/Extractor"
+          },
           "description": "Capture values from protocol messages for use in subsequent phases via {{name}} template syntax."
         },
         "on_enter": {
           "type": "array",
-          "items": { "$ref": "#/$defs/Action" },
-          "description": "Actions executed when this phase begins, before any client interaction."
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/Action"
+          },
+          "description": "Actions executed when this phase begins, before any client interaction. When present, must contain at least one action."
         },
-        "advance": {
+        "trigger": {
           "$ref": "#/$defs/Trigger",
           "description": "Condition that triggers advancement to the next phase. Omit for terminal phase (persists indefinitely)."
         }
       }
     },
-
     "Extractor": {
       "type": "object",
       "description": "Captures a value from a protocol message for use in subsequent phases and response templates.",
-      "required": ["name", "source", "type", "expression"],
+      "required": [
+        "name",
+        "source",
+        "type",
+        "selector"
+      ],
       "additionalProperties": false,
       "properties": {
         "name": {
           "type": "string",
           "description": "Variable name. Referenced as {{name}} in templates. Last-write-wins if redefined in a later phase.",
-          "examples": ["admin_tool_name", "session_id"]
+          "examples": [
+            "admin_tool_name",
+            "session_id"
+          ],
+          "pattern": "^[a-z][a-z0-9_]*$"
         },
         "source": {
           "type": "string",
-          "enum": ["request", "response"],
+          "enum": [
+            "request",
+            "response"
+          ],
           "description": "Extract from incoming requests or outgoing responses."
         },
         "type": {
           "type": "string",
-          "enum": ["json_path", "regex", "header"],
-          "description": "Extraction method. json_path: JSONPath expression. regex: first capture group. header: HTTP header value."
+          "enum": [
+            "json_path",
+            "regex"
+          ],
+          "description": "Extraction method. json_path: JSONPath expression (RFC 9535, first node in document order). regex: first match, first capture group."
         },
-        "expression": {
+        "selector": {
           "type": "string",
-          "description": "Extraction expression, interpreted according to type.",
-          "examples": ["$.tools[0].name", "\"name\":\\s*\"([^\"]+)\"", "Authorization"]
+          "description": "Extraction selector, interpreted according to type.",
+          "examples": [
+            "$.tools[0].name",
+            "\"name\":\\s*\"([^\"]+)\""
+          ]
         }
       }
     },
-
     "Action": {
       "type": "object",
-      "description": "An action executed on phase entry.",
-      "additionalProperties": false,
-      "properties": {
-        "send_notification": {
-          "type": "object",
-          "description": "Send a protocol notification.",
-          "required": ["method"],
+      "description": "An action executed on phase entry. Exactly one action key per object (V-043). Known actions defined inline in each oneOf branch; binding-specific actions in the catch-all branch.",
+      "oneOf": [
+        {
+          "required": [
+            "send_notification"
+          ],
           "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
           "properties": {
-            "method": {
-              "type": "string",
-              "description": "Notification method name.",
-              "examples": ["notifications/tools/list_changed", "notifications/resources/updated"]
-            },
-            "params": {
+            "send_notification": {
               "type": "object",
-              "description": "Notification parameters."
+              "description": "Send a protocol notification.",
+              "required": [
+                "method"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "method": {
+                  "type": "string",
+                  "description": "Notification method name.",
+                  "examples": [
+                    "notifications/tools/list_changed",
+                    "notifications/resources/updated"
+                  ]
+                },
+                "params": {
+                  "type": "object",
+                  "description": "Notification parameters."
+                }
+              }
             }
           }
         },
-        "log": {
-          "type": "object",
-          "description": "Emit a log message.",
-          "required": ["message"],
+        {
+          "required": [
+            "log"
+          ],
           "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
           "properties": {
-            "message": {
-              "type": "string",
-              "description": "Log message text. Supports {{template}} interpolation."
-            },
-            "level": {
-              "type": "string",
-              "enum": ["info", "warn", "error"],
-              "description": "Log severity level."
+            "log": {
+              "type": "object",
+              "description": "Emit a log message.",
+              "required": [
+                "message"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Log message text. Supports {{template}} interpolation."
+                },
+                "level": {
+                  "type": "string",
+                  "enum": [
+                    "info",
+                    "warn",
+                    "error"
+                  ],
+                  "description": "Log severity level."
+                }
+              }
             }
           }
+        },
+        {
+          "required": [
+            "send_elicitation"
+          ],
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-": {}
+          },
+          "properties": {
+            "send_elicitation": {
+              "type": "object",
+              "description": "Send an elicitation request to the client (MCP server-mode only).",
+              "required": [
+                "message"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Human-readable prompt for the elicitation."
+                },
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "form",
+                    "url"
+                  ],
+                  "default": "form",
+                  "description": "Elicitation mode."
+                },
+                "requestedSchema": {
+                  "type": "object",
+                  "description": "JSON Schema for form mode fields."
+                },
+                "url": {
+                  "type": "string",
+                  "description": "URL for url mode."
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "Binding-specific entry action (no known action keys). At least one non-x- key must be present; exact 'one non-x- key' enforcement is SDK-level (V-043).",
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "send_notification"
+                ]
+              },
+              {
+                "required": [
+                  "log"
+                ]
+              },
+              {
+                "required": [
+                  "send_elicitation"
+                ]
+              },
+              {
+                "propertyNames": {
+                  "pattern": "^x-"
+                }
+              }
+            ]
+          },
+          "minProperties": 1,
+          "additionalProperties": {}
         }
-      }
+      ]
     },
-
     "Trigger": {
       "type": "object",
-      "description": "Condition for phase advancement. Combines event matching, counting, content predicates, and timeouts.",
+      "description": "Condition for phase advancement. Combines event matching, counting, content predicates, and duration-based advancement.",
       "additionalProperties": false,
       "dependentRequired": {
-        "count": ["event"],
-        "match": ["event"]
+        "count": [
+          "event"
+        ],
+        "match": [
+          "event"
+        ]
       },
       "properties": {
         "event": {
           "type": "string",
-          "description": "Protocol event type to match. Supports name qualifiers via colon syntax. Values are protocol-specific (spec §7).",
-          "examples": ["tools/call", "tools/list", "task/send", "run_agent", "tools/call:calculator"]
+          "description": "Protocol event type to match. Uses protocol-native naming (slash-separated for MCP/A2A, snake_case for AG-UI). Supports qualifier via colon syntax for simple filtering. Must be valid for the actor's mode per the Event-Mode Validity Matrix (spec §7).",
+          "pattern": "^[a-z][a-zA-Z0-9_/]*(:[a-zA-Z0-9_-]+)?$",
+          "examples": [
+            "tools/call",
+            "tools/call:calculator",
+            "tools/list",
+            "elicitation/create",
+            "tasks/get",
+            "tasks/result",
+            "notifications/tasks/status",
+            "message/send",
+            "task/status:completed",
+            "agent_card/get",
+            "tasks/pushNotification/set",
+            "sampling/createMessage",
+            "tool_call_start:transfer_funds",
+            "run_started",
+            "custom:my_event"
+          ]
         },
         "count": {
           "type": "integer",
           "minimum": 1,
-          "default": 1,
-          "description": "Number of matching events required before advancing. Defaults to 1 when event is specified."
+          "description": "Number of matching events required before advancing. Defaults to 1 when event is present. Must not appear without event. Accumulates within the current phase; resets to zero on phase transition."
         },
         "match": {
           "$ref": "#/$defs/MatchPredicate",
@@ -639,32 +964,75 @@
         "after": {
           "$ref": "#/$defs/Duration",
           "description": "Advance unconditionally after this duration from phase entry."
-        },
-        "timeout": {
-          "$ref": "#/$defs/Duration",
-          "description": "Maximum wait for a matching event. Measured from last match or phase entry. Differs from 'after' which always measures from phase entry."
         }
-      }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "event"
+          ]
+        },
+        {
+          "required": [
+            "after"
+          ]
+        }
+      ]
     },
-
     "MatchPredicate": {
       "type": "object",
       "description": "Structured conditions against protocol message content. Keys are dot-path field references (e.g., arguments.command). All conditions combine with AND. String operators are case-sensitive.",
       "additionalProperties": {
-        "oneOf": [
-          { "type": "string" },
-          { "type": "number" },
-          { "type": "boolean" },
-          { "type": "array" },
-          { "$ref": "#/$defs/MatchCondition" }
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "array"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "object",
+            "$comment": "Bare-object equality. Objects containing any MatchCondition operator key must validate against the MatchCondition ref instead.",
+            "not": {
+              "anyOf": [
+                { "required": ["contains"] },
+                { "required": ["starts_with"] },
+                { "required": ["ends_with"] },
+                { "required": ["regex"] },
+                { "required": ["any_of"] },
+                { "required": ["gt"] },
+                { "required": ["lt"] },
+                { "required": ["gte"] },
+                { "required": ["lte"] },
+                { "required": ["exists"] }
+              ]
+            }
+          },
+          {
+            "$ref": "#/$defs/MatchCondition"
+          }
         ]
+      },
+      "propertyNames": {
+        "pattern": "^([a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)*)?$",
+        "description": "Simple dot-path field references (e.g., arguments.command). Empty string targets the root. No wildcards or array indices."
       }
     },
-
     "Indicator": {
       "type": "object",
-      "description": "Detection pattern for identifying the attack in observed protocol traffic. Targets a specific protocol surface using exactly one detection method.",
-      "required": ["surface"],
+      "description": "Pattern for determining whether the agent complied with the attack. Targets a specific protocol surface using exactly one of: pattern, expression, or semantic.",
+      "required": [
+        "surface"
+      ],
       "additionalProperties": false,
       "patternProperties": {
         "^x-": {}
@@ -672,13 +1040,17 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^OATF-[0-9]{3,}-[0-9]{2,}$",
-          "description": "Unique identifier within this document. Auto-generated as {attack.id}-{NN} when omitted.",
-          "examples": ["OATF-003-01", "OATF-027-03"]
+          "description": "Unique identifier within this document. Auto-generated when omitted. Format validated by SDK (see V-024).",
+          "examples": [
+            "OATF-003-01",
+            "OATF-027-03",
+            "ACME-001-01",
+            "indicator-01"
+          ]
         },
         "protocol": {
           "$ref": "#/$defs/Protocol",
-          "description": "Protocol this indicator applies to. Defaults to execution.protocol. Set explicitly when targeting a different protocol."
+          "description": "Protocol this indicator applies to. Defaults to the protocol component of execution.mode. Required when execution.mode is absent."
         },
         "surface": {
           "$ref": "#/$defs/Surface"
@@ -687,16 +1059,8 @@
           "type": "string",
           "description": "Prose describing what this indicator detects and why it is significant."
         },
-        "method": {
-          "type": "string",
-          "enum": ["pattern", "schema", "expression", "semantic"],
-          "description": "Detection method. Inferred from present method-specific key when omitted."
-        },
         "pattern": {
           "$ref": "#/$defs/PatternMatch"
-        },
-        "schema": {
-          "$ref": "#/$defs/SchemaMatch"
         },
         "expression": {
           "$ref": "#/$defs/ExpressionMatch"
@@ -712,128 +1076,675 @@
         },
         "severity": {
           "$ref": "#/$defs/SeverityLevel",
-          "description": "Indicator-level severity, overrides attack-level severity.level."
+          "description": "Indicator-level severity override (level only). Overrides attack.severity.level for this indicator."
         },
         "false_positives": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Known benign scenarios that may trigger this indicator. Helps tool operators tune alerting."
         }
       },
       "oneOf": [
-        { "required": ["pattern"] },
-        { "required": ["schema"] },
-        { "required": ["expression"] },
-        { "required": ["semantic"] }
+        {
+          "required": [
+            "pattern"
+          ]
+        },
+        {
+          "required": [
+            "expression"
+          ]
+        },
+        {
+          "required": [
+            "semantic"
+          ]
+        }
       ]
     },
-
     "PatternMatch": {
       "type": "object",
       "description": "String and structural pattern matching against parsed protocol messages. Standard form uses target + condition. Shorthand places a single condition operator directly on the pattern object.",
       "properties": {
         "target": {
           "type": "string",
+          "pattern": "^([a-zA-Z0-9_-]+(\\[\\*\\])?(\\.[a-zA-Z0-9_-]+(\\[\\*\\])?)*)?$",
           "description": "Dot-path to the field to inspect. Supports wildcards (tools[*].description). Defaults to surface's canonical target (spec §7).",
-          "examples": ["tools[*].description", "content[*]", "messages[*].content"]
+          "examples": [
+            "tools[*].description",
+            "content[*]",
+            "messages[*].content"
+          ]
         },
         "condition": {
-          "$ref": "#/$defs/MatchPredicate",
-          "description": "Matching condition (spec §5.4). Required in standard form."
-        },
-        "scope": {
-          "type": "string",
-          "enum": ["value", "key", "any"],
-          "default": "value",
-          "description": "Where to apply the match. value: field value. key: field name. any: both."
-        },
-        "contains": { "type": "string", "description": "Shorthand: substring match on surface default target." },
-        "starts_with": { "type": "string", "description": "Shorthand: prefix match on surface default target." },
-        "ends_with": { "type": "string", "description": "Shorthand: suffix match on surface default target." },
-        "regex": { "type": "string", "description": "Shorthand: RE2 regex on surface default target." },
-        "any_of": { "type": "array", "description": "Shorthand: match any listed value on surface default target." },
-        "gt": { "type": "number", "description": "Shorthand: greater than on surface default target." },
-        "lt": { "type": "number", "description": "Shorthand: less than on surface default target." },
-        "gte": { "type": "number", "description": "Shorthand: greater than or equal on surface default target." },
-        "lte": { "type": "number", "description": "Shorthand: less than or equal on surface default target." }
-      },
-      "additionalProperties": false
-    },
-
-    "SchemaMatch": {
-      "type": "object",
-      "description": "Structural validation rules applied to parsed protocol messages.",
-      "required": ["checks"],
-      "additionalProperties": false,
-      "properties": {
-        "target": {
-          "type": "string",
-          "description": "Dot-path to the field to validate. Defaults to surface's canonical target (spec §7).",
-          "examples": ["tools[*].inputSchema", "arguments"]
-        },
-        "checks": {
-          "type": "array",
-          "minItems": 1,
-          "items": { "$ref": "#/$defs/SchemaCheck" },
-          "description": "Structural checks combined with AND logic."
-        }
-      }
-    },
-
-    "SchemaCheck": {
-      "type": "object",
-      "description": "A single structural validation check.",
-      "required": ["type"],
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "type_check",
-            "required_fields",
-            "max_length",
-            "max_depth",
-            "max_items",
-            "value_range",
-            "format"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "$comment": "Bare-object equality. Objects containing any MatchCondition operator key must validate against the MatchCondition ref instead.",
+              "not": {
+                "anyOf": [
+                  { "required": ["contains"] },
+                  { "required": ["starts_with"] },
+                  { "required": ["ends_with"] },
+                  { "required": ["regex"] },
+                  { "required": ["any_of"] },
+                  { "required": ["gt"] },
+                  { "required": ["lt"] },
+                  { "required": ["gte"] },
+                  { "required": ["lte"] },
+                  { "required": ["exists"] }
+                ]
+              }
+            },
+            {
+              "$ref": "#/$defs/MatchCondition"
+            }
           ],
-          "description": "The kind of structural check to perform."
+          "description": "Matching condition applied to target node(s). A single operator object, or a bare value for equality matching. Required in standard form."
         },
-        "expected_type": {
+        "contains": {
           "type": "string",
-          "description": "For type_check: the expected JSON type.",
-          "examples": ["string", "object", "array"]
+          "description": "Shorthand: substring match on surface default target."
         },
-        "fields": {
+        "starts_with": {
+          "type": "string",
+          "description": "Shorthand: prefix match on surface default target."
+        },
+        "ends_with": {
+          "type": "string",
+          "description": "Shorthand: suffix match on surface default target."
+        },
+        "regex": {
+          "type": "string",
+          "description": "Shorthand: RE2 regex on surface default target."
+        },
+        "any_of": {
           "type": "array",
-          "items": { "type": "string" },
-          "description": "For required_fields: field names that must be present.",
-          "examples": [["name", "description", "inputSchema"]]
+          "description": "Shorthand: match any listed value on surface default target.",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              }
+            ]
+          }
         },
-        "max": {
-          "type": "integer",
-          "description": "For max_length (string length), max_depth (nesting), or max_items (array size)."
-        },
-        "min": {
+        "gt": {
           "type": "number",
-          "description": "For value_range: minimum allowed value."
+          "description": "Shorthand: greater than on surface default target."
         },
-        "max_value": {
+        "lt": {
           "type": "number",
-          "description": "For value_range: maximum allowed value."
+          "description": "Shorthand: less than on surface default target."
         },
-        "format": {
-          "type": "string",
-          "description": "For format: expected string format.",
-          "examples": ["uri", "email", "date"]
+        "gte": {
+          "type": "number",
+          "description": "Shorthand: greater than or equal on surface default target."
+        },
+        "lte": {
+          "type": "number",
+          "description": "Shorthand: less than or equal on surface default target."
         }
-      }
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "description": "Standard form: explicit target and condition.",
+          "required": [
+            "condition"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "contains"
+                ]
+              },
+              {
+                "required": [
+                  "starts_with"
+                ]
+              },
+              {
+                "required": [
+                  "ends_with"
+                ]
+              },
+              {
+                "required": [
+                  "regex"
+                ]
+              },
+              {
+                "required": [
+                  "any_of"
+                ]
+              },
+              {
+                "required": [
+                  "gt"
+                ]
+              },
+              {
+                "required": [
+                  "lt"
+                ]
+              },
+              {
+                "required": [
+                  "gte"
+                ]
+              },
+              {
+                "required": [
+                  "lte"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "description": "Shorthand form: single condition operator using surface default target.",
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "condition"
+                ]
+              },
+              {
+                "required": [
+                  "target"
+                ]
+              }
+            ]
+          },
+          "minProperties": 1,
+          "anyOf": [
+            {
+              "required": [
+                "contains"
+              ],
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "starts_with"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "ends_with"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "regex"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "any_of"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "gt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "lt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "gte"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "lte"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "required": [
+                "starts_with"
+              ],
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "contains"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "ends_with"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "regex"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "any_of"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "gt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "lt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "gte"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "lte"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "required": [
+                "ends_with"
+              ],
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "contains"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "starts_with"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "regex"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "any_of"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "gt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "lt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "gte"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "lte"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "required": [
+                "regex"
+              ],
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "contains"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "starts_with"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "ends_with"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "any_of"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "gt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "lt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "gte"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "lte"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "required": [
+                "any_of"
+              ],
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "contains"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "starts_with"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "ends_with"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "regex"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "gt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "lt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "gte"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "lte"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "required": [
+                "gt"
+              ],
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "contains"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "starts_with"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "ends_with"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "regex"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "any_of"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "lt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "gte"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "lte"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "required": [
+                "lt"
+              ],
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "contains"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "starts_with"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "ends_with"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "regex"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "any_of"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "gt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "gte"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "lte"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "required": [
+                "gte"
+              ],
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "contains"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "starts_with"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "ends_with"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "regex"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "any_of"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "gt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "lt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "lte"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "required": [
+                "lte"
+              ],
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "contains"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "starts_with"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "ends_with"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "regex"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "any_of"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "gt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "lt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "gte"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
     },
-
     "ExpressionMatch": {
       "type": "object",
       "description": "CEL expression evaluated against the full message context. No target field; the expression itself navigates to relevant fields.",
-      "required": ["cel"],
+      "required": [
+        "cel"
+      ],
       "additionalProperties": false,
       "properties": {
         "cel": {
@@ -846,63 +1757,96 @@
         },
         "variables": {
           "type": "object",
-          "additionalProperties": { "type": "string" },
+          "propertyNames": {
+            "pattern": "^[_a-zA-Z][_a-zA-Z0-9]*$",
+            "description": "Variable names must be valid CEL identifiers (V-041)."
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^([a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)*)?$"
+          },
           "description": "Named variables pre-extracted via dot-path, available to the CEL expression beyond the root message context."
         }
       }
     },
-
     "SemanticMatch": {
       "type": "object",
       "description": "Intent-based detection requiring an inference engine (LLM, embedding model, or classifier). Threshold is tool-relative; cross-tool interoperability depends on the examples field.",
-      "required": ["intent", "category"],
+      "required": [
+        "intent"
+      ],
       "additionalProperties": false,
       "properties": {
         "target": {
           "type": "string",
+          "pattern": "^([a-zA-Z0-9_-]+(\\[\\*\\])?(\\.[a-zA-Z0-9_-]+(\\[\\*\\])?)*)?$",
           "description": "Dot-path to the field to analyze. Defaults to surface's canonical target (spec §7).",
-          "examples": ["tools[*].description", "skills[*].description"]
+          "examples": [
+            "tools[*].description",
+            "skills[*].description"
+          ]
         },
         "intent": {
           "type": "string",
           "description": "Natural-language description of the malicious intent to detect. Used as reference for similarity or classification.",
-          "examples": ["Override agent behavior by impersonating system instructions within a tool description"]
+          "examples": [
+            "Override agent behavior by impersonating system instructions within a tool description"
+          ]
         },
-        "category": {
+        "intent_class": {
           "type": "string",
           "enum": [
             "prompt_injection",
             "data_exfiltration",
             "privilege_escalation",
             "social_engineering",
-            "instruction_override",
-            "benign"
+            "instruction_override"
           ],
-          "description": "Category of malicious intent for classification-based engines."
+          "description": "Class of malicious intent for classification-based engines."
         },
         "threshold": {
           "type": "number",
           "minimum": 0.0,
           "maximum": 1.0,
-          "default": 0.7,
-          "description": "Tool-relative confidence threshold (0.0-1.0). Not comparable across tools using different models. Calibrate using the examples field."
+          "description": "Tool-relative confidence threshold (0.0-1.0). When absent, SDKs apply 0.7 at evaluation time. Not comparable across tools using different models. Calibrate using the examples field."
         },
         "examples": {
           "type": "object",
           "description": "Ground truth for calibrating inference engines. Documents should include at least 2 positive and 2 negative examples.",
           "additionalProperties": false,
+          "minProperties": 1,
           "properties": {
             "positive": {
               "type": "array",
-              "items": { "type": "string" },
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              },
               "description": "Strings that should trigger this indicator."
             },
             "negative": {
               "type": "array",
-              "items": { "type": "string" },
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              },
               "description": "Strings that should not trigger this indicator."
             }
           }
+        }
+      }
+    },
+    "SynthesizeBlock": {
+      "type": "object",
+      "$comment": "Intentionally unreferenced by the core schema. Synthesize blocks appear inside binding-specific state (free-form object). Binding-aware validators and code generators should extract and $ref this definition for protocol-specific validation.",
+      "description": "LLM-powered response generation request. Contains a prompt for runtime LLM synthesis. Model selection, temperature, and other generation parameters are runtime concerns, not part of the document (spec §7.4). This definition is not $ref'd by the core schema because synthesize blocks appear inside binding-specific state (which is free-form); it is provided for binding-aware tools to reuse.",
+      "required": ["prompt"],
+      "additionalProperties": false,
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Free-text prompt for the LLM. Supports {{template}} interpolation from extractors and request fields. Must be non-empty (V-035)."
         }
       }
     }

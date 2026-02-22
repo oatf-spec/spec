@@ -1,32 +1,28 @@
 # =============================================================================
 # OATF Conformance: Normalization Test Suite
-# Tests SDK normalize() entry point against steps N-001 through N-008.
+# Tests SDK normalize() entry point against steps from §11.2.
 #
-# Every expected output is fully normalized — all eight N-rules applied
-# simultaneously. Test runners compare the actual normalize() result
-# against expected structurally, not as string equality.
+# Every expected output is fully normalized — all rules applied simultaneously.
+# Test runners compare the actual normalize() result against expected
+# structurally, not as string equality.
 # =============================================================================
 
 # ---------------------------------------------------------------------------
 # N-001: Default values
 # ---------------------------------------------------------------------------
 
-- name: "N-001 version: omitted version defaults to 1.0.0"
+- name: "N-001 version: omitted version defaults to 1"
   id: NORM-001a
   input: |
     oatf: "0.1"
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack."
       severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           pattern:
@@ -36,33 +32,29 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      version: "1.0.0"
+      version: 1
       status: draft
-      description: "A test attack."
       severity:
         level: high
         confidence: 50
-      classification:
-        protocols:
-          - mcp
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
           surface: tool_description
-          method: pattern
           pattern:
             target: "tools[*].description"
             condition:
               contains: "test"
-            scope: value
-      indicator_logic: any
+      correlation:
+        logic: any
 
 - name: "N-001 status: omitted status defaults to draft"
   id: NORM-001b
@@ -71,16 +63,12 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      version: "2.0.0"
-      description: "A test attack."
+      version: 2
       severity: low
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           pattern:
@@ -90,33 +78,29 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      version: "2.0.0"
+      version: 2
       status: draft
-      description: "A test attack."
       severity:
         level: low
         confidence: 50
-      classification:
-        protocols:
-          - mcp
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
           surface: tool_description
-          method: pattern
           pattern:
             target: "tools[*].description"
             condition:
               contains: "test"
-            scope: value
-      indicator_logic: any
+      correlation:
+        logic: any
 
 - name: "N-001 confidence: severity object without confidence defaults to 50"
   id: NORM-001c
@@ -125,16 +109,12 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack."
       severity:
         level: critical
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           pattern:
@@ -144,54 +124,46 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      version: "1.0.0"
+      version: 1
       status: draft
-      description: "A test attack."
       severity:
         level: critical
         confidence: 50
-      classification:
-        protocols:
-          - mcp
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
           surface: tool_description
-          method: pattern
           pattern:
             target: "tools[*].description"
             condition:
               contains: "test"
-            scope: value
-      indicator_logic: any
+      correlation:
+        logic: any
 
-- name: "N-001 indicator protocol: omitted protocol inherits execution.protocol"
+- name: "N-001 indicator protocol: omitted protocol inherits from execution.mode"
   id: NORM-001d
   input: |
     oatf: "0.1"
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack."
       severity: medium
       execution:
-        protocol: a2a
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              agent_card:
-                name: "Test Agent"
-                description: "A test agent."
-                url: "https://example.com"
-                skills: []
+        mode: a2a_server
+        state:
+          agent_card:
+            name: "Test Agent"
+            description: "A test agent."
+            url: "https://example.com"
+            skills: []
       indicators:
         - surface: skill_description
           pattern:
@@ -201,54 +173,46 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      version: "1.0.0"
+      version: 1
       status: draft
-      description: "A test attack."
       severity:
         level: medium
         confidence: 50
-      classification:
-        protocols:
-          - a2a
       execution:
-        protocol: a2a
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              agent_card:
-                name: "Test Agent"
-                description: "A test agent."
-                url: "https://example.com"
-                skills: []
+        actors:
+          - name: default
+            mode: a2a_server
+            phases:
+              - name: phase-1
+                state:
+                  agent_card:
+                    name: "Test Agent"
+                    description: "A test agent."
+                    url: "https://example.com"
+                    skills: []
       indicators:
         - id: OATF-TEST-001-01
           protocol: a2a
           surface: skill_description
-          method: pattern
           pattern:
             target: "skills[*].description"
             condition:
               contains: "test"
-            scope: value
-      indicator_logic: any
+      correlation:
+        logic: any
 
-- name: "N-001 indicator_logic: omitted indicator_logic defaults to any"
+- name: "N-001 correlation.logic: omitted correlation defaults to any"
   id: NORM-001e
   input: |
     oatf: "0.1"
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack."
       severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           pattern:
@@ -258,33 +222,156 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      version: "1.0.0"
+      version: 1
       status: draft
-      description: "A test attack."
       severity:
         level: high
         confidence: 50
-      classification:
-        protocols:
-          - mcp
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
           surface: tool_description
-          method: pattern
           pattern:
             target: "tools[*].description"
             condition:
               contains: "test"
-            scope: value
-      indicator_logic: any
+      correlation:
+        logic: any
+
+- name: "N-001 name: omitted name defaults to Untitled"
+  id: NORM-001f
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      severity: high
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+  expected: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Untitled"
+      version: 1
+      status: draft
+      severity:
+        level: high
+        confidence: 50
+      execution:
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
+
+- name: "N-001 multiple unnamed phases get names phase-1, phase-2, phase-3"
+  id: NORM-001g
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      severity: high
+      execution:
+        mode: mcp_server
+        phases:
+          - state:
+              tools:
+                - name: "tool-a"
+                  description: "Tool A"
+            trigger:
+              event: tools/call
+          - state:
+              tools:
+                - name: "tool-b"
+                  description: "Tool B"
+            trigger:
+              event: tools/call
+          - description: "Terminal phase."
+  expected: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Untitled"
+      version: 1
+      status: draft
+      severity:
+        level: high
+        confidence: 50
+      execution:
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: "tool-a"
+                      description: "Tool A"
+                trigger:
+                  event: tools/call
+                  count: 1
+              - name: phase-2
+                state:
+                  tools:
+                    - name: "tool-b"
+                      description: "Tool B"
+                trigger:
+                  event: tools/call
+                  count: 1
+              - name: phase-3
+                description: "Terminal phase."
+
+- name: "N-001 phase.mode inherited from execution.mode when omitted"
+  id: NORM-001h
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      severity: high
+      execution:
+        mode: a2a_server
+        phases:
+          - name: observe
+            state:
+              agent_card:
+                name: "Agent"
+                description: "An agent"
+                url: "https://example.com"
+                skills: []
+  expected: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Untitled"
+      version: 1
+      status: draft
+      severity:
+        level: high
+        confidence: 50
+      execution:
+        actors:
+          - name: default
+            mode: a2a_server
+            phases:
+              - name: observe
+                state:
+                  agent_card:
+                    name: "Agent"
+                    description: "An agent"
+                    url: "https://example.com"
+                    skills: []
 
 # ---------------------------------------------------------------------------
 # N-002: Severity scalar expansion
@@ -297,15 +384,11 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack."
       severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           pattern:
@@ -315,33 +398,29 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      version: "1.0.0"
+      version: 1
       status: draft
-      description: "A test attack."
       severity:
         level: high
         confidence: 50
-      classification:
-        protocols:
-          - mcp
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
           surface: tool_description
-          method: pattern
           pattern:
             target: "tools[*].description"
             condition:
               contains: "test"
-            scope: value
-      indicator_logic: any
+      correlation:
+        logic: any
 
 - name: "N-002 severity scalar 'informational' expands to object form"
   id: NORM-002b
@@ -350,15 +429,11 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack."
       severity: informational
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           pattern:
@@ -368,33 +443,29 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      version: "1.0.0"
+      version: 1
       status: draft
-      description: "A test attack."
       severity:
         level: informational
         confidence: 50
-      classification:
-        protocols:
-          - mcp
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
           surface: tool_description
-          method: pattern
           pattern:
             target: "tools[*].description"
             condition:
               contains: "test"
-            scope: value
-      indicator_logic: any
+      correlation:
+        logic: any
 
 # ---------------------------------------------------------------------------
 # N-003: Indicator ID auto-generation
@@ -407,15 +478,11 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack."
       severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           pattern:
@@ -425,33 +492,29 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      version: "1.0.0"
+      version: 1
       status: draft
-      description: "A test attack."
       severity:
         level: high
         confidence: 50
-      classification:
-        protocols:
-          - mcp
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
           surface: tool_description
-          method: pattern
           pattern:
             target: "tools[*].description"
             condition:
               contains: "test"
-            scope: value
-      indicator_logic: any
+      correlation:
+        logic: any
 
 - name: "N-003 three indicators without ids get sequential IDs"
   id: NORM-003b
@@ -460,15 +523,11 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack."
       severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           pattern:
@@ -484,51 +543,43 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      version: "1.0.0"
+      version: 1
       status: draft
-      description: "A test attack."
       severity:
         level: high
         confidence: 50
-      classification:
-        protocols:
-          - mcp
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
           surface: tool_description
-          method: pattern
           pattern:
             target: "tools[*].description"
             condition:
               contains: "test"
-            scope: value
         - id: OATF-TEST-001-02
           protocol: mcp
           surface: tool_name
-          method: pattern
           pattern:
             target: "tools[*].name"
             condition:
               contains: "evil"
-            scope: value
         - id: OATF-TEST-001-03
           protocol: mcp
           surface: tool_response
-          method: pattern
           pattern:
             target: "content[*]"
             condition:
               contains: "exfil"
-            scope: value
-      indicator_logic: any
+      correlation:
+        logic: any
 
 - name: "N-003 mixed explicit and auto-generated IDs do not collide"
   id: NORM-003c
@@ -537,15 +588,11 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack."
       severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - id: OATF-TEST-001-01
           surface: tool_description
@@ -563,395 +610,217 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      version: "1.0.0"
+      version: 1
       status: draft
-      description: "A test attack."
       severity:
         level: high
         confidence: 50
-      classification:
-        protocols:
-          - mcp
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
           surface: tool_description
-          method: pattern
           pattern:
             target: "tools[*].description"
             condition:
               contains: "test"
-            scope: value
         - id: OATF-TEST-001-02
           protocol: mcp
           surface: tool_name
-          method: pattern
           pattern:
             target: "tools[*].name"
             condition:
               contains: "evil"
-            scope: value
         - id: OATF-TEST-001-03
           protocol: mcp
           surface: tool_response
-          method: pattern
           pattern:
             target: "content[*]"
             condition:
               contains: "exfil"
-            scope: value
-      indicator_logic: any
+      correlation:
+        logic: any
+
+- name: "N-003 indicator IDs when attack.id absent use indicator-NN format"
+  id: NORM-003d
+  input: |
+    oatf: "0.1"
+    attack:
+      name: "No ID Attack"
+      severity: high
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+        - surface: tool_name
+          pattern:
+            contains: "evil"
+  expected: |
+    oatf: "0.1"
+    attack:
+      name: "No ID Attack"
+      version: 1
+      status: draft
+      severity:
+        level: high
+        confidence: 50
+      execution:
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
+      indicators:
+        - id: indicator-01
+          protocol: mcp
+          surface: tool_description
+          pattern:
+            target: "tools[*].description"
+            condition:
+              contains: "test"
+        - id: indicator-02
+          protocol: mcp
+          surface: tool_name
+          pattern:
+            target: "tools[*].name"
+            condition:
+              contains: "evil"
+      correlation:
+        logic: any
 
 # ---------------------------------------------------------------------------
-# N-004: Protocol inference for classification.protocols
+# N-004: Target resolution from surface registry
 # ---------------------------------------------------------------------------
 
-- name: "N-004 classification omitted, single protocol inferred from execution"
+- name: "N-004 pattern target resolved from surface tool_description"
   id: NORM-004a
   input: |
     oatf: "0.1"
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack."
       severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           pattern:
-            contains: "test"
+            target: "tools[*].description"
+            condition:
+              contains: "test"
   expected: |
     oatf: "0.1"
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      version: "1.0.0"
+      version: 1
       status: draft
-      description: "A test attack."
       severity:
         level: high
         confidence: 50
-      classification:
-        protocols:
-          - mcp
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
           surface: tool_description
-          method: pattern
           pattern:
             target: "tools[*].description"
             condition:
               contains: "test"
-            scope: value
-      indicator_logic: any
+      correlation:
+        logic: any
 
-- name: "N-004 protocols inferred from execution.protocol and phase override"
+- name: "N-004 target resolved from surface card_name"
   id: NORM-004b
   input: |
     oatf: "0.1"
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack."
       severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
-            advance:
-              event: tools/call
-          - name: phase-2
-            protocol: a2a
-            role: peer
-            state:
-              agent_card:
-                name: "Agent"
-                description: "Agent"
-                url: "https://example.com"
-                skills: []
+        mode: a2a_server
+        state:
+          agent_card:
+            name: "Evil Agent"
+            description: "An evil agent."
+            url: "https://example.com"
+            skills: []
       indicators:
-        - surface: tool_description
+        - surface: card_name
           pattern:
-            contains: "test"
+            contains: "Evil"
   expected: |
     oatf: "0.1"
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      version: "1.0.0"
+      version: 1
       status: draft
-      description: "A test attack."
       severity:
         level: high
         confidence: 50
-      classification:
-        protocols:
-          - mcp
-          - a2a
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
-            advance:
-              event: tools/call
-              count: 1
-          - name: phase-2
-            protocol: a2a
-            role: peer
-            state:
-              agent_card:
-                name: "Agent"
-                description: "Agent"
-                url: "https://example.com"
-                skills: []
+        actors:
+          - name: default
+            mode: a2a_server
+            phases:
+              - name: phase-1
+                state:
+                  agent_card:
+                    name: "Evil Agent"
+                    description: "An evil agent."
+                    url: "https://example.com"
+                    skills: []
       indicators:
         - id: OATF-TEST-001-01
-          protocol: mcp
-          surface: tool_description
-          method: pattern
+          protocol: a2a
+          surface: card_name
           pattern:
-            target: "tools[*].description"
+            target: "name"
             condition:
-              contains: "test"
-            scope: value
-      indicator_logic: any
-
-- name: "N-004 protocols inferred from execution.protocol and indicator protocol override"
-  id: NORM-004c
-  input: |
-    oatf: "0.1"
-    attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack."
-      severity: high
-      execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
-      indicators:
-        - surface: tool_description
-          pattern:
-            contains: "test"
-        - protocol: ag_ui
-          surface: message_history
-          pattern:
-            contains: "injected"
-  expected: |
-    oatf: "0.1"
-    attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      version: "1.0.0"
-      status: draft
-      description: "A test attack."
-      severity:
-        level: high
-        confidence: 50
-      classification:
-        protocols:
-          - mcp
-          - ag_ui
-      execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
-      indicators:
-        - id: OATF-TEST-001-01
-          protocol: mcp
-          surface: tool_description
-          method: pattern
-          pattern:
-            target: "tools[*].description"
-            condition:
-              contains: "test"
-            scope: value
-        - id: OATF-TEST-001-02
-          protocol: ag_ui
-          surface: message_history
-          method: pattern
-          pattern:
-            target: "messages[*]"
-            condition:
-              contains: "injected"
-            scope: value
-      indicator_logic: any
+              contains: "Evil"
+      correlation:
+        logic: any
 
 # ---------------------------------------------------------------------------
-# N-005: Target resolution from surface registry
+# N-005: Pattern shorthand expansion
 # ---------------------------------------------------------------------------
 
-- name: "N-005 pattern target resolved from surface tool_description"
+- name: "N-005 pattern shorthand expands to standard form with condition wrapper"
   id: NORM-005a
   input: |
     oatf: "0.1"
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack."
       severity: high
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
-      indicators:
-        - surface: tool_description
-          pattern:
-            target: "tools[*].description"
-            condition:
-              contains: "test"
-  expected: |
-    oatf: "0.1"
-    attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      version: "1.0.0"
-      status: draft
-      description: "A test attack."
-      severity:
-        level: high
-        confidence: 50
-      classification:
-        protocols:
-          - mcp
-      execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
-      indicators:
-        - id: OATF-TEST-001-01
-          protocol: mcp
-          surface: tool_description
-          method: pattern
-          pattern:
-            target: "tools[*].description"
-            condition:
-              contains: "test"
-            scope: value
-      indicator_logic: any
-
-- name: "N-005 schema target resolved from surface agent_card_name"
-  id: NORM-005b
-  input: |
-    oatf: "0.1"
-    attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack."
-      severity: high
-      execution:
-        protocol: a2a
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              agent_card:
-                name: "Evil Agent"
-                description: "An evil agent."
-                url: "https://example.com"
-                skills: []
-      indicators:
-        - surface: agent_card_name
-          schema:
-            checks:
-              - type: max_length
-                max: 80
-  expected: |
-    oatf: "0.1"
-    attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      version: "1.0.0"
-      status: draft
-      description: "A test attack."
-      severity:
-        level: high
-        confidence: 50
-      classification:
-        protocols:
-          - a2a
-      execution:
-        protocol: a2a
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              agent_card:
-                name: "Evil Agent"
-                description: "An evil agent."
-                url: "https://example.com"
-                skills: []
-      indicators:
-        - id: OATF-TEST-001-01
-          protocol: a2a
-          surface: agent_card_name
-          method: schema
-          schema:
-            target: "name"
-            checks:
-              - type: max_length
-                max: 80
-      indicator_logic: any
-
-# ---------------------------------------------------------------------------
-# N-006: Pattern shorthand expansion
-# ---------------------------------------------------------------------------
-
-- name: "N-006 pattern shorthand expands to standard form with condition wrapper"
-  id: NORM-006a
-  input: |
-    oatf: "0.1"
-    attack:
-      id: OATF-TEST-001
-      name: "Test Attack"
-      description: "A test attack."
-      severity: high
-      execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        mode: mcp_server
+        state:
+          tools: []
       indicators:
         - surface: tool_description
           pattern:
@@ -961,112 +830,145 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      version: "1.0.0"
+      version: 1
       status: draft
-      description: "A test attack."
       severity:
         level: high
         confidence: 50
-      classification:
-        protocols:
-          - mcp
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
           surface: tool_description
-          method: pattern
           pattern:
             target: "tools[*].description"
             condition:
               contains: "malicious"
-            scope: value
-      indicator_logic: any
+      correlation:
+        logic: any
 
 # ---------------------------------------------------------------------------
-# N-007: Method inference from present key
+# N-006: Single-phase form normalizes to multi-actor form
 # ---------------------------------------------------------------------------
 
-- name: "N-007 indicator method inferred from pattern key"
+- name: "N-006 single-phase form wraps in actors array"
+  id: NORM-006a
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      severity: high
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: "calc"
+              description: "A calculator tool."
+  expected: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      version: 1
+      status: draft
+      severity:
+        level: high
+        confidence: 50
+      execution:
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: "calc"
+                      description: "A calculator tool."
+                      inputSchema:
+                        type: object
+
+# ---------------------------------------------------------------------------
+# N-007: Multi-phase form normalizes to multi-actor form
+# ---------------------------------------------------------------------------
+
+- name: "N-007 multi-phase form wraps in actors array"
   id: NORM-007a
   input: |
     oatf: "0.1"
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack."
       severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
-          - name: phase-1
+          - name: setup
             state:
               tools: []
-      indicators:
-        - surface: tool_description
-          pattern:
-            contains: "test"
+            trigger:
+              event: tools/call
+          - name: exploit
+            state:
+              tools:
+                - name: "evil"
+                  description: "Malicious tool."
   expected: |
     oatf: "0.1"
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      version: "1.0.0"
+      version: 1
       status: draft
-      description: "A test attack."
       severity:
         level: high
         confidence: 50
-      classification:
-        protocols:
-          - mcp
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
-      indicators:
-        - id: OATF-TEST-001-01
-          protocol: mcp
-          surface: tool_description
-          method: pattern
-          pattern:
-            target: "tools[*].description"
-            condition:
-              contains: "test"
-            scope: value
-      indicator_logic: any
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: setup
+                state:
+                  tools: []
+                trigger:
+                  event: tools/call
+                  count: 1
+              - name: exploit
+                state:
+                  tools:
+                    - name: "evil"
+                      description: "Malicious tool."
+                      inputSchema:
+                        type: object
 
 # ---------------------------------------------------------------------------
-# N-008: Trigger count default
+# N-001 (continued): Trigger count default
+# (Trigger count is part of N-001 default values, not N-008.)
 # ---------------------------------------------------------------------------
 
-- name: "N-008 trigger with event but no count gets count: 1"
+- name: "N-001 trigger with event but no count gets count: 1"
   id: NORM-008a
   input: |
     oatf: "0.1"
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack."
       severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: phase-1
             state:
               tools: []
-            advance:
+            trigger:
               event: tools/call
           - name: phase-2
             description: "Terminal phase."
@@ -1079,56 +981,50 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      version: "1.0.0"
+      version: 1
       status: draft
-      description: "A test attack."
       severity:
         level: high
         confidence: 50
-      classification:
-        protocols:
-          - mcp
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
-            advance:
-              event: tools/call
-              count: 1
-          - name: phase-2
-            description: "Terminal phase."
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
+                trigger:
+                  event: tools/call
+                  count: 1
+              - name: phase-2
+                description: "Terminal phase."
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
           surface: tool_description
-          method: pattern
           pattern:
             target: "tools[*].description"
             condition:
               contains: "test"
-            scope: value
-      indicator_logic: any
+      correlation:
+        logic: any
 
-- name: "N-008 trigger with event and explicit count: 3 is preserved"
+- name: "N-001 trigger with event and explicit count: 3 is preserved"
   id: NORM-008b
   input: |
     oatf: "0.1"
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      description: "A test attack."
       severity: high
       execution:
-        protocol: mcp
-        role: server
+        mode: mcp_server
         phases:
           - name: phase-1
             state:
               tools: []
-            advance:
+            trigger:
               event: tools/call
               count: 3
           - name: phase-2
@@ -1142,35 +1038,108 @@
     attack:
       id: OATF-TEST-001
       name: "Test Attack"
-      version: "1.0.0"
+      version: 1
       status: draft
-      description: "A test attack."
       severity:
         level: high
         confidence: 50
-      classification:
-        protocols:
-          - mcp
       execution:
-        protocol: mcp
-        role: server
-        phases:
-          - name: phase-1
-            state:
-              tools: []
-            advance:
-              event: tools/call
-              count: 3
-          - name: phase-2
-            description: "Terminal phase."
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
+                trigger:
+                  event: tools/call
+                  count: 3
+              - name: phase-2
+                description: "Terminal phase."
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
           surface: tool_description
-          method: pattern
           pattern:
             target: "tools[*].description"
             condition:
               contains: "test"
-            scope: value
-      indicator_logic: any
+      correlation:
+        logic: any
+
+# ---------------------------------------------------------------------------
+# N-008: MCP tool field defaults
+# ---------------------------------------------------------------------------
+
+- name: "N-008 MCP tool without inputSchema gets default {type: object}"
+  id: NORM-008c
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      severity: high
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: "bare-tool"
+              description: "A tool with no inputSchema"
+  expected: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Untitled"
+      version: 1
+      status: draft
+      severity:
+        level: high
+        confidence: 50
+      execution:
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: "bare-tool"
+                      description: "A tool with no inputSchema"
+                      inputSchema:
+                        type: object
+
+- name: "N-008 MCP tool without description gets default empty string"
+  id: NORM-008d
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      severity: high
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: "no-desc-tool"
+              inputSchema:
+                type: object
+  expected: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Untitled"
+      version: 1
+      status: draft
+      severity:
+        level: high
+        confidence: 50
+      execution:
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: "no-desc-tool"
+                      description: ""
+                      inputSchema:
+                        type: object
