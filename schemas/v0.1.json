@@ -761,7 +761,7 @@
             "json_path",
             "regex"
           ],
-          "description": "Extraction method. json_path: JSONPath expression (RFC 9535, first node in document order). regex: first match, first capture group."
+          "description": "Extraction method. json_path: JSONPath expression (RFC 9535, first node in document order). regex: first match, first capture group. When type is regex, the selector MUST contain at least one capture group (V-044; not enforceable in JSON Schema)."
         },
         "selector": {
           "type": "string",

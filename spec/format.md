@@ -731,7 +731,7 @@ Whether to extract from incoming requests or outgoing responses. The terms `requ
 The extraction method:
 
 - `json_path`: A JSONPath expression conforming to [RFC 9535](https://www.rfc-editor.org/rfc/rfc9535) evaluated against the message body. When the expression matches multiple nodes, the **first node** in document order is extracted. When the expression matches no nodes, the extractor produces no value (absent). An absent extractor resolves to empty string during template interpolation.
-- `regex`: A regular expression with a capture group. The **first match** in the input string is used, and the first capture group's value from that match is extracted. When the regex does not match, the extractor produces no value (absent). An absent extractor resolves to empty string during template interpolation.
+- `regex`: A regular expression that MUST contain at least one capture group (V-044). The **first match** in the input string is used, and the first capture group's value from that match is extracted. When the regex does not match, the extractor produces no value (absent). An absent extractor resolves to empty string during template interpolation.
 
 #### `extractor.selector` (REQUIRED)
 
@@ -1937,7 +1937,7 @@ attack:
 
 A conforming OATF document:
 
-The SDK specification (sdk.md §3.2) assigns stable rule identifiers (V-001 through V-041) to conformance requirements across this specification. Conformance test suites reference these identifiers. The numbered rules below define the structural requirements; additional V-rules cover field-level validation constraints defined in their respective sections (§4–§7).
+The SDK specification (sdk.md §3.2) assigns stable rule identifiers (V-001 through V-044) to conformance requirements across this specification. Conformance test suites reference these identifiers. The numbered rules below define the structural requirements; additional V-rules cover field-level validation constraints defined in their respective sections (§4–§7).
 
 **Core structure**
 
