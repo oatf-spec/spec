@@ -474,7 +474,7 @@ Defines an LLM-powered response generation request. See format specification §7
 
 ### 2.24 ResponseEntry
 
-A conditional response entry used for request-specific response dispatch. Appears in MCP tool/prompt `responses`, A2A `task_responses`, and AG-UI `run_agent_input.responses`.
+A conditional response entry used for request-specific response dispatch. Appears in MCP tool/prompt `responses` and A2A `task_responses`. AG-UI uses a different structure: `messages` and `synthesize` are mutually exclusive directly on `run_agent_input`, not within an ordered response list.
 
 | Field | Type | Required | Description |
 |---|---|---|---|

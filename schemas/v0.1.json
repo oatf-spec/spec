@@ -222,6 +222,11 @@
       "required": [
         "execution"
       ],
+      "dependentRequired": {
+        "correlation": [
+          "indicators"
+        ]
+      },
       "additionalProperties": false,
       "patternProperties": {
         "^x-": {}
@@ -1017,8 +1022,7 @@
         "count": {
           "type": "integer",
           "minimum": 1,
-          "default": 1,
-          "description": "Number of matching events required before advancing. Accumulates within the current phase; resets to zero on phase transition. Defaults to 1 when event is specified."
+          "description": "Number of matching events required before advancing. Defaults to 1 when event is present. Must not appear without event. Accumulates within the current phase; resets to zero on phase transition."
         },
         "match": {
           "$ref": "#/$defs/MatchPredicate",
@@ -1046,7 +1050,7 @@
       "type": "object",
       "description": "Structured conditions against protocol message content. Keys are dot-path field references (e.g., arguments.command). All conditions combine with AND. String operators are case-sensitive.",
       "additionalProperties": {
-        "oneOf": [
+        "anyOf": [
           {
             "type": "string"
           },
@@ -1061,6 +1065,9 @@
           },
           {
             "type": "null"
+          },
+          {
+            "type": "object"
           },
           {
             "$ref": "#/$defs/MatchCondition"
@@ -1164,7 +1171,7 @@
           ]
         },
         "condition": {
-          "oneOf": [
+          "anyOf": [
             {
               "type": "string"
             },
@@ -1179,6 +1186,9 @@
             },
             {
               "type": "null"
+            },
+            {
+              "type": "object"
             },
             {
               "$ref": "#/$defs/MatchCondition"
@@ -1841,9 +1851,11 @@
           "type": "object",
           "description": "Ground truth for calibrating inference engines. Documents should include at least 2 positive and 2 negative examples.",
           "additionalProperties": false,
+          "minProperties": 1,
           "properties": {
             "positive": {
               "type": "array",
+              "minItems": 1,
               "items": {
                 "type": "string"
               },
@@ -1851,6 +1863,7 @@
             },
             "negative": {
               "type": "array",
+              "minItems": 1,
               "items": {
                 "type": "string"
               },

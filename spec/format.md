@@ -362,7 +362,7 @@ An array of mappings to external security frameworks. Each mapping identifies a 
 
 ```yaml
 mappings:
-  - framework: enum(atlas, mitre_attack, owasp_llm, owasp_mcp, owasp_agentic, cwe, other)
+  - framework: string    # Open; recommended: atlas, mitre_attack, owasp_llm, owasp_mcp, owasp_agentic, cwe, other
     id: string
     name: string?
     url: string?
@@ -1912,7 +1912,7 @@ draft → experimental → stable → deprecated
 
 ### 10.3 Extension Mechanism
 
-The following object types support extension fields prefixed with `x-`: `attack`, `execution`, `actor`, `phase`, `action`, and `indicator`. Conforming tools MUST ignore `x-` prefixed fields they do not understand. Extension fields MUST NOT alter the semantics of standard fields. Other object types (triggers, extractors, match conditions, pattern/expression/semantic definitions, references, classifications, framework mappings) do not support extension fields.
+The following object types support extension fields prefixed with `x-`: `attack`, `execution`, `actor`, `phase`, `action`, and `indicator`. Conforming tools MUST ignore `x-` prefixed fields they do not understand. Extension fields MUST NOT alter the semantics of standard fields. Other object types (triggers, extractors, match conditions, pattern/expression/semantic definitions, severity, correlation, synthesis blocks, references, classifications, framework mappings) do not support extension fields.
 
 ```yaml
 attack:
