@@ -2822,3 +2822,101 @@
             contains: "test"
   expected:
     valid: true
+
+# ---------------------------------------------------------------------------
+# V-044: regex extractor selectors must contain at least one capture group
+# ---------------------------------------------------------------------------
+
+- name: "V-044 valid: regex extractor with capture group"
+  id: VAL-044a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            extractors:
+              - name: token
+                source: request
+                type: regex
+                selector: '"token":\s*"([^"]+)"'
+            trigger:
+              event: tools/call
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-044 invalid: regex extractor without capture group"
+  id: VAL-044b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            extractors:
+              - name: token
+                source: request
+                type: regex
+                selector: "passwd"
+            trigger:
+              event: tools/call
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-044"
+        path: "attack.execution.phases[0].extractors[0].selector"
+
+# ---------------------------------------------------------------------------
+# V-045: phase.on_enter must contain at least one action when present
+# ---------------------------------------------------------------------------
+
+- name: "V-045 invalid: phase.on_enter is an empty array"
+  id: VAL-045a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools:
+                - name: test-tool
+                  description: "A test tool"
+                  inputSchema:
+                    type: object
+            on_enter: []
+            trigger:
+              event: tools/call
+          - name: terminal
+      indicators:
+        - surface: tool_description
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-045"
+        path: "attack.execution.phases[0].on_enter"
