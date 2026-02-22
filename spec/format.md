@@ -885,7 +885,7 @@ When omitted, defaults to the canonical target path for the indicator's `surface
 
 #### `pattern.condition` (CONDITIONAL)
 
-The matching condition applied to the node(s) selected by `pattern.target`. A Condition is a single operator object — one of `contains`, `starts_with`, `ends_with`, `regex`, `any_of`, `gt`, `lt`, `gte`, `lte` — or a bare value for equality matching. This is the same set of operators used within MatchPredicates (§5.4), but here applied to an already-selected field rather than a field-path mapping. Required when using the standard form. Absent when using the shorthand form.
+The matching condition applied to the node(s) selected by `pattern.target`. A Condition is a single operator object — one of `contains`, `starts_with`, `ends_with`, `regex`, `any_of`, `gt`, `lt`, `gte`, `lte`, `exists` — or a bare value for equality matching. This is the same set of operators used within MatchPredicates (§5.4), but here applied to an already-selected field rather than a field-path mapping. Required when using the standard form. Absent when using the shorthand form. Note that `exists` is available in the standard form but not in the shorthand form (shorthand omits `target`, so there is no explicit path for `exists` to check).
 
 When the condition contains multiple operators, they are combined with AND logic (all must match). For example, `{contains: "secret", regex: "key_[0-9]+"}` matches only if both conditions are satisfied.
 
