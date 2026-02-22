@@ -168,7 +168,7 @@ Extension fields (`x-` prefixed) on `Execution` are stored in an `extensions: Op
 |---|---|---|---|---|
 | `name` | `Optional<String>` | No | `"phase-{N}"` (1-based index) | Human-readable phase label. Auto-generated when omitted. |
 | `description` | `Optional<String>` | No | — | Phase purpose. |
-| `mode` | `Optional<String>` | No | Inherited from `execution.mode` | Attacker posture for this phase. Required when `execution.mode` is absent. |
+| `mode` | `Optional<String>` | No | Inherited from `execution.mode` or `actor.mode` | Attacker posture for this phase. Required when `execution.mode` is absent and not in multi-actor form. |
 | `state` | `Optional<Value>` | No | Inherited from preceding phase | Protocol-specific state. Required on first phase. |
 | `extractors` | `Optional<List<Extractor>>` | No | — | Value extractors for this phase. |
 | `on_enter` | `Optional<List<Action>>` | No | — | Entry actions executed when this phase begins. See §2.7a. |
@@ -603,7 +603,7 @@ The following transformations are applied in order. Each references the normativ
 
 | Step | Spec Ref | Transformation |
 |---|---|---|
-| N-001 | §11.2.1 | Apply default values: `name` → `"Untitled"`, `version` → `1`, `status` → `draft`, `severity.confidence` → `50` (when `severity` is present), `phase.name` → `"phase-{N}"` (1-based index within actor, when omitted), `phase.mode` → `execution.mode` (when present), `trigger.count` → `1` (when `trigger.event` is present and `trigger.count` is absent), `indicator.protocol` → protocol component of `execution.mode` (when both `indicators` and `execution.mode` are present), `correlation.logic` → `any` (when `indicators` is present). |
+| N-001 | §11.2.1 | Apply default values: `name` → `"Untitled"`, `version` → `1`, `status` → `draft`, `severity.confidence` → `50` (when `severity` is present), `phase.name` → `"phase-{N}"` (1-based index within actor, when omitted), `phase.mode` → `execution.mode` (when present); in multi-actor form (including after N-006/N-007 conversion) `phase.mode` → `actor.mode` (when `phase.mode` is still absent), `trigger.count` → `1` (when `trigger.event` is present and `trigger.count` is absent), `indicator.protocol` → protocol component of `execution.mode` (when both `indicators` and `execution.mode` are present), `correlation.logic` → `any` (when `indicators` is present). |
 | N-002 | §11.2.2 | When `severity` is present, expand scalar form to object form: `"high"` → `{level: "high", confidence: 50}`. When `severity` is absent, leave it absent. |
 | N-003 | §11.2.3 | Auto-generate `indicator.id` for indicators that omit it. When `attack.id` is present, format as `{attack.id}-{NN}`. When `attack.id` is absent, format as `indicator-{NN}`. `NN` is the 1-based zero-padded indicator index. |
 | N-004 | §11.2.4 | Resolve `pattern.target` and `semantic.target` from the surface registry (§2.21) when omitted. |
