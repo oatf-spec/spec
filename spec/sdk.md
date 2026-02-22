@@ -302,7 +302,7 @@ The YAML representation supports two forms:
 - **Standard form:** `target` + `condition` (both explicit). `condition` may be a bare value (e.g., `condition: "ls"`) or an operator object (e.g., `condition: {contains: "ls"}`).
 - **Shorthand form:** a single condition operator as a direct key (e.g., `contains: "foo"`). No `condition` wrapper.
 
-Normalization (N-004): When a `PatternMatch` is parsed in shorthand form, the SDK MUST expand it to standard form with an explicit `condition` field (as a `MatchCondition` object) and `target` defaulted from the surface. Bare-value conditions in standard form are preserved as-is (not wrapped in an operator object).
+Normalization (N-005): When a `PatternMatch` is parsed in shorthand form, the SDK MUST expand it to standard form with an explicit `condition` field (as a `MatchCondition` object) and `target` defaulted from the surface. Bare-value conditions in standard form are preserved as-is (not wrapped in an operator object).
 
 ### 2.14 ExpressionMatch
 
@@ -652,7 +652,7 @@ Always:
 serialize(document: Document) → String
 ```
 
-Serializes a document to YAML. SDKs SHOULD emit the fully-expanded normalized form per §11.2.7.
+Serializes a document to YAML. SDKs SHOULD emit the fully-expanded normalized form per §11.2.10.
 
 **Preconditions:** `document` is a well-formed document model (typically the output of `normalize`).
 
@@ -1342,7 +1342,7 @@ OATF documents may contain fields prefixed with `x-`. SDKs MUST preserve these t
 
 - Regex patterns SHOULD be compiled once during `validate` or `normalize` and cached for reuse during evaluation.
 - CEL expressions SHOULD be parsed once during `validate` and the parsed AST cached for evaluation.
-- The surface registry (§2.17) is static data. SDKs SHOULD represent it as a compile-time constant, not a runtime lookup.
+- The surface registry (§2.21) is static data. SDKs SHOULD represent it as a compile-time constant, not a runtime lookup.
 
 ### 8.6 Dependency Guidance
 
