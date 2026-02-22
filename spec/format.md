@@ -51,6 +51,14 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 A conforming OATF document MUST validate against the schema defined in this specification. The normative JSON Schema is published at `https://oatf.io/schemas/v0.1.json` and distributed as a companion file (`v0.1.json`). The schema validates the protocol-agnostic document core (envelope, execution forms, phases, triggers, extractors, indicators, correlation). Binding-specific state validation — MCP tools/resources/prompts structure, A2A agent card, AG-UI run input — is the responsibility of binding-aware tools and is not enforced by the JSON Schema. The schema at a given `MAJOR.MINOR` URL is immutable: once published, it MUST NOT be modified. Patch releases clarify prose but do not change the schema; minor releases publish a new schema at a new URL (e.g., `v0.2.json`). A conforming tool MAY implement support for a subset of protocol bindings (for example, MCP only) but MUST correctly parse and ignore bindings it does not support.
 
+Several MUST-level constraints defined in this specification are enforced by SDK validation (see the SDK specification, §3.2) rather than by the JSON Schema, because they involve cross-field or cross-element semantics that JSON Schema cannot express:
+
+- **Uniqueness of names and identifiers.** Actor names (V-010), phase names (V-011), and indicator IDs (V-031) MUST be unique within their respective scopes.
+- **Terminal phase ordering.** A terminal phase (one without a trigger) MUST be the last phase in its actor's phase list (V-008).
+- **YAML source constraints.** Documents MUST NOT use YAML anchors, aliases, or merge keys (V-023). The `oatf` key MUST appear first in the source mapping (V-020).
+- **Event-mode and surface-protocol validity.** Trigger events MUST be valid for the actor's mode (V-029). Indicator surfaces MUST be valid for the indicator's protocol (V-029).
+- **Conditional requiredness.** `phase.mode` is required when `execution.mode` is absent (V-028). `indicator.protocol` is required when `execution.mode` is absent (V-028).
+
 ### 1.4 Relationship to Other Standards
 
 OATF complements existing security standards:

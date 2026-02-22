@@ -515,7 +515,7 @@ Most language deserialization frameworks (serde in Rust, Jackson in Java, encodi
 - Type mismatch (for example, `severity.confidence` is a string instead of integer) → `ParseError` with `kind: type_mismatch`.
 - Unknown enum value → `ParseError` with `kind: unknown_variant`.
 
-`parse` MUST NOT reject documents based on semantic constraints (missing required fields, duplicate IDs, invalid cross-references). Those are `validate`'s responsibility. The separation allows tools to parse a partial document for editing or introspection without requiring full validity.
+`parse` MUST NOT reject documents based on semantic constraints (conditional field requirements, duplicate IDs, invalid cross-references). Those are `validate`'s responsibility. Fields marked `Required: Yes` in §2 produce a `ParseError` with `kind: type_mismatch` when absent, since deserialization into the target type requires their presence. Constraints that depend on document context (e.g., `phase.mode` required only when `execution.mode` is absent, first phase must include `state`) are `validate`'s responsibility. The separation allows tools to parse a partial document for editing or introspection without requiring full validity.
 
 ### 3.2 validate
 
@@ -583,6 +583,8 @@ The following rules are checked. Each rule references the normative requirement 
 | V-039 | §5.5 | Extractor names MUST match the pattern `[a-z][a-z0-9_]*`. |
 | V-040 | §11.1.8 | `phase.extractors`, when present, MUST contain at least one entry. |
 | V-041 | §11.1.17 | All `expression.variables` keys MUST be valid CEL identifiers, matching `^[_a-zA-Z][_a-zA-Z0-9]*$`. Names containing hyphens, dots, or other non-identifier characters are rejected because CEL would parse them as operators rather than variable references. |
+| V-042 | §5.2, §5.3 | Trigger MUST specify at least one of `event` or `after`. An empty trigger object is invalid. |
+| V-043 | §5.2 | Binding-specific action objects (those containing no known action key) MUST contain exactly one non-`x-` key. |
 
 **Unrecognized binding diagnostics:** SDKs SHOULD expose a `known_modes()` function returning the set of modes defined by included protocol bindings (v0.1: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`) and a `known_protocols()` function returning the corresponding protocols (v0.1: `mcp`, `a2a`, `ag_ui`). When a mode or protocol passes V-036 pattern validation but is not in the known set, `validate` SHOULD emit a warning (not an error) indicating the value is unrecognized. This catches typos like `mpc_server` while allowing intentional use of custom bindings. Tools MAY provide a mechanism to suppress these warnings.
 
