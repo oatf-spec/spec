@@ -453,6 +453,7 @@
       "properties": {
         "framework": {
           "type": "string",
+          "minLength": 1,
           "description": "The external framework being referenced. Recommended values: atlas, mitre_attack, owasp_llm, owasp_mcp, owasp_agentic, cwe. Any string is accepted for custom or future frameworks.",
           "examples": [
             "atlas",
@@ -702,7 +703,7 @@
         },
         "state": {
           "type": "object",
-          "description": "Protocol state for this phase. Structure is protocol-specific and defined by the relevant binding (spec §7). Note: this schema validates the protocol-agnostic document core only. Binding-specific state validation (MCP tools/resources/prompts structure, A2A agent card, AG-UI run input) is the responsibility of binding-aware tools."
+          "description": "Protocol state for this phase. When omitted, inherits the entire state from the preceding phase (full replacement, no merging). Required on the first phase of each actor. Structure is protocol-specific and defined by the relevant binding (spec §7). Binding-specific state validation is the responsibility of binding-aware tools."
         },
         "extractors": {
           "type": "array",
@@ -714,10 +715,11 @@
         },
         "on_enter": {
           "type": "array",
+          "minItems": 1,
           "items": {
             "$ref": "#/$defs/Action"
           },
-          "description": "Actions executed when this phase begins, before any client interaction."
+          "description": "Actions executed when this phase begins, before any client interaction. When present, must contain at least one action."
         },
         "trigger": {
           "$ref": "#/$defs/Trigger",
@@ -773,85 +775,7 @@
     },
     "Action": {
       "type": "object",
-      "description": "An action executed on phase entry.",
-      "properties": {
-        "send_notification": {
-          "type": "object",
-          "description": "Send a protocol notification.",
-          "required": [
-            "method"
-          ],
-          "additionalProperties": false,
-          "properties": {
-            "method": {
-              "type": "string",
-              "description": "Notification method name.",
-              "examples": [
-                "notifications/tools/list_changed",
-                "notifications/resources/updated"
-              ]
-            },
-            "params": {
-              "type": "object",
-              "description": "Notification parameters."
-            }
-          }
-        },
-        "log": {
-          "type": "object",
-          "description": "Emit a log message.",
-          "required": [
-            "message"
-          ],
-          "additionalProperties": false,
-          "properties": {
-            "message": {
-              "type": "string",
-              "description": "Log message text. Supports {{template}} interpolation."
-            },
-            "level": {
-              "type": "string",
-              "enum": [
-                "info",
-                "warn",
-                "error"
-              ],
-              "description": "Log severity level."
-            }
-          }
-        },
-        "send_elicitation": {
-          "type": "object",
-          "description": "Send an elicitation request to the client (MCP server-mode only).",
-          "required": [
-            "message"
-          ],
-          "additionalProperties": false,
-          "properties": {
-            "message": {
-              "type": "string",
-              "description": "Human-readable prompt for the elicitation."
-            },
-            "mode": {
-              "type": "string",
-              "enum": [
-                "form",
-                "url"
-              ],
-              "default": "form",
-              "description": "Elicitation mode."
-            },
-            "requestedSchema": {
-              "type": "object",
-              "description": "JSON Schema for form mode fields."
-            },
-            "url": {
-              "type": "string",
-              "description": "URL for url mode."
-            }
-          }
-        }
-      },
+      "description": "An action executed on phase entry. Exactly one action key per object (V-043). Known actions defined inline in each oneOf branch; binding-specific actions in the catch-all branch.",
       "oneOf": [
         {
           "required": [
@@ -1076,7 +1000,22 @@
             "type": "null"
           },
           {
-            "type": "object"
+            "type": "object",
+            "$comment": "Bare-object equality. Objects containing any MatchCondition operator key must validate against the MatchCondition ref instead.",
+            "not": {
+              "anyOf": [
+                { "required": ["contains"] },
+                { "required": ["starts_with"] },
+                { "required": ["ends_with"] },
+                { "required": ["regex"] },
+                { "required": ["any_of"] },
+                { "required": ["gt"] },
+                { "required": ["lt"] },
+                { "required": ["gte"] },
+                { "required": ["lte"] },
+                { "required": ["exists"] }
+              ]
+            }
           },
           {
             "$ref": "#/$defs/MatchCondition"
@@ -1197,7 +1136,22 @@
               "type": "null"
             },
             {
-              "type": "object"
+              "type": "object",
+              "$comment": "Bare-object equality. Objects containing any MatchCondition operator key must validate against the MatchCondition ref instead.",
+              "not": {
+                "anyOf": [
+                  { "required": ["contains"] },
+                  { "required": ["starts_with"] },
+                  { "required": ["ends_with"] },
+                  { "required": ["regex"] },
+                  { "required": ["any_of"] },
+                  { "required": ["gt"] },
+                  { "required": ["lt"] },
+                  { "required": ["gte"] },
+                  { "required": ["lte"] },
+                  { "required": ["exists"] }
+                ]
+              }
             },
             {
               "$ref": "#/$defs/MatchCondition"

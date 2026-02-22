@@ -188,7 +188,8 @@ attack:
   modified: datetime?
   author: string?
   description: string?
-  
+  grace_period: duration?            # Post-terminal observation window
+
   severity: (<Severity> | string)?  # Optional; no default
   impact: enum(...)[]?
   classification: <Classification>?
@@ -1802,6 +1803,8 @@ Cross-actor extractor references are resolved at template interpolation time (§
 
 For cross-protocol attacks, indicators targeting different protocols are evaluated independently. The attack-level correlation model determines how their individual verdicts combine into the attack verdict.
 
+`attack.correlation` MUST NOT appear unless `attack.indicators` is also present. Correlation governs how indicator verdicts combine and is meaningless without indicators.
+
 The correlation model is defined at the attack level:
 
 ```yaml
@@ -1971,7 +1974,7 @@ All conforming tools (adversarial and evaluation):
 
 **Defaults and shorthand expansion**
 
-1. MUST apply default values for omitted optional fields as defined in this specification: `name` → `"Untitled"`, `version` → `1`, `status` → `"draft"`, `severity.confidence` → `50` (when `severity` is present), `phase.name` → `"phase-{N}"` (1-based index within actor), `phase.mode` → `execution.mode` (when present); in multi-actor form (including after normalization items 6–7) `phase.mode` → `actor.mode` (when `phase.mode` is still absent), `trigger.count` → `1` (when `trigger.event` is present and `trigger.count` is absent), `indicator.protocol` → protocol component of `execution.mode` (when both `indicators` and `execution.mode` are present), `correlation.logic` → `any` (when `indicators` is present).
+1. MUST apply default values for omitted optional fields as defined in this specification: `name` → `"Untitled"`, `version` → `1`, `status` → `"draft"`, `severity.confidence` → `50` (when `severity` is present), `phase.name` → `"phase-{N}"` (1-based index within actor), `phase.mode` → `execution.mode` (when present); in multi-actor form (including after normalization items 6–7) `phase.mode` → `actor.mode` (when `phase.mode` is still absent), `trigger.count` → `1` (when `trigger.event` is present and `trigger.count` is absent), `indicator.protocol` → protocol component of `execution.mode` (when both `indicators` and `execution.mode` are present), `correlation.logic` → `any` (when `indicators` is present), `mapping.relationship` → `"primary"`.
 2. MUST expand severity scalar form (`severity: "high"`) to the object form (`{level: "high", confidence: 50}`) before processing, when `severity` is present.
 3. MUST auto-generate `indicator.id` values for indicators that omit `id`. When `attack.id` is present, the format is `{attack.id}-{NN}`. When `attack.id` is absent, the format is `indicator-{NN}`. `NN` is the 1-based, zero-padded position of the indicator in the `indicators` array.
 4. MUST resolve `pattern.target` and `semantic.target` from the surface's default target path (as defined in §7 surface tables) when the target is omitted. If a surface does not define a default target path, the `target` field is REQUIRED for indicators using that surface. Tools MUST reject such indicators when `target` is absent.

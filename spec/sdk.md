@@ -123,6 +123,8 @@ The attack envelope and all contained structures.
 |---|---|---|---|---|
 | `logic` | `CorrelationLogic` | No | `any` | How indicator verdicts combine to produce the attack-level verdict. |
 
+`correlation` MUST only be present when `indicators` is also present (the JSON Schema enforces this via `dependentRequired`). Correlation governs how indicator verdicts combine and is meaningless without indicators.
+
 ### 2.4 Severity
 
 Always represented in object form. SDKs MUST expand scalar input during normalization.
@@ -174,6 +176,8 @@ Extension fields (`x-` prefixed) on `Execution` are stored in an `extensions: Op
 | `on_enter` | `Optional<List<Action>>` | No | — | Entry actions executed when this phase begins. See §2.7a. |
 | `trigger` | `Optional<Trigger>` | No | — | Trigger condition. Absent on terminal phase. |
 | `extensions` | `Optional<Map<String, Value>>` | No | — | Extension fields (`x-` prefixed). Preserved through round-trips. |
+
+> **Note on `state` type:** `state` uses `Value` to permit deserialization of structurally invalid documents for diagnostic reporting. The format specification and JSON Schema constrain `state` to an object; validation (§3.2) rejects non-object values.
 
 ### 2.7a Action
 
@@ -328,7 +332,7 @@ Normalization (N-005): When a `PatternMatch` is parsed in shorthand form, the SD
 | `positive` | `Optional<List<String>>` | No | Strings that SHOULD trigger the indicator. |
 | `negative` | `Optional<List<String>>` | No | Strings that SHOULD NOT trigger the indicator. |
 
-Documents with `semantic` indicators SHOULD include at least two positive and two negative examples to enable cross-tool calibration (format specification §6.4).
+When `examples` is present, at least one of `positive` or `negative` MUST be provided (the JSON Schema enforces this via `minProperties: 1`). Documents with `semantic` indicators SHOULD include at least two positive and two negative examples to enable cross-tool calibration (format specification §6.4).
 
 ### 2.17 Reference
 
@@ -546,7 +550,7 @@ The following rules are checked. Each rule references the normative requirement 
 | V-002 | §11.1.2 | `oatf` SHOULD be the first key in the document. This is a canonical form recommendation, not a validity requirement. SDKs that can detect key ordering SHOULD emit a warning (not an error) when `oatf` is not first. SDKs that cannot preserve key ordering MAY skip this check. SDKs that serialize OATF documents MUST emit `oatf` as the first key. |
 | V-003 | §11.1.3 | Exactly one `attack` object is present. |
 | V-004 | §11.1.4 | Required fields present: `execution`. |
-| V-005 | §11.1.5 | All enumeration values are valid members of their respective types. |
+| V-005 | §11.1.5 | All closed enumeration values are valid members of their respective types. Open enumerations (§2.20: Protocol, Mode, Surface, Framework) are validated by their pattern or format constraints only, not by membership in a fixed set. |
 | V-006 | §11.1.6 | `indicators`, when present, contains at least one entry. |
 | V-007 | §11.1.8, §11.1.9 | In multi-phase form: `execution.phases` contains at least one entry. In multi-actor form: each actor's `phases` contains at least one entry. (Single-phase form always has exactly one implicit phase.) |
 | V-008 | §11.1.8 | At most one terminal phase per actor (no `trigger`), and it is the last phase in the actor's list. |
@@ -606,7 +610,7 @@ The following transformations are applied in order. Each references the normativ
 
 | Step | Spec Ref | Transformation |
 |---|---|---|
-| N-001 | §11.2.1 | Apply default values: `name` → `"Untitled"`, `version` → `1`, `status` → `draft`, `severity.confidence` → `50` (when `severity` is present), `phase.name` → `"phase-{N}"` (1-based index within actor, when omitted), `phase.mode` → `execution.mode` (when present); in multi-actor form (including after N-006/N-007 conversion) `phase.mode` → `actor.mode` (when `phase.mode` is still absent), `trigger.count` → `1` (when `trigger.event` is present and `trigger.count` is absent), `indicator.protocol` → protocol component of `execution.mode` (when both `indicators` and `execution.mode` are present), `correlation.logic` → `any` (when `indicators` is present). |
+| N-001 | §11.2.1 | Apply default values: `name` → `"Untitled"`, `version` → `1`, `status` → `draft`, `severity.confidence` → `50` (when `severity` is present), `phase.name` → `"phase-{N}"` (1-based index within actor, when omitted), `phase.mode` → `execution.mode` (when present); in multi-actor form (including after N-006/N-007 conversion) `phase.mode` → `actor.mode` (when `phase.mode` is still absent), `trigger.count` → `1` (when `trigger.event` is present and `trigger.count` is absent), `indicator.protocol` → protocol component of `execution.mode` (when both `indicators` and `execution.mode` are present), `correlation.logic` → `any` (when `indicators` is present), `mapping.relationship` → `"primary"`. |
 | N-002 | §11.2.2 | When `severity` is present, expand scalar form to object form: `"high"` → `{level: "high", confidence: 50}`. When `severity` is absent, leave it absent. |
 | N-003 | §11.2.3 | Auto-generate `indicator.id` for indicators that omit it. When `attack.id` is present, format as `{attack.id}-{NN}`. When `attack.id` is absent, format as `indicator-{NN}`. `NN` is the 1-based zero-padded indicator index. |
 | N-004 | §11.2.4 | Resolve `pattern.target` and `semantic.target` from the surface registry (§2.21) when omitted. |
