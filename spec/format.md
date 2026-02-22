@@ -776,6 +776,8 @@ CEL expressions MUST be evaluated in a sandboxed environment. Specifically:
 
 These constraints ensure that OATF documents cannot be weaponized against the tools that consume them. A malicious OATF document with a pathological regex or an infinitely-recursive JSONPath expression must fail safely rather than deny service to the evaluating tool.
 
+> *Note on RE2 and lookarounds:* Practitioners familiar with Sigma rules or YARA signatures may notice that the RE2 subset excludes lookaheads and lookbehinds. This is a deliberate tradeoff. OATF evaluators run against adversarial payloads by design — ReDoS in a security evaluation tool that processes attacker-controlled content is an exploitable vulnerability, not a theoretical concern. Unlike Sigma (which scans flat log lines), OATF pattern indicators operate on structured JSON messages where the `target` dot-path already narrows evaluation to a specific field. Most lookaround use cases are better expressed as multiple entries in a `match` predicate (each targeting a different field, joined with AND logic) or as a CEL expression when the condition genuinely involves intra-string context.
+
 ---
 
 ## 6. Indicators
@@ -1892,7 +1894,7 @@ draft → experimental → stable → deprecated
 
 ### 10.3 Extension Mechanism
 
-Documents MAY include fields prefixed with `x-` for tool-specific extensions. Conforming tools MUST ignore `x-` prefixed fields they do not understand. Extension fields MUST NOT alter the semantics of standard fields.
+The following object types support extension fields prefixed with `x-`: `attack`, `execution`, `actor`, `phase`, `action`, and `indicator`. Conforming tools MUST ignore `x-` prefixed fields they do not understand. Extension fields MUST NOT alter the semantics of standard fields. Other object types (triggers, extractors, match conditions, pattern/expression/semantic definitions, references, classifications, framework mappings) do not support extension fields.
 
 ```yaml
 attack:

@@ -99,7 +99,7 @@
     },
     "MatchCondition": {
       "type": "object",
-      "description": "A single condition operator or combination of operators (AND logic). At least one operator key (contains, starts_with, ends_with, regex, any_of, gt, lt, gte, lte) MUST be present. Extension fields (x-) do not satisfy this requirement.",
+      "description": "A single condition operator or combination of operators (AND logic). At least one operator key (contains, starts_with, ends_with, regex, any_of, gt, lt, gte, lte) MUST be present.",
       "properties": {
         "contains": {
           "type": "string",
