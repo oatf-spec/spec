@@ -1034,7 +1034,7 @@ Each binding carries a maturity level:
 | Primary attack surface | Tool/resource/prompt descriptions, tool responses | Agent Card, skill descriptions, task messages | Message history, tool results, agent state |
 | Default mode | `mcp_server` | `a2a_server` | `ag_ui_client` |
 | Surfaces defined | 23 | 8 | 7 |
-| Event types defined | 23 | 8 | 15 |
+| Event types defined | 23 | 10 | 15 |
 | Execution state | Full (tools, resources, prompts, elicitations, capabilities, behavior) | Partial (agent card, task responses) | Partial (RunAgentInput) |
 | Behavioral modifiers | Defined (delivery, side effects) | Not yet defined | Not yet defined |
 | Payload generation | Defined | Not yet defined | Not yet defined |
