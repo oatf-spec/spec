@@ -1190,7 +1190,7 @@ Notification events (`notifications/*`) are true wire-level events with their ow
 
 `notifications/*` events are server-to-client only. Using `notifications/*` as a trigger on an `mcp_server` actor is a validation error.
 
-`tasks/*` events (`tasks/get`, `tasks/result`, `tasks/list`, `tasks/cancel`) are valid on both `mcp_server` actors (agent polls this server) and `mcp_client` actors (server returns results). The `notifications/tasks/status` event is server-to-client only.
+`tasks/get` and `tasks/result` are valid on both `mcp_server` actors (agent polls this server) and `mcp_client` actors (server returns results). `tasks/list` and `tasks/cancel` are valid on `mcp_server` only. The `notifications/tasks/status` event is server-to-client only.
 
 **Qualifier resolution** for MCP events:
 
