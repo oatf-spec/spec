@@ -13,7 +13,7 @@
       pattern:
         target: "tools[*].description"
         condition:
-          contains: "read /etc/passwd"
+          contains: "Read /etc/passwd"
     message:
       tools:
         - name: "ls"
