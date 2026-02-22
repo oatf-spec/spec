@@ -53,7 +53,7 @@ A conforming OATF SDK:
 5. MUST implement all execution primitives defined in §5.
 6. MUST define extension point interfaces for CEL evaluation and semantic evaluation (§6).
 7. MUST use the error taxonomy defined in §7.
-8. SHOULD implement expression indicator evaluation via the CEL extension point (§4.4).
+8. SHOULD implement expression indicator evaluation via the CEL extension point (§4.3, §6.1).
 9. SHOULD pass the OATF conformance test suite without failure.
 10. MUST document which optional capabilities it supports.
 
@@ -406,6 +406,7 @@ SDKs MUST define named types for the following enumerations. The canonical strin
 | `DiagnosticSeverity` | `error`, `warning` |
 | `LogLevel` | `info`, `warn`, `error` |
 | `ElicitationMode` | `form`, `url` |
+| `Surface` | Open string. Values defined per-protocol in format spec §7 surface tables. |
 | `AdvanceReason` | `event_matched`, `timeout` |
 
 **Open vs closed enums:** `Protocol`, `Mode`, `Surface` (§2.21), and `Framework` are open strings — unknown values are accepted (with optional warnings for unrecognized bindings, per §3.2). All other enumerations in this table are closed: unknown values MUST be rejected during parsing (`ParseError` with `kind: unknown_variant`). This distinction ensures extensibility for protocol bindings and framework mappings while maintaining strict validation for lifecycle, verdict, and structural enums.
@@ -547,7 +548,7 @@ The following rules are checked. Each rule references the normative requirement 
 | V-004 | §11.1.4 | Required fields present: `execution`. |
 | V-005 | §11.1.5 | All enumeration values are valid members of their respective types. |
 | V-006 | §11.1.6 | `indicators`, when present, contains at least one entry. |
-| V-007 | §11.1.8 | In multi-phase form: `execution.phases` contains at least one entry. In multi-actor form: each actor's `phases` contains at least one entry. (Single-phase form always has exactly one implicit phase.) |
+| V-007 | §11.1.8, §11.1.9 | In multi-phase form: `execution.phases` contains at least one entry. In multi-actor form: each actor's `phases` contains at least one entry. (Single-phase form always has exactly one implicit phase.) |
 | V-008 | §11.1.8 | At most one terminal phase per actor (no `trigger`), and it is the last phase in the actor's list. |
 | V-009 | §11.1.8 | First phase in each actor includes `state`. In single-phase form, `execution.state` is present, which always satisfies this. In multi-phase and multi-actor forms, check `phases[0].state` directly. |
 | V-010 | §11.1.10 | All explicitly specified `indicator.id` values are unique. |
@@ -1035,7 +1036,7 @@ First-match-wins: the first entry whose `when` predicate matches is returned, re
 ```
 evaluate_trigger(
     trigger: Trigger,
-    event: ProtocolEvent,
+    event: Optional<ProtocolEvent>,
     elapsed: Duration,
     event_count: Integer
 ) → TriggerResult
@@ -1046,10 +1047,10 @@ Evaluates whether a trigger condition is satisfied for phase advancement.
 **Behavior:**
 
 1. If `trigger.after` is present and `elapsed` ≥ `trigger.after`, return `TriggerResult::Advanced { reason: timeout }`.
-2. If `trigger.event` is present:
+2. If `trigger.event` is present and `event` is present:
    a. Check if `event` matches `trigger.event` (after stripping qualifier, if present).
    b. If the event matches and `trigger.match` is present, evaluate the match predicate against the event content using `evaluate_predicate` (§5.4). If the predicate does not match, return `TriggerResult::NotAdvanced`.
-   c. If the event matches (and predicate passes, if present), increment the event count. If `event_count + 1` ≥ `trigger.count` (resolved, default `1`), return `TriggerResult::Advanced { reason: event_matched }`.
+   c. If the event matches (and predicate passes, if present), check whether `event_count + 1` ≥ `trigger.count` (resolved, default `1`). If so, return `TriggerResult::Advanced { reason: event_matched }`. The caller is responsible for persisting the updated count.
 3. Return `TriggerResult::NotAdvanced`.
 
 `TriggerResult` and `AdvanceReason` are defined in §2.8b.

@@ -9,9 +9,6 @@
     "attack"
   ],
   "additionalProperties": false,
-  "patternProperties": {
-    "^x-": {}
-  },
   "properties": {
     "$schema": {
       "type": "string",
@@ -1856,7 +1853,7 @@
     },
     "SynthesizeBlock": {
       "type": "object",
-      "description": "LLM-powered response generation request. Contains a prompt for runtime LLM synthesis. Model selection, temperature, and other generation parameters are runtime concerns, not part of the document (spec §7.4).",
+      "description": "LLM-powered response generation request. Contains a prompt for runtime LLM synthesis. Model selection, temperature, and other generation parameters are runtime concerns, not part of the document (spec §7.4). This definition is not $ref'd by the core schema because synthesize blocks appear inside binding-specific state (which is free-form); it is provided for binding-aware tools to reuse.",
       "required": ["prompt"],
       "additionalProperties": false,
       "properties": {

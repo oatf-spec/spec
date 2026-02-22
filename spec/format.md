@@ -49,7 +49,7 @@ The format is a description language. It does not define how tools implement tra
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
-A conforming OATF document MUST validate against the schema defined in this specification. The normative JSON Schema is published at `https://oatf.io/schemas/v0.1.json` and distributed as a companion file (`oatf-schema-v0_1.json`). The schema validates the protocol-agnostic document core (envelope, execution forms, phases, triggers, extractors, indicators, correlation). Binding-specific state validation — MCP tools/resources/prompts structure, A2A agent card, AG-UI run input — is the responsibility of binding-aware tools and is not enforced by the JSON Schema. The schema at a given `MAJOR.MINOR` URL is immutable: once published, it MUST NOT be modified. Patch releases clarify prose but do not change the schema; minor releases publish a new schema at a new URL (e.g., `v0.2.json`). A conforming tool MAY implement support for a subset of protocol bindings (for example, MCP only) but MUST correctly parse and ignore bindings it does not support.
+A conforming OATF document MUST validate against the schema defined in this specification. The normative JSON Schema is published at `https://oatf.io/schemas/v0.1.json` and distributed as a companion file (`v0.1.json`). The schema validates the protocol-agnostic document core (envelope, execution forms, phases, triggers, extractors, indicators, correlation). Binding-specific state validation — MCP tools/resources/prompts structure, A2A agent card, AG-UI run input — is the responsibility of binding-aware tools and is not enforced by the JSON Schema. The schema at a given `MAJOR.MINOR` URL is immutable: once published, it MUST NOT be modified. Patch releases clarify prose but do not change the schema; minor releases publish a new schema at a new URL (e.g., `v0.2.json`). A conforming tool MAY implement support for a subset of protocol bindings (for example, MCP only) but MUST correctly parse and ignore bindings it does not support.
 
 ### 1.4 Relationship to Other Standards
 
@@ -476,7 +476,7 @@ The three forms are mutually exclusive — a document MUST NOT combine `executio
 
 All forms are syntactic sugar over the multi-actor form. Conformant tools MUST normalize documents internally:
 
-- **Single-phase form** normalizes to: `actors: [{ name: "default", mode: <mode>, phases: [{ name: "phase-1", state: <state> }] }]` (see §11.2 items 6–7).
+- **Single-phase form** normalizes to: `actors: [{ name: "default", mode: <mode>, phases: [{ name: "phase-1", state: <state> }] }]` (see §11.2 item 6).
 - **Multi-phase form** normalizes to: `actors: [{ name: "default", mode: <mode>, phases: <phases> }]` (see §11.2 item 7).
 
 #### `execution.mode` (CONDITIONAL)
@@ -1737,8 +1737,8 @@ execution:
 indicators:
   - id: OATF-042-01
     protocol: ag_ui
-    surface: tool_result
-    description: "Agent acted on injected instruction by initiating a tool call to the attacker-specified tool"
+    surface: tool_definition
+    description: "AG-UI RunAgentInput exposes the attacker-specified tool to the agent"
     pattern:
       target: "tools[*].name"
       condition:
@@ -1925,7 +1925,7 @@ attack:
 
 A conforming OATF document:
 
-The SDK specification (sdk.md §3.2) assigns stable rule identifiers (V-001 through V-041) to each conformance requirement below. Conformance test suites reference these identifiers.
+The SDK specification (sdk.md §3.2) assigns stable rule identifiers (V-001 through V-041) to conformance requirements across this specification. Conformance test suites reference these identifiers. The numbered rules below define the structural requirements; additional V-rules cover field-level validation constraints defined in their respective sections (§4–§7).
 
 **Core structure**
 
