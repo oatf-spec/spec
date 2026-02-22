@@ -319,6 +319,8 @@
                   tools:
                     - name: "tool-a"
                       description: "Tool A"
+                      inputSchema:
+                        type: object
                 trigger:
                   event: tools/call
                   count: 1
@@ -327,6 +329,8 @@
                   tools:
                     - name: "tool-b"
                       description: "Tool B"
+                      inputSchema:
+                        type: object
                 trigger:
                   event: tools/call
                   count: 1
