@@ -99,7 +99,7 @@
     },
     "MatchCondition": {
       "type": "object",
-      "description": "A single condition operator or combination of operators (AND logic). At least one operator key (contains, starts_with, ends_with, regex, any_of, gt, lt, gte, lte) MUST be present.",
+      "description": "A single condition operator or combination of operators (AND logic). At least one operator key (contains, starts_with, ends_with, regex, any_of, gt, lt, gte, lte, exists) MUST be present.",
       "properties": {
         "contains": {
           "type": "string",
@@ -159,6 +159,10 @@
         "lte": {
           "type": "number",
           "description": "Less than or equal."
+        },
+        "exists": {
+          "type": "boolean",
+          "description": "Field presence check. true: matches if the path resolved to a value (including null). false: matches if the path did not resolve."
         }
       },
       "additionalProperties": false,
@@ -206,6 +210,11 @@
         {
           "required": [
             "lte"
+          ]
+        },
+        {
+          "required": [
+            "exists"
           ]
         }
       ]
@@ -306,6 +315,10 @@
         "description": {
           "type": "string",
           "description": "Prose description of the attack: what it does, why it matters, what conditions enable it."
+        },
+        "grace_period": {
+          "$ref": "#/$defs/Duration",
+          "description": "Post-terminal-phase observation window. Duration to continue observing after all terminal phases complete before computing the final verdict."
         },
         "severity": {
           "$ref": "#/$defs/Severity",
@@ -1051,8 +1064,8 @@
         ]
       },
       "propertyNames": {
-        "pattern": "^[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)*$",
-        "description": "Simple dot-path field references (e.g., arguments.command). No wildcards or array indices."
+        "pattern": "^([a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)*)?$",
+        "description": "Simple dot-path field references (e.g., arguments.command). Empty string targets the root. No wildcards or array indices."
       }
     },
     "Indicator": {
@@ -1766,6 +1779,10 @@
         },
         "variables": {
           "type": "object",
+          "propertyNames": {
+            "pattern": "^[_a-zA-Z][_a-zA-Z0-9]*$",
+            "description": "Variable names must be valid CEL identifiers (V-041)."
+          },
           "additionalProperties": {
             "type": "string",
             "pattern": "^([a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)*)?$"
@@ -1834,6 +1851,19 @@
               "description": "Strings that should not trigger this indicator."
             }
           }
+        }
+      }
+    },
+    "SynthesizeBlock": {
+      "type": "object",
+      "description": "LLM-powered response generation request. Contains a prompt for runtime LLM synthesis. Model selection, temperature, and other generation parameters are runtime concerns, not part of the document (spec §7.4).",
+      "required": ["prompt"],
+      "additionalProperties": false,
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Free-text prompt for the LLM. Supports {{template}} interpolation from extractors and request fields. Must be non-empty (V-035)."
         }
       }
     }

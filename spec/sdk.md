@@ -105,6 +105,7 @@ The attack envelope and all contained structures.
 | `modified` | `Optional<DateTime>` | No | — | Last modified date/time. Bare dates accepted. |
 | `author` | `Optional<String>` | No | — | Author or organization. |
 | `description` | `Optional<String>` | No | — | Prose description of the attack. |
+| `grace_period` | `Optional<Duration>` | No | — | Post-terminal-phase observation window. When present, tools observe for this duration after all terminal phases complete before computing the verdict. Parsed by `parse_duration` (§5.2). |
 | `severity` | `Optional<Severity>` | No | — | Absent when not assessed. Always in object form after normalization when present. |
 | `impact` | `Optional<List<Impact>>` | No | — | Categories of harm. |
 | `classification` | `Optional<Classification>` | No | — | Framework mappings and taxonomy. |
@@ -265,6 +266,7 @@ A condition applied to a resolved field value. At least one operator MUST be pre
 | `lt` | `Optional<Float>` | Less than. |
 | `gte` | `Optional<Float>` | Greater than or equal. |
 | `lte` | `Optional<Float>` | Less than or equal. |
+| `exists` | `Optional<Boolean>` | Field presence check. `true`: matches if the path resolved to a value (including `null`). `false`: matches if the path did not resolve. |
 
 ### 2.12 Indicator
 
@@ -307,7 +309,7 @@ Normalization (N-004): When a `PatternMatch` is parsed in shorthand form, the SD
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `cel` | `String` | Yes | CEL expression evaluating to boolean. |
-| `variables` | `Optional<Map<String, String>>` | No | Named variables as dot-paths into message. |
+| `variables` | `Optional<Map<String, String>>` | No | Named variables as dot-paths into message. Keys must be valid CEL identifiers (`[_a-zA-Z][_a-zA-Z0-9]*`). |
 
 ### 2.15 SemanticMatch
 
@@ -579,6 +581,7 @@ The following rules are checked. Each rule references the normative requirement 
 | V-038 | §5.3 | `trigger.after`, when present, MUST be a valid duration (shorthand or ISO 8601). |
 | V-039 | §5.5 | Extractor names MUST match the pattern `[a-z][a-z0-9_]*`. |
 | V-040 | §11.1.8 | `phase.extractors`, when present, MUST contain at least one entry. |
+| V-041 | §11.1.17 | All `expression.variables` keys MUST be valid CEL identifiers, matching `^[_a-zA-Z][_a-zA-Z0-9]*$`. Names containing hyphens, dots, or other non-identifier characters are rejected because CEL would parse them as operators rather than variable references. |
 
 **Unrecognized binding diagnostics:** SDKs SHOULD expose a `known_modes()` function returning the set of modes defined by included protocol bindings (v0.1: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`) and a `known_protocols()` function returning the corresponding protocols (v0.1: `mcp`, `a2a`, `ag_ui`). When a mode or protocol passes V-036 pattern validation but is not in the known set, `validate` SHOULD emit a warning (not an error) indicating the value is unrecognized. This catches typos like `mpc_server` while allowing intentional use of custom bindings. Tools MAY provide a mechanism to suppress these warnings.
 
@@ -921,6 +924,7 @@ Evaluates a condition against a resolved value. If `condition` is a bare value (
 | `lt` | Number | `value < operand`. |
 | `gte` | Number | `value >= operand`. |
 | `lte` | Number | `value <= operand`. |
+| `exists` | Boolean | See §5.4 — `exists` is evaluated during predicate resolution, not by `evaluate_condition`. |
 | *(equality)* | Any | `value` equals the operand (deep equality). Used when the MatchEntry is a scalar, not a MatchCondition. |
 
 **Type mismatches:** If the operator requires a specific value type (string operators on non-string, numeric operators on non-number), the condition evaluates to `false`. Type mismatches are not errors.
@@ -928,6 +932,8 @@ Evaluates a condition against a resolved value. If `condition` is a bare value (
 **Deep equality:** The `any_of` and scalar equality operators use deep equality with the following rules: numeric values compare by mathematical value (integer `42` equals float `42.0`); object key order is irrelevant; NaN is not equal to any value including itself; null equals only null; arrays compare element-wise by position and length.
 
 **Regex:** Patterns MUST be compiled with RE2 semantics (linear-time guarantee). SDKs MUST reject patterns with features outside the RE2 subset during `validate`. The regex is evaluated as a **partial match**: the pattern may match any substring of the value. To require a full-string match, the pattern MUST include `^` and `$` anchors. This matches the default behavior of RE2 libraries across languages (Go's `regexp.MatchString`, Rust's `regex::Regex::is_match`, Python's `re2.search`).
+
+**The `exists` operator:** Unlike all other operators, `exists` does not inspect the resolved value — it inspects whether resolution succeeded. `exists` is evaluated during `evaluate_predicate` (§5.4) at the path-resolution step, before `evaluate_condition` is called. When `exists` is the only operator in a MatchCondition, `evaluate_condition` is not called at all (for `exists: true`, the path having resolved is sufficient; for `exists: false`, the path not having resolved is sufficient). When `exists` is combined with other operators, `exists: true` is redundant (all other operators already require a resolved value), and `exists: false` combined with any value-inspecting operator is always false (there is no value to inspect). These are natural consequences of AND logic, not special cases.
 
 ### 5.4 evaluate_predicate
 
@@ -941,8 +947,12 @@ Evaluates a match predicate (a set of dot-path → condition entries) against a 
 
 1. For each entry `(path, condition)` in the predicate map:
    a. Resolve the dot-path key against `value` using `resolve_simple_path` (§5.1.1).
-   b. If the path does not resolve (returns nothing), the entry evaluates to `false`.
-   c. If the path resolves to a value, evaluate the condition against it. The entry is `true` if the value satisfies the condition.
+   b. If the path does not resolve (returns nothing):
+      - If `condition` is a `MatchCondition` with `exists: false` (and no other operators), the entry evaluates to `true`.
+      - Otherwise, the entry evaluates to `false`.
+   c. If the path resolves to a value:
+      - If `condition` is a `MatchCondition` with `exists: false`, the entry evaluates to `false` (regardless of other operators, since AND with a false `exists` is false).
+      - Otherwise, evaluate the remaining condition operators against the resolved value. The entry is `true` if the value satisfies the condition.
 2. Return `true` if all entries are `true`. Return `false` if any entry is `false`.
 
 ### 5.5 interpolate_template

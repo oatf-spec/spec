@@ -256,6 +256,12 @@ The author or organization that created this document.
 
 A prose description of the attack: what it does, why it matters, and what conditions enable it. SHOULD provide sufficient context for a security practitioner to understand the threat without reading the execution profile or indicators.
 
+#### `attack.grace_period` (OPTIONAL)
+
+The duration to continue observing protocol traffic after all terminal phases complete, before computing the final verdict. Format: shorthand (`30s`, `5m`) or ISO 8601 (`PT30S`, `PT5M`), parsed by `parse_duration`. When absent, the tool uses its own default observation window.
+
+This field enables attack authors to specify observation time for delayed effects — exfiltration, state changes, or unauthorized actions that manifest after the attack simulation ends. For example, a prompt injection that causes the agent to exfiltrate data on its next autonomous action may need a 60-second observation window.
+
 ### 4.3 Severity
 
 The `severity` field quantifies the threat level of the attack. It is OPTIONAL; when omitted, severity is absent from the normalized document. This allows authors to defer severity assessment during early development. It accepts two forms:
@@ -586,7 +592,7 @@ trigger:
 
 The protocol event type to match. Event names use the protocol's native naming convention: MCP and A2A use slash-separated JSON-RPC method names; AG-UI uses `snake_case` derived from its EventType enum. Non-RPC HTTP endpoints use an `entity/verb` pattern (e.g., `agent_card/get`). The full event vocabulary is defined per-mode in the protocol binding sections (§7).
 
-Event types MAY include a colon-separated **qualifier** for filtering: `tools/call:calculator` matches only `tools/call` events where the tool name is `calculator`. Qualifiers are restricted to simple identifier tokens (names, states). Values containing colons, slashes, or other structural characters (such as URIs) MUST use `trigger.match` instead. Qualifier resolution rules are defined per-protocol in §7.
+Event types MAY include a colon-separated **qualifier** for filtering: `tools/call:calculator` matches only `tools/call` events where the tool name is `calculator`. Qualifiers are restricted to simple identifier tokens (names, states). The event type is split at the first colon: everything before is the event name, everything after is the qualifier token. Values containing colons, slashes, or other structural characters (such as URIs) MUST use `trigger.match` instead. Qualifier resolution rules are defined per-protocol in §7.
 
 A trigger's event type MUST be valid for the actor's resolved mode. An event type not listed in the validity matrix for the actor's mode is a validation error (see §7 Event-Mode Validity Matrix).
 
@@ -647,7 +653,10 @@ field.path:
   lt: number                       # Less than
   gte: number                      # Greater than or equal
   lte: number                      # Less than or equal
+  exists: boolean                  # Field presence check
 ```
+
+The `regex` operator performs a **partial match** (substring search): the pattern succeeds if it matches anywhere within the target string. To anchor a match to the full string, use `^` and `$` anchors explicitly. This is consistent with RE2's default behavior across languages (see Sandboxing and Resource Limits in §5.7 for RE2 constraints).
 
 Field paths use dot notation for nested access (for example, `arguments.command`, `metadata.agent_id`). OATF defines two dot-path variants:
 
@@ -675,14 +684,15 @@ Wildcard paths extend simple paths with `[*]` array traversal. When `[*]` is app
 - JSON keys containing `.`, `[`, or `]` are not addressable via dot-path syntax. Authors MUST use CEL expressions (§6.3) to match fields with these characters in their names.
 - Missing intermediate keys produce no value (never an error).
 - Type mismatches (e.g., traversing into a string or number) produce no value.
+- The empty string `""` is a valid path that selects the root value (the entire message object). This is the canonical form for surfaces that target the root, such as A2A `agent_card`.
 
 All conditions within a match predicate are combined with AND logic. Every condition must match for the predicate to succeed.
 
-Multiple values in a single field path array are combined with OR logic. Any value in the array matches.
-
-Missing fields never match. A predicate referencing a field that does not exist in the event evaluates to false.
+Missing fields never match — except when the condition is `exists: false`, which matches precisely when the field is absent. The `exists` operator checks field presence independent of value: `exists: true` matches if the dot-path resolves to any value (including `null`), `exists: false` matches if the dot-path does not resolve.
 
 All string operators (`contains`, `starts_with`, `ends_with`, `any_of`, and equality) are case-sensitive. Case-insensitive matching is available via the `regex` operator with inline flags (e.g., `regex: "(?i)error"`).
+
+**Comparison semantics.** Equality comparisons (bare-value matching and `any_of`) use deep equality: numeric values compare by mathematical value (integer `42` equals float `42.0`); object key order is irrelevant; arrays compare element-wise by position and length; `null` equals only `null`; NaN does not equal any value including itself.
 
 Type mismatches evaluate to `false`, not errors. String operators (`contains`, `starts_with`, `ends_with`, `regex`) applied to non-string values produce `false`. Numeric operators (`gt`, `lt`, `gte`, `lte`) applied to non-numeric values produce `false`. Equality comparison is strict and type-aware: integer `42` does not equal string `"42"`, but integer `42` equals float `42.0`.
 
@@ -786,7 +796,7 @@ The `indicators` field is OPTIONAL. When absent, the document is valid for simul
 
 Indicators SHOULD examine only the agent's *response* to the attack — not the attack payload itself. An indicator that checked whether a tool description contains suspicious text would always fire in a closed-loop simulation: the execution profile placed that text there. The valuable indicators are those that detect whether the agent *acted on* the malicious content — exfiltrating data, complying with injected instructions, or performing unauthorized actions.
 
-Evaluation tools evaluate each indicator against protocol traffic observed during the entire execution of the attack profile (all phases of all actors). An indicator matches if **any** applicable message in the observed trace satisfies its condition — the tool does not require a specific message position (first, last, or otherwise). Tools MAY apply a configurable grace period after the terminal phase(s) complete, to capture delayed effects such as exfiltration or state changes that manifest after the attack simulation ends. The grace period duration is a tool configuration concern and is not specified in the OATF document.
+Evaluation tools evaluate each indicator against protocol traffic observed during the entire execution of the attack profile (all phases of all actors). An indicator matches if **any** applicable message in the observed trace satisfies its condition — the tool does not require a specific message position (first, last, or otherwise). Tools MAY apply a configurable grace period after the terminal phase(s) complete, to capture delayed effects such as exfiltration or state changes that manifest after the attack simulation ends. When `attack.grace_period` is present, tools MUST use the specified duration as the post-terminal-phase observation window. When absent, tools MAY apply their own configurable default.
 
 ### 6.1 Structure
 
@@ -921,7 +931,7 @@ expression:
 
 #### `expression.variables` (OPTIONAL)
 
-Named variables available to the CEL expression beyond the message context. Defined as a map from variable name to dot-path into the message, enabling pre-extraction of deeply nested values for cleaner expressions.
+Named variables available to the CEL expression beyond the message context. Defined as a map from variable name to dot-path into the message, enabling pre-extraction of deeply nested values for cleaner expressions. Variable names MUST be valid CEL identifiers (`[_a-zA-Z][_a-zA-Z0-9]*`); names containing hyphens or other non-identifier characters will fail CEL compilation.
 
 ### 6.4 Semantic Analysis
 
@@ -1915,7 +1925,7 @@ attack:
 
 A conforming OATF document:
 
-The SDK specification (sdk.md §3.2) assigns stable rule identifiers (V-001 through V-040) to each conformance requirement below. Conformance test suites reference these identifiers.
+The SDK specification (sdk.md §3.2) assigns stable rule identifiers (V-001 through V-041) to each conformance requirement below. Conformance test suites reference these identifiers.
 
 **Core structure**
 
@@ -1944,6 +1954,7 @@ The SDK specification (sdk.md §3.2) assigns stable rule identifiers (V-001 thro
 14. In MCP tool `responses` and prompt `responses` entries: `content` (or `messages` for prompts) and `synthesize` are mutually exclusive. Each entry MUST specify at most one. In A2A `task_responses` entries: `messages`/`artifacts` and `synthesize` are mutually exclusive. In AG-UI `run_agent_input`: `messages` and `synthesize` are mutually exclusive.
 15. In any `responses` or `task_responses` list, at most one entry MAY omit `when`. When present, it SHOULD be the last entry in the list. An entry without `when` after another entry without `when` is a validation error.
 16. `synthesize.prompt` MUST be a non-empty string when `synthesize` is present.
+17. All `expression.variables` keys MUST be valid CEL identifiers, matching `[_a-zA-Z][_a-zA-Z0-9]*`. Names containing hyphens, dots, or other non-identifier characters are rejected because CEL would parse them as operators rather than variable references.
 
 ### 11.2 Tool Conformance: General
 
@@ -2393,17 +2404,33 @@ attack:
 
 ---
 
-## Appendix D: Future Work (v0.2)
+## Appendix D: Diagnostic Warning Codes (Non-Normative)
+
+SDKs that implement the validation and evaluation pipeline (see the SDK specification) produce structured diagnostics. The following warning codes are defined for v0.1. These are non-normative summaries — the SDK specification is authoritative.
+
+| Code  | Condition |
+|-------|-----------|
+| W-001 | `oatf` is not the first key in the document. |
+| W-002 | A mode passes pattern validation but is not in the known modes registry. Likely typo. |
+| W-003 | A protocol passes pattern validation but is not in the known protocols set. Likely typo. |
+| W-004 | Template interpolation references an undefined extractor or an unresolvable message path. |
+| W-005 | An indicator targets a protocol with no matching actor in the execution profile. |
+
+Authors encountering these warnings should review the flagged fields. W-002 and W-003 in particular catch common typos in mode and protocol strings (e.g., `mpc_server` instead of `mcp_server`).
+
+---
+
+## Appendix E: Future Work (v0.2)
 
 This appendix collects areas under investigation for the next minor version. These items are non-normative and do not affect v0.1 conformance.
 
-### D.1 A2A Binding Extensions
+### E.1 A2A Binding Extensions
 
 - **Streaming task updates.** A2A supports server-sent events for long-running tasks (`message/stream`). The current binding defines `task/status` and `task/artifact` events for the client-mode side but does not model attacks that exploit the streaming channel (e.g., injecting malicious status updates mid-stream or exploiting race conditions between concurrent task updates). Behavioral modifiers for A2A streaming need to be defined.
 - **Multi-agent delegation chains.** A2A permits agents to delegate tasks to other agents, forming chains of arbitrary depth. The current execution state models a single agent-to-agent interaction. Attacks that exploit transitive trust across three or more agents (e.g., a compromised intermediate agent modifying task artifacts before forwarding) require a delegation-aware execution model.
 - **Authentication scheme manipulation.** The Agent Card's `authentication.schemes` field is surfaced in the execution state but not yet treated as an attack surface. Attacks that advertise false authentication capabilities to downgrade security or harvest credentials need dedicated surfaces and indicators.
 
-### D.2 AG-UI Binding Extensions
+### E.2 AG-UI Binding Extensions
 
 - **State object schema.** AG-UI's `state` field accepts arbitrary JSON, making it a flexible but opaque attack surface. The current binding treats it as an unstructured blob. Future versions may define typed state schemas for common agent frameworks (e.g., LangGraph checkpoint state, CrewAI task state) to enable more precise indicators.
 - **Event sequencing attacks.** The SSE response stream delivers events in order, but the current binding does not model attacks that depend on specific event sequences (e.g., emitting a `tool_call_start` event without a corresponding `tool_call_end`, or interleaving events from concurrent runs to confuse client-side state management). This requires behavioral modifiers for AG-UI.
