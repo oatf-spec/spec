@@ -1,0 +1,123 @@
+# =============================================================================
+# OATF Conformance: resolve_event_qualifier Primitive Tests
+# Tests SDK resolve_event_qualifier(protocol, base_event, content) per SDK
+# spec §5.9a.
+# =============================================================================
+
+- name: "MCP tools/call resolves qualifier from params.name"
+  id: QUAL-001
+  input:
+    protocol: "mcp"
+    base_event: "tools/call"
+    content:
+      params:
+        name: "calculator"
+  expected: "calculator"
+
+- name: "MCP prompts/get resolves qualifier from params.name"
+  id: QUAL-002
+  input:
+    protocol: "mcp"
+    base_event: "prompts/get"
+    content:
+      params:
+        name: "summarize"
+  expected: "summarize"
+
+- name: "A2A task/status resolves qualifier from status.state"
+  id: QUAL-003
+  input:
+    protocol: "a2a"
+    base_event: "task/status"
+    content:
+      status:
+        state: "completed"
+  expected: "completed"
+
+- name: "AG-UI tool_call_start resolves qualifier from toolCallName"
+  id: QUAL-004
+  input:
+    protocol: "ag_ui"
+    base_event: "tool_call_start"
+    content:
+      toolCallName: "search"
+      toolCallId: "tc-001"
+  expected: "search"
+
+- name: "AG-UI tool_call_end resolves qualifier from toolCallName"
+  id: QUAL-005
+  input:
+    protocol: "ag_ui"
+    base_event: "tool_call_end"
+    content:
+      toolCallName: "search"
+      toolCallId: "tc-001"
+  expected: "search"
+
+- name: "AG-UI custom resolves qualifier from name"
+  id: QUAL-006
+  input:
+    protocol: "ag_ui"
+    base_event: "custom"
+    content:
+      name: "my_event"
+      data: "payload"
+  expected: "my_event"
+
+- name: "Event not in registry returns null"
+  id: QUAL-007
+  input:
+    protocol: "mcp"
+    base_event: "resources/read"
+    content:
+      uri: "file:///etc/passwd"
+  expected: null
+
+- name: "Content field path missing returns null"
+  id: QUAL-008
+  input:
+    protocol: "mcp"
+    base_event: "tools/call"
+    content:
+      params: {}
+  expected: null
+
+- name: "Unknown protocol returns null"
+  id: QUAL-009
+  input:
+    protocol: "unknown_proto"
+    base_event: "tools/call"
+    content:
+      params:
+        name: "calculator"
+  expected: null
+
+- name: "A2A task/artifact not in registry returns null"
+  id: QUAL-010
+  input:
+    protocol: "a2a"
+    base_event: "task/artifact"
+    content:
+      artifacts:
+        - name: "report"
+  expected: null
+
+- name: "AG-UI run_started not in registry returns null"
+  id: QUAL-011
+  input:
+    protocol: "ag_ui"
+    base_event: "run_started"
+    content:
+      threadId: "t-001"
+  expected: null
+
+- name: "Content is nested but path resolves correctly"
+  id: QUAL-012
+  input:
+    protocol: "a2a"
+    base_event: "task/status"
+    content:
+      status:
+        state: "input-required"
+        message: "Need more info"
+  expected: "input-required"
