@@ -75,7 +75,7 @@
     state:
       event_count: 0
 
-- name: "Count 3 not yet reached after 2 matches"
+- name: "Count 3 reached on third match — advances"
   id: TRIG-005
   input:
     trigger:

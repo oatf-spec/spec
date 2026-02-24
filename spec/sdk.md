@@ -218,7 +218,7 @@ Represents a protocol-level event observed during execution. Used by `evaluate_t
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `event_type` | `String` | Yes | The base event type (e.g., `tools/call`, `message/send`, `run_started`). |
-| `qualifier` | `Optional<String>` | No | Event qualifier, if present (the portion after `:` in `tools/call:calculator`). |
+| `qualifier` | `Optional<String>` | No | Pre-resolved event qualifier, if present (the portion after `:` in `tools/call:calculator`). When set, `evaluate_trigger` uses this value directly instead of calling `resolve_event_qualifier`. When absent, the qualifier is resolved from `content` at trigger evaluation time. |
 | `content` | `Value` | Yes | The event payload. Evaluated against `trigger.match` predicates via `evaluate_predicate`. |
 
 ### 2.8b TriggerResult
@@ -509,6 +509,8 @@ SDKs MUST maintain a compile-time registry mapping `(protocol, base_event)` pair
 | `ag_ui` | `custom` | `name` |
 
 The content field path is resolved against the event's `content` field using `resolve_simple_path` (§5.1.1). A qualifier matches when the resolved value, converted to its string representation, equals the qualifier token. Events whose `(protocol, base_event)` pair is not in the registry do not support qualifier resolution — `resolve_event_qualifier` returns `None` for such events.
+
+**Correlated response events.** For protocols that use request/response correlation rather than embedding all necessary fields in the response payload (notably MCP JSON-RPC for `mcp_client` actors), SDKs MUST construct `ProtocolEvent.content` for correlated response events so that the qualifier paths in this registry are resolvable. Specifically, for MCP `tools/call` and `prompts/get` events observed in client mode, `content` MUST be an enriched object that includes the originating request's `params` (in addition to any response payload fields), since JSON-RPC responses do not themselves carry `params`. When the registry specifies `params.name` for these MCP entries, it resolves against this enriched `content` derived from the correlated original request. See format specification §7.1.2 for the full correlation semantics.
 
 SDKs SHOULD define this as a compile-time constant data structure, paralleling the Event-Mode Validity Registry (§2.22) and Surface Registry (§2.21).
 
@@ -1111,7 +1113,9 @@ Evaluates whether a trigger condition is satisfied for phase advancement. The fu
 2. If `trigger.event` is present and `event` is present:
    a. Parse `trigger.event` via `parse_event_qualifier` (§5.9) to obtain `(trigger_base, trigger_qualifier)`.
    b. **Base match:** If `event.event_type` ≠ `trigger_base`, return `TriggerResult::NotAdvanced`.
-   c. **Qualifier match:** If `trigger_qualifier` is present, call `resolve_event_qualifier(protocol, event.event_type, event.content)` (§5.9a). If the result is `None` or does not equal `trigger_qualifier`, return `TriggerResult::NotAdvanced`.
+   c. **Qualifier match:** If `trigger_qualifier` is present:
+      i. Determine the event's qualifier: if `event.qualifier` is present, use that value. Otherwise, call `resolve_event_qualifier(protocol, event.event_type, event.content)` (§5.9a) and use its result (which may be `None`).
+      ii. If the event's qualifier is `None` or does not equal `trigger_qualifier`, return `TriggerResult::NotAdvanced`.
    d. **Predicate check:** If `trigger.match` is present, evaluate the match predicate against `event.content` using `evaluate_predicate` (§5.4). If the predicate does not match, return `TriggerResult::NotAdvanced`.
    e. **Count increment:** Increment `state.event_count` by 1. This increment occurs only after base event, qualifier, and predicate have all passed.
    f. **Count check:** If `state.event_count` ≥ `trigger.count` (resolved, default `1`), return `TriggerResult::Advanced { reason: event_matched }`.
