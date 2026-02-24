@@ -1,6 +1,6 @@
 # =============================================================================
 # OATF Conformance: evaluate_extractor Primitive Tests
-# Tests SDK evaluate_extractor(extractor, message) per SDK spec §5.6.
+# Tests SDK evaluate_extractor(extractor, message, direction) per SDK spec §5.6.
 # =============================================================================
 
 - name: "JSONPath match returns first result"
@@ -14,6 +14,7 @@
     message:
       tools:
         - name: "calc"
+    direction: "request"
 
   expected: "calc"
 
@@ -27,6 +28,7 @@
       selector: "$.missing"
     message:
       other: 1
+    direction: "request"
 
   expected: null
 
@@ -39,6 +41,7 @@
       type: "regex"
       selector: "key=([a-zA-Z0-9]+)"
     message: "api key=abc123 here"
+    direction: "response"
 
   expected: "abc123"
 
@@ -51,6 +54,7 @@
       type: "regex"
       selector: "secret=(\\w+)"
     message: "no secrets"
+    direction: "response"
 
   expected: null
 
@@ -67,6 +71,7 @@
         files:
           - "/etc/passwd"
           - "/etc/shadow"
+    direction: "request"
 
   expected: "/etc/passwd"
 
@@ -79,6 +84,7 @@
       type: "regex"
       selector: "https?://([^/]+)(/.*)"
     message: "visit https://evil.com/exfil?data=secret"
+    direction: "response"
 
   expected: "evil.com"
 
@@ -97,6 +103,7 @@
             properties:
               a:
                 type: "string"
+    direction: "request"
 
   expected: '{"type":"object","properties":{"a":{"type":"string"}}}'
 
@@ -109,6 +116,7 @@
       type: "regex"
       selector: "key=[a-zA-Z0-9]+"
     message: "api key=abc123 here"
+    direction: "response"
 
   expected: null
 
@@ -124,5 +132,21 @@
       tools:
         - name: "first"
         - name: "second"
+    direction: "request"
 
   expected: "first"
+
+- name: "Direction mismatch returns null without evaluating"
+  id: EXTR-010
+  input:
+    extractor:
+      name: "tool_name"
+      source: "request"
+      type: "json_path"
+      selector: "$.tools[0].name"
+    message:
+      tools:
+        - name: "calc"
+    direction: "response"
+
+  expected: null

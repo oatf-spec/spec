@@ -350,15 +350,66 @@ response: <optional Value>
 
 ### `evaluate_extractor.yaml`
 
-Tests `evaluate_extractor(extractor, message)`.
+Tests `evaluate_extractor(extractor, message, direction)`.
 
 **Input:**
 ```yaml
 extractor: <Extractor object>
 message: <Value>
+direction: <"request" or "response">
 ```
 
-**Expected:** The extracted string value, or `null` when extraction yields nothing.
+**Expected:** The extracted string value, or `null` when extraction yields nothing. Returns `null` when `extractor.source` ≠ `direction` (direction mismatch).
+
+### `interpolate_value.yaml`
+
+Tests `interpolate_value(value, extractors, request, response)`.
+
+**Input:**
+```yaml
+value: <Value — the JSON-like tree to interpolate>
+extractors:
+  name: "extracted_value"
+request: <optional Value>
+response: <optional Value>
+```
+
+**Expected:** The interpolated `Value` tree. Strings containing `{{` are interpolated via `interpolate_template`; objects and arrays are recursed; other scalars are unchanged.
+
+### `resolve_event_qualifier.yaml`
+
+Tests `resolve_event_qualifier(protocol, base_event, content)`.
+
+**Input:**
+```yaml
+protocol: "mcp"
+base_event: "tools/call"
+content: <Value — the event payload>
+```
+
+**Expected:** The resolved qualifier string, or `null` when the event type has no qualifier support or the content field path does not resolve.
+
+### `evaluate_trigger.yaml`
+
+Tests `evaluate_trigger(trigger, event, elapsed, state, protocol)`.
+
+**Input:**
+```yaml
+trigger: <Trigger object>
+event: <optional ProtocolEvent object>
+elapsed: <duration string>
+state:
+  event_count: <integer>
+protocol: <string>
+```
+
+**Expected:**
+```yaml
+result: <"advanced" or "not_advanced">
+reason: <"event_matched" or "timeout", present only when result is "advanced">
+state:
+  event_count: <integer — the updated event count after evaluation>
+```
 
 ### `compute_effective_state.yaml`
 
