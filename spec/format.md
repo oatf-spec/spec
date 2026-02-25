@@ -1423,7 +1423,7 @@ state:
 
 **Filesystem roots.** The `roots` list is returned verbatim on `roots/list` requests. When absent, the client does not advertise filesystem roots.
 
-**Template interpolation** (§5.6) applies to string fields in actions (`name`, `uri`, `arguments` values) and response content.
+**Template interpolation** (§5.6) applies recursively to all string-valued fields within actions (including `name`, `uri`, and any string values nested at any depth inside `arguments` objects/arrays) and response content, matching the SDK's `interpolate_value` semantics.
 
 #### 7.1.5 Entry Actions (MCP)
 

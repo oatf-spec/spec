@@ -1105,7 +1105,7 @@ evaluate_trigger(
 ) → TriggerResult
 ```
 
-Evaluates whether a trigger condition is satisfied for phase advancement. The function manages event counting internally via the mutable `state` parameter (§2.8c), which the caller persists across calls but does not inspect or modify.
+Evaluates whether a trigger condition is satisfied for phase advancement. The function manages event counting internally via the mutable `state` parameter (§2.8c), which the caller persists across calls but does not inspect or modify. The `protocol` argument MUST be the normalized protocol identifier (the output of `extract_protocol(mode)`) corresponding to the registry keys defined in §2.25 (`mcp`, `a2a`, `ag_ui`); passing an unnormalized or free-form value will cause silent qualifier resolution failures.
 
 **Behavior:**
 
@@ -1158,7 +1158,7 @@ Resolves the qualifier value from a protocol event's content by looking up the c
 1. Look up `(protocol, base_event)` in the Qualifier Resolution Registry (§2.25).
 2. If no entry exists, return `None`. This event type does not support qualifier resolution.
 3. Resolve the registered content field path against `content` using `resolve_simple_path` (§5.1.1).
-4. If the path resolves to a value, convert it to its string representation and return it.
+4. If the path resolves to a value `v`, return a qualifier string: if `v` is a string, return it unchanged; if `v` is a number or boolean, return its canonical JSON encoding (e.g., `42`, `true`); for `null`, arrays, or objects, return `None` (these types are not valid qualifier values).
 5. If the path does not resolve, return `None`.
 
 **Examples:**
