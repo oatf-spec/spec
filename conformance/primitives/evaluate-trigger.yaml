@@ -1,0 +1,303 @@
+# =============================================================================
+# OATF Conformance: evaluate_trigger Primitive Tests
+# Tests SDK evaluate_trigger(trigger, event, elapsed, state, protocol) per SDK
+# spec §5.8.
+# =============================================================================
+
+- name: "Timeout triggers advancement"
+  id: TRIG-001
+  input:
+    trigger:
+      after: "30s"
+    event: null
+    elapsed: "31s"
+    state:
+      event_count: 0
+    protocol: "mcp"
+  expected:
+    result: "advanced"
+    reason: "timeout"
+    state:
+      event_count: 0
+
+- name: "Timeout not yet reached"
+  id: TRIG-002
+  input:
+    trigger:
+      after: "30s"
+    event: null
+    elapsed: "10s"
+    state:
+      event_count: 0
+    protocol: "mcp"
+  expected:
+    result: "not_advanced"
+    state:
+      event_count: 0
+
+- name: "Simple event match with count 1 advances"
+  id: TRIG-003
+  input:
+    trigger:
+      event: "tools/call"
+      count: 1
+    event:
+      event_type: "tools/call"
+      content:
+        params:
+          name: "calculator"
+    elapsed: "0s"
+    state:
+      event_count: 0
+    protocol: "mcp"
+  expected:
+    result: "advanced"
+    reason: "event_matched"
+    state:
+      event_count: 1
+
+- name: "Event type mismatch does not advance"
+  id: TRIG-004
+  input:
+    trigger:
+      event: "tools/call"
+      count: 1
+    event:
+      event_type: "resources/read"
+      content:
+        uri: "file:///x"
+    elapsed: "0s"
+    state:
+      event_count: 0
+    protocol: "mcp"
+  expected:
+    result: "not_advanced"
+    state:
+      event_count: 0
+
+- name: "Count 3 reached on third match — advances"
+  id: TRIG-005
+  input:
+    trigger:
+      event: "tools/call"
+      count: 3
+    event:
+      event_type: "tools/call"
+      content:
+        params:
+          name: "calc"
+    elapsed: "0s"
+    state:
+      event_count: 2
+    protocol: "mcp"
+  expected:
+    result: "advanced"
+    reason: "event_matched"
+    state:
+      event_count: 3
+
+- name: "Count 3 with only 1 prior match increments but does not advance"
+  id: TRIG-006
+  input:
+    trigger:
+      event: "tools/call"
+      count: 3
+    event:
+      event_type: "tools/call"
+      content:
+        params:
+          name: "calc"
+    elapsed: "0s"
+    state:
+      event_count: 1
+    protocol: "mcp"
+  expected:
+    result: "not_advanced"
+    state:
+      event_count: 2
+
+- name: "Qualifier match advances"
+  id: TRIG-007
+  input:
+    trigger:
+      event: "tools/call:calculator"
+      count: 1
+    event:
+      event_type: "tools/call"
+      content:
+        params:
+          name: "calculator"
+    elapsed: "0s"
+    state:
+      event_count: 0
+    protocol: "mcp"
+  expected:
+    result: "advanced"
+    reason: "event_matched"
+    state:
+      event_count: 1
+
+- name: "Qualifier mismatch does not advance or increment"
+  id: TRIG-008
+  input:
+    trigger:
+      event: "tools/call:calculator"
+      count: 1
+    event:
+      event_type: "tools/call"
+      content:
+        params:
+          name: "search"
+    elapsed: "0s"
+    state:
+      event_count: 0
+    protocol: "mcp"
+  expected:
+    result: "not_advanced"
+    state:
+      event_count: 0
+
+- name: "Predicate match advances"
+  id: TRIG-009
+  input:
+    trigger:
+      event: "tools/call"
+      count: 1
+      match:
+        params.name:
+          contains: "calc"
+    event:
+      event_type: "tools/call"
+      content:
+        params:
+          name: "calculator"
+    elapsed: "0s"
+    state:
+      event_count: 0
+    protocol: "mcp"
+  expected:
+    result: "advanced"
+    reason: "event_matched"
+    state:
+      event_count: 1
+
+- name: "Predicate mismatch does not advance or increment"
+  id: TRIG-010
+  input:
+    trigger:
+      event: "tools/call"
+      count: 1
+      match:
+        params.name: "calculator"
+    event:
+      event_type: "tools/call"
+      content:
+        params:
+          name: "search"
+    elapsed: "0s"
+    state:
+      event_count: 0
+    protocol: "mcp"
+  expected:
+    result: "not_advanced"
+    state:
+      event_count: 0
+
+- name: "No event provided and no timeout does not advance"
+  id: TRIG-011
+  input:
+    trigger:
+      event: "tools/call"
+      count: 1
+    event: null
+    elapsed: "0s"
+    state:
+      event_count: 0
+    protocol: "mcp"
+  expected:
+    result: "not_advanced"
+    state:
+      event_count: 0
+
+- name: "Timeout takes priority over event matching"
+  id: TRIG-012
+  input:
+    trigger:
+      event: "tools/call"
+      count: 1
+      after: "10s"
+    event:
+      event_type: "tools/call"
+      content:
+        params:
+          name: "calc"
+    elapsed: "15s"
+    state:
+      event_count: 0
+    protocol: "mcp"
+  expected:
+    result: "advanced"
+    reason: "timeout"
+    state:
+      event_count: 0
+
+- name: "AG-UI qualifier resolution for tool_call_start"
+  id: TRIG-013
+  input:
+    trigger:
+      event: "tool_call_start:search"
+      count: 1
+    event:
+      event_type: "tool_call_start"
+      content:
+        toolCallName: "search"
+        toolCallId: "tc-001"
+    elapsed: "0s"
+    state:
+      event_count: 0
+    protocol: "ag_ui"
+  expected:
+    result: "advanced"
+    reason: "event_matched"
+    state:
+      event_count: 1
+
+- name: "A2A qualifier resolution for task/status"
+  id: TRIG-014
+  input:
+    trigger:
+      event: "task/status:completed"
+      count: 1
+    event:
+      event_type: "task/status"
+      content:
+        status:
+          state: "completed"
+    elapsed: "0s"
+    state:
+      event_count: 0
+    protocol: "a2a"
+  expected:
+    result: "advanced"
+    reason: "event_matched"
+    state:
+      event_count: 1
+
+- name: "Qualifier on event with no registry entry does not advance"
+  id: TRIG-015
+  input:
+    trigger:
+      event: "resources/read:file"
+      count: 1
+    event:
+      event_type: "resources/read"
+      content:
+        uri: "file:///etc/passwd"
+    elapsed: "0s"
+    state:
+      event_count: 0
+    protocol: "mcp"
+  expected:
+    result: "not_advanced"
+    state:
+      event_count: 0

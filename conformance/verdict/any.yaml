@@ -56,7 +56,7 @@
   expected:
     result: error
 
-- name: "All skipped — not_exploited"
+- name: "All skipped — error (no evaluation occurred)"
   id: VERDICT-ANY-04
   input:
     correlation_logic: any
@@ -71,7 +71,7 @@
         result: skipped
         timestamp: null
   expected:
-    result: not_exploited
+    result: error
 
 - name: "Mixed skipped and matched — exploited"
   id: VERDICT-ANY-05

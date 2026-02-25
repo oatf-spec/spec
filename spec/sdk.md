@@ -218,7 +218,7 @@ Represents a protocol-level event observed during execution. Used by `evaluate_t
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `event_type` | `String` | Yes | The base event type (e.g., `tools/call`, `message/send`, `run_started`). |
-| `qualifier` | `Optional<String>` | No | Event qualifier, if present (the portion after `:` in `tools/call:calculator`). |
+| `qualifier` | `Optional<String>` | No | Pre-resolved event qualifier, if present (the portion after `:` in `tools/call:calculator`). When set, `evaluate_trigger` uses this value directly instead of calling `resolve_event_qualifier`. When absent, the qualifier is resolved from `content` at trigger evaluation time. |
 | `content` | `Value` | Yes | The event payload. Evaluated against `trigger.match` predicates via `evaluate_predicate`. |
 
 ### 2.8b TriggerResult
@@ -231,6 +231,14 @@ Returned by `evaluate_trigger` (§5.8) to indicate whether a phase should advanc
 | `NotAdvanced` | — | The trigger condition is not yet satisfied; remain in the current phase. |
 
 `AdvanceReason` is one of: `event_matched` (the required number of matching events was reached), `timeout` (the `after` duration elapsed).
+
+### 2.8c TriggerState
+
+Mutable state tracked per-actor-per-phase for trigger evaluation. The runtime creates a fresh `TriggerState` when an actor enters a phase and passes it to every `evaluate_trigger` call for that phase. The function updates the state internally; the caller persists it across calls but does not inspect or modify its fields.
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `event_count` | `Integer` | `0` | Number of fully-matched events observed so far in this phase. Initialized to `0` on phase entry; incremented by `evaluate_trigger` (§5.8) when base event, qualifier, and predicate all match. |
 
 ### 2.9 Extractor
 
@@ -486,6 +494,25 @@ A conditional response entry used for request-specific response dispatch. Appear
 | `synthesize` | `Optional<SynthesizeBlock>` | No | LLM-generated response. Mutually exclusive with static content fields. |
 
 Static content fields are protocol-binding-specific: MCP tools use `content`, MCP prompts use `messages`, A2A uses `messages`/`artifacts`, AG-UI uses `messages`. See format specification §7 for the complete structure of each binding's response entries.
+
+### 2.25 Qualifier Resolution Registry
+
+SDKs MUST maintain a compile-time registry mapping `(protocol, base_event)` pairs to a content field path used for qualifier resolution. This registry is used by `resolve_event_qualifier` (§5.9a) to determine whether a protocol event matches a trigger's qualifier token. The mapping is derived from the qualifier resolution rules in the format specification (§7.1.2, §7.2.2, §7.3.2).
+
+| Protocol | Base Event | Content Field Path |
+|---|---|---|
+| `mcp` | `tools/call` | `params.name` |
+| `mcp` | `prompts/get` | `params.name` |
+| `a2a` | `task/status` | `status.state` |
+| `ag_ui` | `tool_call_start` | `toolCallName` |
+| `ag_ui` | `tool_call_end` | `toolCallName` |
+| `ag_ui` | `custom` | `name` |
+
+The content field path is resolved against the event's `content` field using `resolve_simple_path` (§5.1.1). A qualifier matches when the resolved value, converted to its string representation, equals the qualifier token. Events whose `(protocol, base_event)` pair is not in the registry do not support qualifier resolution — `resolve_event_qualifier` returns `None` for such events.
+
+**Correlated response events.** For protocols that use request/response correlation rather than embedding all necessary fields in the response payload (notably MCP JSON-RPC for `mcp_client` actors), SDKs MUST construct `ProtocolEvent.content` for correlated response events so that the qualifier paths in this registry are resolvable. Specifically, for MCP `tools/call` and `prompts/get` events observed in client mode, `content` MUST be an enriched object that includes the originating request's `params` (in addition to any response payload fields), since JSON-RPC responses do not themselves carry `params`. When the registry specifies `params.name` for these MCP entries, it resolves against this enriched `content` derived from the correlated original request. See format specification §7.1.2 for the full correlation semantics.
+
+SDKs SHOULD define this as a compile-time constant data structure, paralleling the Event-Mode Validity Registry (§2.22) and Surface Registry (§2.21).
 
 ---
 
@@ -800,17 +827,19 @@ Computes the attack-level verdict from a set of indicator verdicts according to 
 **Behavior by logic mode:**
 
 **`any` (default):**
+- If all indicator verdicts are `skipped`, return `error`.
 - If any indicator verdict is `error`, return `error`.
 - Else if any indicator verdict is `matched`, return `exploited`.
 - Else return `not_exploited`.
 
 **`all`:**
+- If all indicator verdicts are `skipped`, return `error`.
 - If any indicator verdict is `error`, return `error`.
 - If all indicator verdicts are `matched`, return `exploited`.
 - If at least one is `matched` and at least one is `not_matched` or `skipped`, return `partial`.
 - If all are `not_matched` or `skipped`, return `not_exploited`.
 
-**Treatment of `skipped` verdicts:** A `skipped` verdict means the indicator could not be evaluated (absent evaluator, unsupported method). For verdict computation purposes, `skipped` is treated equivalently to `not_matched`: the indicator did not produce evidence of agent compliance. This is semantically correct: the agent was not shown to be exploited by that indicator, regardless of why. Consuming tools that need to distinguish between "evaluated and not matched" versus "not evaluated" SHOULD inspect the individual `IndicatorVerdict` results or the `evaluation_summary` in the returned `AttackVerdict`.
+**Treatment of `skipped` verdicts:** A `skipped` verdict means the indicator could not be evaluated (absent evaluator, unsupported method). For verdict computation purposes, `skipped` is treated equivalently to `not_matched`: the indicator did not produce evidence of agent compliance. This is semantically correct: the agent was not shown to be exploited by that indicator, regardless of why. **The sole exception: when ALL indicators are `skipped`, the result is `error` rather than `not_exploited`. A verdict produced without any evaluation is not a legitimate pass — it indicates a configuration gap (missing evaluator, unsupported indicator types) that must be surfaced.** Consuming tools that need to distinguish between "evaluated and not matched" versus "not evaluated" SHOULD inspect the individual `IndicatorVerdict` results or the `evaluation_summary` in the returned `AttackVerdict`.
 
 **Evaluation summary:** The returned `AttackVerdict` MUST include an `evaluation_summary` containing counts of each indicator result (`matched`, `not_matched`, `error`, `skipped`). This enables consumers to detect evaluation gaps — for example, a `not_exploited` verdict with a high `skipped` count signals incomplete coverage rather than confirmed resilience.
 
@@ -999,18 +1028,45 @@ The `extractors` map is populated by the calling runtime with both local names (
 4. Restore all placeholders to literal `{{`.
 5. Return the interpolated string and accumulated diagnostics.
 
+### 5.5a interpolate_value
+
+```
+interpolate_value(
+    value: Value,
+    extractors: Map<String, String>,
+    request: Optional<Value>,
+    response: Optional<Value>
+) → (Value, List<Diagnostic>)
+```
+
+Recursively walks a `Value` tree and interpolates all template expressions found in string values. Non-string scalars are returned unchanged. This function is the entry point for interpolating structured values (e.g., action parameters, state objects) that may contain template expressions at any depth.
+
+**Behavior:**
+
+1. If `value` is a string containing `{{`, call `interpolate_template(value, extractors, request, response)`. Return the interpolated string and its diagnostics.
+2. If `value` is a string without `{{`, return the string unchanged with no diagnostics.
+3. If `value` is an object (map), recurse into each value (not keys). Return the object with interpolated values and the union of all diagnostics.
+4. If `value` is an array, recurse into each element. Return the array with interpolated elements and the union of all diagnostics.
+5. If `value` is any other scalar (null, boolean, number), return it unchanged with no diagnostics.
+
+**No re-expansion:** Interpolation results are not re-scanned for template expressions. If an extractor value contains `{{`, it is treated as literal text in the output. This prevents injection of template expressions through extracted values.
+
 ### 5.6 evaluate_extractor
 
 ```
 evaluate_extractor(
     extractor: Extractor,
-    message: Value
+    message: Value,
+    direction: ExtractorSource
 ) → Optional<String>
 ```
 
-Applies an extractor to a message, capturing a value.
+Applies an extractor to a message, capturing a value. The `direction` parameter indicates whether `message` is a request or response, enabling the function to filter extractors by their declared source.
 
-**Behavior by type:**
+**Behavior:**
+
+1. If `extractor.source` ≠ `direction`, return `None`. This extractor targets a different message direction and should not be applied.
+2. Apply the extractor by type:
 
 - `json_path`: Evaluate the JSONPath expression against `message`. If the expression matches one or more nodes, return the first match in document order (per RFC 9535 §2.6) serialized to its compact JSON string representation. If no match, return `None`.
 - `regex`: Convert `message` to its string representation, evaluate the regular expression. If the regex matches, return the first capture group's value. If no match, return `None`. (V-044 guarantees at least one capture group is present.)
@@ -1046,22 +1102,28 @@ evaluate_trigger(
     trigger: Trigger,
     event: Optional<ProtocolEvent>,
     elapsed: Duration,
-    event_count: Integer
+    state: TriggerState,
+    protocol: String
 ) → TriggerResult
 ```
 
-Evaluates whether a trigger condition is satisfied for phase advancement.
+Evaluates whether a trigger condition is satisfied for phase advancement. The function manages event counting internally via the mutable `state` parameter (§2.8c), which the caller persists across calls but does not inspect or modify. The `protocol` argument MUST be the normalized protocol identifier (the output of `extract_protocol(mode)`) corresponding to the registry keys defined in §2.25 (`mcp`, `a2a`, `ag_ui`); passing an unnormalized or free-form value will cause silent qualifier resolution failures.
 
 **Behavior:**
 
 1. If `trigger.after` is present and `elapsed` ≥ `trigger.after`, return `TriggerResult::Advanced { reason: timeout }`.
 2. If `trigger.event` is present and `event` is present:
-   a. Check if `event` matches `trigger.event` (after stripping qualifier, if present).
-   b. If the event matches and `trigger.match` is present, evaluate the match predicate against the event content using `evaluate_predicate` (§5.4). If the predicate does not match, return `TriggerResult::NotAdvanced`.
-   c. If the event matches (and predicate passes, if present), check whether `event_count + 1` ≥ `trigger.count` (resolved, default `1`). If so, return `TriggerResult::Advanced { reason: event_matched }`. The caller is responsible for persisting the updated count.
+   a. Parse `trigger.event` via `parse_event_qualifier` (§5.9) to obtain `(trigger_base, trigger_qualifier)`.
+   b. **Base match:** If `event.event_type` ≠ `trigger_base`, return `TriggerResult::NotAdvanced`.
+   c. **Qualifier match:** If `trigger_qualifier` is present:
+      i. Determine the event's qualifier: if `event.qualifier` is present, use that value. Otherwise, call `resolve_event_qualifier(protocol, event.event_type, event.content)` (§5.9a) and use its result (which may be `None`).
+      ii. If the event's qualifier is `None` or does not equal `trigger_qualifier`, return `TriggerResult::NotAdvanced`.
+   d. **Predicate check:** If `trigger.match` is present, evaluate the match predicate against `event.content` using `evaluate_predicate` (§5.4). If the predicate does not match, return `TriggerResult::NotAdvanced`.
+   e. **Count increment:** Increment `state.event_count` by 1. This increment occurs only after base event, qualifier, and predicate have all passed.
+   f. **Count check:** If `state.event_count` ≥ `trigger.count` (resolved, default `1`), return `TriggerResult::Advanced { reason: event_matched }`.
 3. Return `TriggerResult::NotAdvanced`.
 
-`TriggerResult` and `AdvanceReason` are defined in §2.8b.
+`TriggerResult` and `AdvanceReason` are defined in §2.8b. `TriggerState` is defined in §2.8c.
 
 ### 5.9 parse_event_qualifier
 
@@ -1080,6 +1142,32 @@ Splits an event type string on the first `:` separator, returning the base event
 - `"tools/call:calculator"` → `("tools/call", Some("calculator"))`
 - `"tools/call"` → `("tools/call", None)`
 - `"resources/read"` → `("resources/read", None)`
+
+### 5.9a resolve_event_qualifier
+
+```
+resolve_event_qualifier(
+    protocol: String,
+    base_event: String,
+    content: Value
+) → Optional<String>
+```
+
+Resolves the qualifier value from a protocol event's content by looking up the content field path in the Qualifier Resolution Registry (§2.25).
+
+**Behavior:**
+
+1. Look up `(protocol, base_event)` in the Qualifier Resolution Registry (§2.25).
+2. If no entry exists, return `None`. This event type does not support qualifier resolution.
+3. Resolve the registered content field path against `content` using `resolve_simple_path` (§5.1.1).
+4. If the path resolves to a value `v`, return a qualifier string: if `v` is a string, return it unchanged; if `v` is a number or boolean, return its canonical JSON encoding (e.g., `42`, `true`); for `null`, arrays, or objects, return `None` (these types are not valid qualifier values).
+5. If the path does not resolve, return `None`.
+
+**Examples:**
+- `resolve_event_qualifier("mcp", "tools/call", {"params": {"name": "calculator"}})` → `Some("calculator")`
+- `resolve_event_qualifier("mcp", "tools/call", {"params": {}})` → `None`
+- `resolve_event_qualifier("mcp", "resources/read", {"uri": "file://x"})` → `None` (event not in registry)
+- `resolve_event_qualifier("ag_ui", "custom", {"name": "my_event"})` → `Some("my_event")`
 
 ### 5.10 extract_protocol
 

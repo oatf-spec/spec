@@ -1,0 +1,164 @@
+# =============================================================================
+# OATF Conformance: interpolate_value Primitive Tests
+# Tests SDK interpolate_value(value, extractors, request, response) per SDK
+# spec §5.5a.
+# =============================================================================
+
+- name: "String with template expression is interpolated"
+  id: IVAL-001
+  input:
+    value: "Hello {{name}}"
+    extractors:
+      name: "world"
+    request: null
+    response: null
+  expected: "Hello world"
+
+- name: "String without template expression is unchanged"
+  id: IVAL-002
+  input:
+    value: "plain text"
+    extractors: {}
+    request: null
+    response: null
+  expected: "plain text"
+
+- name: "Integer scalar is unchanged"
+  id: IVAL-003
+  input:
+    value: 42
+    extractors:
+      x: "ignored"
+    request: null
+    response: null
+  expected: 42
+
+- name: "Boolean scalar is unchanged"
+  id: IVAL-004
+  input:
+    value: true
+    extractors: {}
+    request: null
+    response: null
+  expected: true
+
+- name: "Null scalar is unchanged"
+  id: IVAL-005
+  input:
+    value: null
+    extractors: {}
+    request: null
+    response: null
+  expected: null
+
+- name: "Object values are recursed, keys are not"
+  id: IVAL-006
+  input:
+    value:
+      greeting: "Hello {{name}}"
+      static_key: "no templates"
+    extractors:
+      name: "world"
+    request: null
+    response: null
+  expected:
+    greeting: "Hello world"
+    static_key: "no templates"
+
+- name: "Array elements are recursed"
+  id: IVAL-007
+  input:
+    value:
+      - "{{a}}"
+      - "literal"
+      - "{{b}}"
+    extractors:
+      a: "first"
+      b: "third"
+    request: null
+    response: null
+  expected:
+    - "first"
+    - "literal"
+    - "third"
+
+- name: "Deeply nested object interpolation"
+  id: IVAL-008
+  input:
+    value:
+      outer:
+        inner:
+          msg: "tool={{request.tool_name}}"
+    extractors: {}
+    request:
+      tool_name: "calculator"
+    response: null
+  expected:
+    outer:
+      inner:
+        msg: "tool=calculator"
+
+- name: "Mixed types in object — only strings interpolated"
+  id: IVAL-009
+  input:
+    value:
+      label: "Count: {{n}}"
+      count: 5
+      active: true
+      data: null
+    extractors:
+      n: "3"
+    request: null
+    response: null
+  expected:
+    label: "Count: 3"
+    count: 5
+    active: true
+    data: null
+
+- name: "Array of objects with templates"
+  id: IVAL-010
+  input:
+    value:
+      - method: "tools/call"
+        params:
+          name: "{{tool}}"
+      - method: "notification"
+        params:
+          msg: "static"
+    extractors:
+      tool: "calculator"
+    request: null
+    response: null
+  expected:
+    - method: "tools/call"
+      params:
+        name: "calculator"
+    - method: "notification"
+      params:
+        msg: "static"
+
+- name: "Response path interpolation in nested value"
+  id: IVAL-011
+  input:
+    value:
+      message: "Got {{response.status}}"
+    extractors: {}
+    request: null
+    response:
+      status: "ok"
+  expected:
+    message: "Got ok"
+
+- name: "No re-expansion of interpolation results"
+  id: IVAL-012
+  input:
+    value:
+      msg: "{{injected}}"
+    extractors:
+      injected: "{{secret}}"
+      secret: "should_not_appear"
+    request: null
+    response: null
+  expected:
+    msg: "{{secret}}"

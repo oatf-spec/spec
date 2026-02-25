@@ -268,7 +268,7 @@ Every test case has four required fields:
 | `input` | object | Function-specific input fields (documented per file below) |
 | `expected` | varies | Expected output |
 
-### `resolve_simple_path.yaml`
+### `resolve-simple-path.yaml`
 
 Tests `resolve_simple_path(path, value)`.
 
@@ -280,7 +280,7 @@ value: <Value — the JSON-like tree to resolve against>
 
 **Expected:** The resolved value directly, or `null` when the path does not resolve. For the special case where the resolved value IS `null`, the expected output uses `{found: true, value: null}` to distinguish from "not found".
 
-### `resolve_wildcard_path.yaml`
+### `resolve-wildcard-path.yaml`
 
 Tests `resolve_wildcard_path(path, value)`.
 
@@ -298,7 +298,7 @@ values:
   - "value2"
 ```
 
-### `parse_duration.yaml`
+### `parse-duration.yaml`
 
 Tests `parse_duration(input)`.
 
@@ -309,7 +309,7 @@ duration: "30s"
 
 **Expected:** Normalized duration in seconds (integer), or `error: true` for invalid inputs.
 
-### `evaluate_condition.yaml`
+### `evaluate-condition.yaml`
 
 Tests `evaluate_condition(condition, value)`.
 
@@ -321,7 +321,7 @@ value: <the value to test against>
 
 **Expected:** `true` or `false`.
 
-### `evaluate_predicate.yaml`
+### `evaluate-predicate.yaml`
 
 Tests `evaluate_predicate(predicate, value)`.
 
@@ -333,7 +333,7 @@ value: <Value — the JSON-like tree to evaluate against>
 
 **Expected:** `true` or `false`.
 
-### `interpolate_template.yaml`
+### `interpolate-template.yaml`
 
 Tests `interpolate_template(template, extractors, request, response)`.
 
@@ -348,19 +348,70 @@ response: <optional Value>
 
 **Expected:** The interpolated string.
 
-### `evaluate_extractor.yaml`
+### `evaluate-extractor.yaml`
 
-Tests `evaluate_extractor(extractor, message)`.
+Tests `evaluate_extractor(extractor, message, direction)`.
 
 **Input:**
 ```yaml
 extractor: <Extractor object>
 message: <Value>
+direction: <"request" or "response">
 ```
 
-**Expected:** The extracted string value, or `null` when extraction yields nothing.
+**Expected:** The extracted string value, or `null` when extraction yields nothing. Returns `null` when `extractor.source` ≠ `direction` (direction mismatch).
 
-### `compute_effective_state.yaml`
+### `interpolate-value.yaml`
+
+Tests `interpolate_value(value, extractors, request, response)`.
+
+**Input:**
+```yaml
+value: <Value — the JSON-like tree to interpolate>
+extractors:
+  name: "extracted_value"
+request: <optional Value>
+response: <optional Value>
+```
+
+**Expected:** The interpolated `Value` tree. Strings containing `{{` are interpolated via `interpolate_template`; objects and arrays are recursed; other scalars are unchanged.
+
+### `resolve-event-qualifier.yaml`
+
+Tests `resolve_event_qualifier(protocol, base_event, content)`.
+
+**Input:**
+```yaml
+protocol: "mcp"
+base_event: "tools/call"
+content: <Value — the event payload>
+```
+
+**Expected:** The resolved qualifier string, or `null` when the event type has no qualifier support or the content field path does not resolve.
+
+### `evaluate-trigger.yaml`
+
+Tests `evaluate_trigger(trigger, event, elapsed, state, protocol)`.
+
+**Input:**
+```yaml
+trigger: <Trigger object>
+event: <optional ProtocolEvent object>
+elapsed: <duration string>
+state:
+  event_count: <integer>
+protocol: <string>
+```
+
+**Expected:**
+```yaml
+result: <"advanced" or "not_advanced">
+reason: <"event_matched" or "timeout", present only when result is "advanced">
+state:
+  event_count: <integer — the updated event count after evaluation>
+```
+
+### `compute-effective-state.yaml`
 
 Tests `compute_effective_state(phases, phase_index)`.
 
