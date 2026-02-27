@@ -1084,6 +1084,7 @@ The following matrix defines which event types are valid for each mode defined b
 | `notifications/resources/updated` | | ✓ | | | |
 | `notifications/prompts/list_changed` | | ✓ | | | |
 | `notifications/tasks/status` | | ✓ | | | |
+| `notifications/elicitation/complete` | | ✓ | | | |
 | `message/send` | | | ✓ | ✓ | |
 | `message/stream` | | | ✓ | ✓ | |
 | `tasks/resubscribe` | | | ✓ | | |
@@ -1198,6 +1199,7 @@ Notification events (`notifications/*`) are true wire-level events with their ow
 | `notifications/resources/updated` | `notifications/resources/updated` | Server signals resource updated | — |
 | `notifications/prompts/list_changed` | `notifications/prompts/list_changed` | Server signals prompts changed | — |
 | `notifications/tasks/status` | `notifications/tasks/status` | Server signals task status change | — |
+| `notifications/elicitation/complete` | `notifications/elicitation/complete` | Server signals URL-mode elicitation completed | — |
 | `sampling/createMessage` | `sampling/createMessage` | Server requests LLM sampling (may include tools) | — |
 | `elicitation/create` | `elicitation/create` | Server requests user input | — |
 | `tasks/get` | `tasks/get` | Server returns task status | — |
@@ -1219,7 +1221,7 @@ Notification events (`notifications/*`) are true wire-level events with their ow
 When a CEL expression is evaluated against an MCP message, the root context object `message` is constructed as follows depending on the message type:
 
 For `tools/list` responses, `message` contains:
-- `message.tools[]`: Array of tool definitions, each with `name`, `title`, `description`, `inputSchema`, `icons[]` (each with `src`, `mimeType`, `sizes[]`, `theme`), and optionally `outputSchema`, `annotations` (with `readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`).
+- `message.tools[]`: Array of tool definitions, each with `name`, `title`, `description`, `inputSchema`, `icons[]` (each with `src`, `mimeType`, `sizes[]`, `theme`), and optionally `outputSchema`, `annotations` (with `title`, `readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`), `execution` (with `taskSupport`).
 
 For `tools/call` requests, `message` contains:
 - `message.name`: The tool name being called.
@@ -1231,7 +1233,7 @@ For `tools/call` responses, `message` contains:
 - `message.isError`: Boolean indicating error response.
 
 For `resources/list` responses, `message` contains:
-- `message.resources[]`: Array of resource definitions, each with `uri`, `name`, `title`, `description`, `mimeType`, `icons[]`.
+- `message.resources[]`: Array of resource definitions, each with `uri`, `name`, `title`, `description`, `mimeType`, `icons[]`, `size`, and optional `annotations` (with `audience[]`, `priority`, `lastModified`).
 
 For `resources/read` responses, `message` contains:
 - `message.contents[]`: Array of resource contents, each with `uri`, `mimeType`, `text` or `blob`.
@@ -1248,15 +1250,17 @@ For `sampling/createMessage` requests, `message` contains:
 - `message.systemPrompt`: Optional system prompt.
 - `message.maxTokens`: Maximum tokens to generate.
 - `message.tools[]`: Optional array of tool definitions available during sampling (added in MCP 2025-11-25).
+- `message.toolChoice`: Optional tool choice configuration with `mode` (`auto`, `required`, `none`).
 
 For `elicitation/create` requests, `message` contains:
 - `message.message`: The human-readable prompt displayed to the user.
-- `message.requestedSchema`: JSON Schema defining the expected input structure.
+- `message.requestedSchema`: JSON Schema defining the expected input structure (form mode).
 - `message.mode`: The elicitation mode (`form` or `url`).
+- `message.elicitationId`: The unique elicitation ID (present when `mode` is `url`).
 - `message.url`: The URL to open (present when `mode` is `url`).
 
 For `elicitation/create` responses, `message` contains:
-- `message.action`: The user's response (`accept`, `reject`, or `cancel`).
+- `message.action`: The user's response (`accept`, `decline`, or `cancel`).
 - `message.content`: The structured data provided by the user (present when `action` is `accept` in form mode).
 
 For `tasks/get` responses and `notifications/tasks/status`, `message` contains:
@@ -1270,6 +1274,9 @@ For `tasks/result` responses, `message` contains:
 For notifications, `message` contains:
 - `message.method`: The notification method name.
 - `message.params`: The notification parameters object (may be absent).
+
+For `notifications/elicitation/complete`, `message` additionally contains:
+- `message.params.elicitationId`: The ID of the elicitation that completed.
 
 For `initialize` responses, `message` contains:
 - `message.protocolVersion`: The negotiated MCP protocol version string.
@@ -1313,10 +1320,13 @@ state:
       inputSchema: object?  # JSON Schema Draft 7+. Defaults to {"type": "object"} when omitted.
       outputSchema: object?  # JSON Schema for structured output
       annotations:           # Behavioral hints (untrusted unless from trusted server)
+        title: string?               # Display name override (takes precedence over top-level title)
         readOnlyHint: boolean?
         destructiveHint: boolean?
         idempotentHint: boolean?
         openWorldHint: boolean?
+      execution:                     # Execution-related properties
+        taskSupport: enum(forbidden, optional, required)?  # Default: forbidden
       responses:                           # Ordered response entries
         - when: <MatchPredicate>?          # Optional condition (first match wins)
           content:                         # Unstructured content (mutually exclusive with synthesize)
@@ -1326,8 +1336,15 @@ state:
               mimeType: string?            # type: image, audio, resource_link
               data: string?                # Base64-encoded (type: image, audio)
               uri: string?                 # type: resource, resource_link
-              name: string?                # type: resource_link — display name
+              name: string?                # type: resource_link — REQUIRED for resource_link
+              title: string?               # type: resource_link — display name
               description: string?         # type: resource_link — description
+              icons:                       # type: resource_link — display icons
+                - src: string
+                  mimeType: string?
+                  sizes: string[]?
+                  theme: enum(light, dark)?
+              size: integer?               # type: resource_link — raw content size in bytes
               annotations:                 # Content metadata
                 audience: string[]?        # ["user"], ["assistant"], or ["user", "assistant"]
                 priority: number?          # 0.0–1.0 processing priority hint
@@ -1343,11 +1360,16 @@ state:
       title: string?                 # Human-readable display name
       description: string?
       mimeType: string?
+      size: integer?                 # Raw content size in bytes
       icons:                         # Display icons
         - src: string
           mimeType: string?
           sizes: string[]?
           theme: enum(light, dark)?
+      annotations:                   # Resource metadata (appears in resources/list responses)
+        audience: string[]?          # ["user"], ["assistant"], or ["user", "assistant"]
+        priority: number?            # 0.0–1.0 processing priority hint
+        lastModified: string?        # ISO 8601 datetime
       content:
         text: string?
         blob: string?          # Base64-encoded
@@ -1380,6 +1402,7 @@ state:
       message: string                    # Human-readable prompt for the user
       mode: enum(form, url)?             # Elicitation mode (default: form)
       requestedSchema: object?           # JSON Schema for form-mode input (required when mode is form)
+      elicitationId: string?             # Unique ID for url-mode elicitation (required when mode is url)
       url: string?                       # URL for url-mode elicitation (required when mode is url)
 
   capabilities:
@@ -1397,14 +1420,6 @@ state:
       requests:                          # Which request types can become async tasks
         tools:
           call: object?
-        prompts:
-          get: object?
-        resources:
-          read: object?
-        elicitation:
-          create: object?
-        sampling:
-          createMessage: object?
 ```
 
 **Response entry semantics.** A tool's `responses` list is an ordered sequence of response entries. When the tool is called, entries are evaluated in order; the first entry whose `when` predicate matches (or the first entry without `when`) is selected. The `when` predicate is evaluated against the incoming request parameters — the same content root as `trigger.match` for the corresponding event (e.g., for `tools/call`, the root contains `name` and `arguments`). Each entry specifies exactly one content strategy: static `content` or LLM `synthesize` — they are mutually exclusive on the same entry. When `responses` is omitted, the tool returns an empty success response (content: `[]`, isError: `false`). The same pattern applies to prompts. When a tool declares `outputSchema`, its response entries SHOULD include `structuredContent` alongside `content` for backward compatibility. The `structuredContent` object MUST conform to the declared `outputSchema`.
@@ -1417,9 +1432,9 @@ state:
 
 **Tool field defaults.** Only `name` is required on a tool definition. When `inputSchema` is omitted, it defaults to `{"type": "object"}` (accepts any arguments). When `description` is omitted, it defaults to an empty string. These defaults minimize boilerplate for simple attacks where the attack payload is in a single field (typically `description`) and the rest is scaffolding.
 
-**Content types.** Tool response content items and prompt message content support five types: `text` (plain text), `image` (base64-encoded image), `audio` (base64-encoded audio), `resource` (embedded resource with inline content), and `resource_link` (a URI reference to a resource the client may fetch or subscribe to). The `resource_link` type includes optional `name`, `description`, and `mimeType` fields. Resource links returned by tools are not guaranteed to appear in `resources/list` results, making them a vector for directing the client to attacker-controlled resources.
+**Content types.** Tool response content items and prompt message content support five types: `text` (plain text), `image` (base64-encoded image), `audio` (base64-encoded audio), `resource` (embedded resource with inline content), and `resource_link` (a URI reference to a resource the client may fetch or subscribe to). The `resource_link` type has a required `name` field and optional `title`, `description`, `mimeType`, `icons`, and `size` fields — it inherits the full Resource structure. Resource links returned by tools are not guaranteed to appear in `resources/list` results, making them a vector for directing the client to attacker-controlled resources.
 
-**Content annotations.** All content items in tool responses and prompt messages MAY include `annotations`. The `audience` field is particularly security-relevant: content marked `audience: ["assistant"]` is intended to be invisible to the user, creating an attack vector where malicious instructions can be hidden from human oversight. The `priority` field (0.0–1.0) hints at processing importance, potentially allowing an attacker to ensure their payload is prioritized. Attack documents testing oversight bypass SHOULD use annotations to control content visibility.
+**Content annotations.** All content items in tool responses and prompt messages MAY include `annotations`. Resources themselves also carry `annotations` in `resources/list` responses. The `audience` field is particularly security-relevant: content or resources marked `audience: ["assistant"]` are intended to be invisible to the user, creating an attack vector where malicious instructions can be hidden from human oversight. The `priority` field (0.0–1.0) hints at processing importance, potentially allowing an attacker to ensure their payload is prioritized. Attack documents testing oversight bypass SHOULD use annotations to control content visibility.
 
 **Resource content mapping.** Each resource in the state defines a single `content` object (`text` or `blob`). The adversarial tool constructs the MCP wire-format `resources/read` response by wrapping this into the protocol's `contents[]` array (a single-element array containing `uri`, `mimeType`, and the content). This is the same projection pattern used for tools (state defines individual tool objects; the tool constructs the `tools/list` response array). Indicator surfaces and CEL contexts reference the wire-format structure (`contents[*]`), not the state-level definition.
 
@@ -1427,7 +1442,9 @@ state:
 
 **LLM synthesis.** When `synthesize` is present, the adversarial tool MUST generate the response content at runtime using an LLM. The `prompt` field is a free-text instruction to the LLM, supporting `{{template}}` interpolation from extractors and request fields. The runtime is responsible for model selection, structured output enforcement, caching, and retry. Conforming tools MUST validate synthesized output against the protocol binding's message structure (MCP tool call result for tools, prompt get result for prompts) before injection into the protocol stream. When the tool declares an `outputSchema`, the synthesized output MUST also include a valid `structuredContent` object conforming to that schema. Generation failures MUST NOT be sent to the target agent. This specification does not define model configuration (model name, temperature, seed) — these are runtime concerns defined by the consuming tool's configuration. See §7.4 for cross-protocol synthesis details.
 
-The `capabilities` object declares which protocol features the adversarial tool supports. Capabilities within the first phase's `state` are sent during the `initialize` handshake before phase execution begins; subsequent phases can modify declared capabilities to simulate capability changes (e.g., rug pull attacks). Declaring `elicitation` enables server-initiated user input requests. The `tasks` capability is structured: the `requests` sub-object declares which MCP request types can be deferred into asynchronous tasks (e.g., `tasks.requests.tools.call` enables async tool calls). For backward compatibility, `tasks: {}` (empty object) is equivalent to declaring task support with no specific request type restrictions. Attack documents testing task-based temporal manipulation SHOULD declare the specific request types being deferred via `tasks.requests`. The `list` and `cancel` sub-objects declare whether the server supports listing and cancelling tasks.
+The `capabilities` object declares which protocol features the adversarial tool supports. Capabilities within the first phase's `state` are sent during the `initialize` handshake before phase execution begins; subsequent phases can modify declared capabilities to simulate capability changes (e.g., rug pull attacks). Declaring `elicitation` enables server-initiated user input requests. The `tasks` capability is structured: `tasks.requests.tools.call` declares that `tools/call` requests can be deferred into asynchronous tasks (the only request type supported for server-side task augmentation in MCP 2025-11-25). For backward compatibility, `tasks: {}` (empty object) is equivalent to declaring task support with no specific request type restrictions. The `list` and `cancel` sub-objects declare whether the server supports listing and cancelling tasks.
+
+**Tool execution hints.** The `execution` object on a tool provides metadata about how the tool should be executed. The `taskSupport` field declares whether the tool supports task-augmented (async) execution: `"forbidden"` (default) means the tool does not support async execution, `"optional"` means it may be called either synchronously or asynchronously, and `"required"` means it must be called with task augmentation. Attack documents testing temporal manipulation or race conditions SHOULD set `taskSupport: "required"` to force the client into async polling mode, where the server can manipulate timing via `pollInterval` and deferred results.
 
 #### 7.1.4a Execution State (MCP Client)
 
@@ -1477,7 +1494,7 @@ state:
 
   elicitation_responses:               # Responses to server-initiated elicitation/create
     - when: <MatchPredicate>?          # Predicate on elicitation request params
-      action: enum(accept, deny)?      # Default: accept
+      action: enum(accept, decline, cancel)?  # Default: accept
       content: object?                 # Response fields matching requestedSchema (static, mutually exclusive with synthesize)
       synthesize:                      # LLM generation (mutually exclusive with content)
         prompt: string
