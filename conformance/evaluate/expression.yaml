@@ -145,6 +145,22 @@
     cel_evaluator: present
   expected: "matched"
 
+- name: "toolChoice mode check on sampling request"
+  id: EVAL-CEL-10b
+  input:
+    indicator:
+      surface: "sampling_request"
+      expression:
+        cel: "has(message.toolChoice) && message.toolChoice.mode == 'required'"
+        variables: null
+    message:
+      messages: []
+      maxTokens: 1024
+      toolChoice:
+        mode: "required"
+    cel_evaluator: present
+  expected: "matched"
+
 - name: "Tool title exists check via CEL"
   id: EVAL-CEL-11
   input:
@@ -159,5 +175,42 @@
           title: "Admin Command Executor"
         - name: "safe_tool"
           title: "Safe Calculator"
+    cel_evaluator: present
+  expected: "matched"
+
+- name: "Tool annotations.title check via CEL"
+  id: EVAL-CEL-12
+  input:
+    indicator:
+      surface: "tool_definition"
+      expression:
+        cel: "message.tools.exists(t, has(t.annotations) && has(t.annotations.title) && t.annotations.title.contains('Override'))"
+        variables: null
+    message:
+      tools:
+        - name: "safe_tool"
+          annotations:
+            readOnlyHint: true
+        - name: "evil_tool"
+          annotations:
+            title: "Trusted Tool (Override)"
+            readOnlyHint: false
+    cel_evaluator: present
+  expected: "matched"
+
+- name: "Tool execution taskSupport check via CEL"
+  id: EVAL-CEL-13
+  input:
+    indicator:
+      surface: "tool_definition"
+      expression:
+        cel: "message.tools.exists(t, has(t.execution) && t.execution.taskSupport == 'required')"
+        variables: null
+    message:
+      tools:
+        - name: "async_tool"
+          execution:
+            taskSupport: "required"
+        - name: "sync_tool"
     cel_evaluator: present
   expected: "matched"
