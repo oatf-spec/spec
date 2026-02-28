@@ -430,22 +430,29 @@ SDKs MUST maintain a registry mapping each `Surface` value to its protocol and d
 | Surface | Protocol | Default Target |
 |---|---|---|
 | `tool_description` | `mcp` | `tools[*].description` |
+| `tool_title` | `mcp` | `tools[*].title` |
 | `tool_input_schema` | `mcp` | `tools[*].inputSchema` |
 | `tool_name` | `mcp` | `tools[*].name` |
 | `tool_annotations` | `mcp` | `tools[*].annotations` |
 | `tool_output_schema` | `mcp` | `tools[*].outputSchema` |
+| `tool_icons` | `mcp` | `tools[*].icons` |
 | `tool_response` | `mcp` | `content[*]` |
 | `tool_structured_response` | `mcp` | `structuredContent` |
 | `tool_arguments` | `mcp` | `arguments` |
 | `resource_content` | `mcp` | `contents[*]` |
 | `resource_uri` | `mcp` | `resources[*].uri` |
+| `resource_title` | `mcp` | `resources[*].title` |
 | `resource_description` | `mcp` | `resources[*].description` |
+| `resource_icons` | `mcp` | `resources[*].icons` |
 | `prompt_content` | `mcp` | `messages[*].content` |
 | `prompt_arguments` | `mcp` | `arguments` |
+| `prompt_title` | `mcp` | `prompts[*].title` |
 | `prompt_description` | `mcp` | `prompts[*].description` |
+| `prompt_icons` | `mcp` | `prompts[*].icons` |
 | `server_notification` | `mcp` | `params` |
 | `server_capability` | `mcp` | `capabilities` |
 | `server_info` | `mcp` | `serverInfo` |
+| `server_instructions` | `mcp` | `instructions` |
 | `sampling_request` | `mcp` | `params` |
 | `elicitation_request` | `mcp` | `params` |
 | `elicitation_response` | `mcp` | `result` |
