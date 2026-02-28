@@ -1527,6 +1527,7 @@ on_enter:
       message: string        # Human-readable prompt
       mode: enum(form, url)? # Default: form
       requestedSchema: object? # JSON Schema for form mode
+      elicitationId: string? # Unique ID for url mode (auto-generated if omitted)
       url: string?           # URL for url mode
   - log:
       message: string
