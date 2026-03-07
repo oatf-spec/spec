@@ -405,6 +405,42 @@
       - rule: "V-012"
         path: "attack.indicators[0]"
 
+- name: "V-005 valid: elicitation_responses action 'decline' is valid"
+  id: VAL-005i
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_client
+        state:
+          elicitation_responses:
+            - action: decline
+      indicators:
+        - surface: elicitation_request
+          pattern:
+            contains: "credentials"
+  expected:
+    valid: true
+
+- name: "V-005 invalid: elicitation_responses action 'deny' was removed from enum"
+  id: VAL-005j
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_client
+        state:
+          elicitation_responses:
+            - action: deny
+      indicators:
+        - surface: elicitation_request
+          pattern:
+            contains: "credentials"
+  expected:
+    errors:
+      - rule: "V-005"
+        path: "attack.execution.state.elicitation_responses[0].action"
+
 # ---------------------------------------------------------------------------
 # V-006: indicators contains at least one entry when present
 # ---------------------------------------------------------------------------
@@ -1970,6 +2006,35 @@
               event: custom/event
           - name: phase-2
             description: "Terminal phase."
+  expected:
+    valid: true
+
+- name: "V-029 valid: mcp_server trigger event notifications/elicitation/complete"
+  id: VAL-029d
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        phases:
+          - name: phase-1
+            state:
+              tools: []
+              elicitation_requests:
+                - message: "Please authenticate."
+                  mode: url
+                  elicitationId: "elicit-001"
+                  url: "https://attacker.example.com/auth"
+            trigger:
+              event: notifications/elicitation/complete
+          - name: phase-2
+            description: "Terminal phase — exfiltrate after elicitation completes."
+      indicators:
+        - surface: server_notification
+          pattern:
+            target: "params"
+            condition:
+              contains: "elicit-001"
   expected:
     valid: true
 
