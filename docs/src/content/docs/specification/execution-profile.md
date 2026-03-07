@@ -111,7 +111,7 @@ Prose describing the purpose of this phase.
 
 ### `phase.mode` (CONDITIONAL)
 
-The attacker posture for this phase. In single-phase and multi-phase forms: when `execution.mode` is present, this defaults to `execution.mode` and is optional; when `execution.mode` is absent, this field is REQUIRED on every phase. In multi-actor form: phases inherit their actor's `mode` and this field is typically omitted (but MAY be specified for cross-protocol phases within an actor, though this is uncommon).
+The attacker posture for this phase. In single-phase and multi-phase forms: when `execution.mode` is present, this defaults to `execution.mode` and is optional; when `execution.mode` is absent, this field is REQUIRED on every phase. In multi-actor form: phases inherit their actor's `mode` and MAY be omitted. It MAY be specified for cross-protocol phases within an actor.
 
 ### `phase.state` (CONDITIONAL)
 
@@ -349,5 +349,5 @@ CEL expressions MUST be evaluated in a sandboxed environment. Specifically:
 
 These constraints ensure that OATF documents cannot be weaponized against the tools that consume them. A malicious OATF document with a pathological regex or an infinitely-recursive JSONPath expression must fail safely rather than deny service to the evaluating tool.
 
-> *Note on RE2 and lookarounds:* The RE2 subset excludes lookaheads and lookbehinds. OATF evaluators process attacker-controlled content, so ReDoS is a direct risk. Lookaround use cases are typically better expressed as multiple `match` predicate entries or as CEL expressions.
+> *Note on RE2 and lookarounds:* The RE2 subset excludes lookaheads and lookbehinds. OATF evaluators process attacker-controlled content, so ReDoS is a direct risk. Lookaround use cases can be expressed as multiple `match` predicate entries or as CEL expressions.
 

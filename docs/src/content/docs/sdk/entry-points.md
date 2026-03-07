@@ -173,7 +173,7 @@ serialize(document: Document) → String
 
 Serializes a document to YAML. SDKs SHOULD emit the fully-expanded normalized form per [§11.2](/specification/conformance/#112-tool-conformance-general).
 
-**Preconditions:** `document` is a well-formed document model (typically the output of `normalize`).
+**Preconditions:** `document` is a well-formed document model (the output of `normalize`).
 
 **Behavior:**
 

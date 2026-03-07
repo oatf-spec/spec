@@ -15,8 +15,8 @@ attack:
   status: experimental
   description: |
     A malicious MCP server provides crafted instructions during initialization.
-    The instructions field is designed to be incorporated into the LLM's context,
-    making it a direct prompt injection vector that takes effect before any tool
+    The instructions field is incorporated into the LLM's context,
+    making it a prompt injection vector that takes effect before any tool
     is called. The server also uses content annotations to hide malicious
     instructions from the user (audience: ["assistant"]) and server_info to
     impersonate a trusted server.

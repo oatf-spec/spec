@@ -3,7 +3,7 @@ title: "Introduction"
 description: "Abstract, purpose, scope, conformance requirements, and notation for the OATF specification."
 ---
 
-This specification defines the Open Agent Threat Format (OATF), a YAML-based format for describing security threats against AI agent communication protocols. OATF is built around three core interaction models (user-to-agent, agent-to-agent, and agent-to-tool) and is designed to accommodate current and future protocols serving these models. Version 0.1 includes protocol bindings for MCP, A2A, and AG-UI.
+This specification defines the Open Agent Threat Format (OATF), a YAML-based format for describing security threats against AI agent communication protocols. OATF covers three core interaction models (user-to-agent, agent-to-agent, and agent-to-tool) and accommodates additional protocols through its binding architecture. Version 0.1 includes protocol bindings for MCP, A2A, and AG-UI.
 
 Each OATF document describes a single attack through an attack envelope (protocol-agnostic metadata, classification, and severity), an execution profile (the protocol messages required to simulate the attack), and optionally a set of indicators (observable patterns that determine whether the attack succeeded). Documents with indicators enable closed-loop testing: conforming tools can reproduce the attack and evaluate its outcome from the document alone, without external configuration. Documents without indicators are valid for simulation only.
 
@@ -23,7 +23,7 @@ Because execution and evaluation are co-located in a single document, the format
 
 ### Why testing, not runtime enforcement
 
-OATF indicators are designed for testing and monitoring, not for live enforcement. Agent-protocol attacks use natural-language persuasion against a probabilistic model; the same malicious intent can be rephrased without shared syntactic features. Published indicators cannot block rephrased variants at runtime.
+OATF indicators apply to testing and monitoring, not live enforcement. Agent-protocol attacks use natural-language persuasion against a probabilistic model; the same malicious intent can be rephrased without shared syntactic features. Published indicators cannot block rephrased variants at runtime.
 
 Indicators verify that a specific known payload is caught (testing) or flag structural anomalies for human review (monitoring). Runtime defenses operate at other layers: model-level guardrails, architectural controls, and protocol-level design constraints.
 

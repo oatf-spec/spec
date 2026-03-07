@@ -16,7 +16,7 @@ interface CelEvaluator {
 }
 ```
 
-Evaluates a CEL expression against a context of named variables. Returns the expression result (typically a boolean) or an evaluation error.
+Evaluates a CEL expression against a context of named variables. Returns a boolean or an evaluation error.
 
 **Contract:**
 
