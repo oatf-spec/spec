@@ -7,7 +7,7 @@ OATF SDKs are libraries that parse, validate, normalize, evaluate, and serialize
 
 ## Available SDKs
 
-### Rust — `oatf`
+### Rust: `oatf`
 
 The reference implementation of the OATF SDK specification.
 
@@ -26,8 +26,8 @@ The [SDK specification](/sdk/) defines the language-agnostic API contract: entry
 
 Key resources:
 
-- [Entry Points](/sdk/entry-points/) — `parse`, `validate`, `normalize`, `serialize`, `load`
-- [Core Types](/sdk/core-types/) — the abstract document model
-- [Evaluation](/sdk/evaluation/) — indicator evaluation and verdict computation
-- [Execution Primitives](/sdk/execution-primitives/) — path resolution, conditions, triggers
-- [Implementation Guidance](/sdk/implementation-guidance/) — language adaptation, naming, async patterns
+- [Entry Points](/sdk/entry-points/): `parse`, `validate`, `normalize`, `serialize`, `load`
+- [Core Types](/sdk/core-types/): the abstract document model
+- [Evaluation](/sdk/evaluation/): indicator evaluation and verdict computation
+- [Execution Primitives](/sdk/execution-primitives/): path resolution, conditions, triggers
+- [Implementation Guidance](/sdk/implementation-guidance/): language adaptation, naming, async patterns

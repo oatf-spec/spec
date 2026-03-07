@@ -48,7 +48,7 @@ Resolves a wildcard dot-path against a value tree. Returns all values that match
 | `[*]` | Wildcard: all elements of array | `tools[*]` |
 | `.` | Segment separator | `tools[*].description` |
 
-Segments consist of alphanumeric characters, underscores, and hyphens, with optional `[*]` suffix. Numeric indexing (`[0]`, `[1]`) is not supported — use CEL expressions for positional access.
+Segments consist of alphanumeric characters, underscores, and hyphens, with optional `[*]` suffix. Numeric indexing (`[0]`, `[1]`) is not supported; use CEL expressions for positional access.
 
 **Behavior:**
 
@@ -103,7 +103,7 @@ Parses a duration string in either shorthand or ISO 8601 format.
 evaluate_condition(condition: Condition, value: Value) → Boolean
 ```
 
-Evaluates a condition against a resolved value. If `condition` is a bare value (string, number, boolean, array), performs deep equality comparison. If `condition` is a `MatchCondition` object, evaluates each present operator — when multiple operators are present, all must match (AND logic). Returns `true` only if every present operator is satisfied.
+Evaluates a condition against a resolved value. If `condition` is a bare value (string, number, boolean, array), performs deep equality comparison. If `condition` is a `MatchCondition` object, evaluates each present operator. When multiple operators are present, all must match (AND logic). Returns `true` only if every present operator is satisfied.
 
 **Behavior by operator:**
 
@@ -118,7 +118,7 @@ Evaluates a condition against a resolved value. If `condition` is a bare value (
 | `lt` | Number | `value < operand`. |
 | `gte` | Number | `value >= operand`. |
 | `lte` | Number | `value <= operand`. |
-| `exists` | Boolean | See [§5.4](/sdk/execution-primitives/#54-evaluate_predicate) — `exists` is evaluated during predicate resolution, not by `evaluate_condition`. |
+| `exists` | Boolean | See [§5.4](/sdk/execution-primitives/#54-evaluate_predicate). `exists` is evaluated during predicate resolution, not by `evaluate_condition`. |
 | *(equality)* | Any | `value` equals the operand (deep equality). Used when the MatchEntry is a scalar, not a MatchCondition. |
 
 **Type mismatches:** If the operator requires a specific value type (string operators on non-string, numeric operators on non-number), the condition evaluates to `false`. Type mismatches are not errors.
@@ -127,7 +127,7 @@ Evaluates a condition against a resolved value. If `condition` is a bare value (
 
 **Regex:** Patterns MUST be compiled with RE2 semantics (linear-time guarantee). SDKs MUST reject patterns with features outside the RE2 subset during `validate`. The regex is evaluated as a **partial match**: the pattern may match any substring of the value. To require a full-string match, the pattern MUST include `^` and `$` anchors. This matches the default behavior of RE2 libraries across languages (Go's `regexp.MatchString`, Rust's `regex::Regex::is_match`, Python's `re2.search`).
 
-**The `exists` operator:** Unlike all other operators, `exists` does not inspect the resolved value — it inspects whether resolution succeeded. `exists` is evaluated during `evaluate_predicate` ([§5.4](/sdk/execution-primitives/#54-evaluate_predicate)) at the path-resolution step, before `evaluate_condition` is called. When `exists` is the only operator in a MatchCondition, `evaluate_condition` is not called at all (for `exists: true`, the path having resolved is sufficient; for `exists: false`, the path not having resolved is sufficient). When `exists` is combined with other operators, `exists: true` is redundant (all other operators already require a resolved value), and `exists: false` combined with any value-inspecting operator is always false (there is no value to inspect). These are natural consequences of AND logic, not special cases.
+**The `exists` operator:** Unlike all other operators, `exists` does not inspect the resolved value; it inspects whether resolution succeeded. `exists` is evaluated during `evaluate_predicate` ([§5.4](/sdk/execution-primitives/#54-evaluate_predicate)) at the path-resolution step, before `evaluate_condition` is called. When `exists` is the only operator in a MatchCondition, `evaluate_condition` is not called at all (for `exists: true`, the path having resolved is sufficient; for `exists: false`, the path not having resolved is sufficient). When `exists` is combined with other operators, `exists: true` is redundant (all other operators already require a resolved value), and `exists: false` combined with any value-inspecting operator is always false (there is no value to inspect). These are natural consequences of AND logic, not special cases.
 
 ## 5.4 evaluate_predicate
 
@@ -170,7 +170,7 @@ Resolves template expressions in a string. Returns the interpolated string and a
 - `{{response.field.path}}` → replaced with the value at the dot-path in the current response.
 - `\{{` → replaced with a literal `{{` (escape sequence).
 
-The `extractors` map is populated by the calling runtime with both local names (unqualified, from the current actor) and qualified names (`actor_name.extractor_name`, from all actors). The function itself performs simple key lookup — cross-actor resolution is a runtime responsibility.
+The `extractors` map is populated by the calling runtime with both local names (unqualified, from the current actor) and qualified names (`actor_name.extractor_name`, from all actors). The function itself performs simple key lookup; cross-actor resolution is a runtime responsibility.
 
 **Behavior:**
 

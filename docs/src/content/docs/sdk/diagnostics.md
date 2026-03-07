@@ -18,8 +18,8 @@ A structured diagnostic message produced during validation, normalization, or ev
 
 ```
 ValidationResult {
-    errors: List<ValidationError>   // conformance violations — document is non-conforming
-    warnings: List<Diagnostic>      // severity: warning — document is valid but has issues
+    errors: List<ValidationError>   // conformance violations; document is non-conforming
+    warnings: List<Diagnostic>      // severity: warning; document is valid but has issues
 }
 ```
 
@@ -32,7 +32,7 @@ SDKs MUST produce warnings for the following conditions:
 | W-001 | `oatf` is not the first key in the document (V-002). |
 | W-002 | A mode passes pattern validation but is not in the known modes registry ([§2.22](/sdk/core-types/#222-event-mode-validity-registry)). Likely typo. |
 | W-003 | A protocol passes pattern validation but is not in the known protocols set. |
-| W-004 | Template interpolation references an undefined extractor or an unresolvable message path. Two sub-cases: (a) "unknown extractor reference" — detectable at validate time by cross-referencing template expressions against declared extractor names; (b) "request/response path failed to resolve" — detectable only at runtime when the actual message is available. |
+| W-004 | Template interpolation references an undefined extractor or an unresolvable message path. Two sub-cases: (a) "unknown extractor reference", detectable at validate time by cross-referencing template expressions against declared extractor names; (b) "request/response path failed to resolve", detectable only at runtime when the actual message is available. |
 | W-005 | An indicator targets a protocol with no matching actor in the execution profile. |
 
 SDKs MAY define additional warning codes for tool-specific diagnostics.
@@ -81,7 +81,7 @@ Produced by a `GenerationProvider` when LLM synthesis fails.
 | `phase_name` | `Optional<String>` | The phase during which generation was attempted. |
 | `prompt_preview` | `Optional<String>` | First 200 characters of the resolved prompt, for diagnostics. |
 
-The `GenerationProvider.generate` interface does not receive `phase_name` — the provider is intentionally unaware of execution context. The SDK is responsible for catching the error returned by the provider and populating `phase_name` from the current execution state before surfacing the `GenerationError` to the consuming tool.
+The `GenerationProvider.generate` interface does not receive `phase_name`; the provider is intentionally unaware of execution context. The SDK is responsible for catching the error returned by the provider and populating `phase_name` from the current execution state before surfacing the `GenerationError` to the consuming tool.
 
 `provider_unavailable` indicates no `GenerationProvider` is configured but a `synthesize` block was encountered. `validation_failure` indicates the LLM produced output that did not conform to the protocol binding's expected structure.
 
@@ -98,8 +98,8 @@ The `load` convenience entry point ([§3.5](/sdk/entry-points/#35-load)) returns
 Union type returned by `load` ([§3.5](/sdk/entry-points/#35-load)). Represents any error that can occur during the combined parse-validate-normalize pipeline.
 
 `OATFError` is one of:
-- `ParseError` ([§7.1](/sdk/diagnostics/#71-parseerror)) — YAML deserialization or structural typing failure.
-- `ValidationError` ([§7.2](/sdk/diagnostics/#72-validationerror)) — conformance rule violation.
+- `ParseError` ([§7.1](/sdk/diagnostics/#71-parseerror)): YAML deserialization or structural typing failure.
+- `ValidationError` ([§7.2](/sdk/diagnostics/#72-validationerror)): conformance rule violation.
 
 SDKs MAY represent this as a tagged union, trait object, sum type, or language-appropriate equivalent.
 

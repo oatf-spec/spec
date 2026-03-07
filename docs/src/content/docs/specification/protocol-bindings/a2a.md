@@ -1,6 +1,6 @@
 ---
 title: "A2A Binding"
-description: "Agent-to-Agent protocol binding — surfaces, events, CEL context, and execution state."
+description: "Agent-to-Agent protocol binding: surfaces, events, CEL context, and execution state."
 ---
 
 The A2A binding covers the Agent-to-Agent protocol as defined in the [A2A specification](https://google.github.io/A2A/). A2A uses HTTP+SSE transport with JSON message bodies. This binding is provisional: core surfaces, event types, and execution state are defined, but behavioral modifiers and payload generation are not yet specified. Future OATF minor versions will expand this binding.
@@ -22,7 +22,7 @@ The A2A binding covers the Agent-to-Agent protocol as defined in the [A2A specif
 
 A2A events are per-actor scoped. An actor's mode determines which events it observes.
 
-**For `a2a_server` actors** — events are JSON-RPC requests and HTTP requests the client agent sends to this server:
+**For `a2a_server` actors**: events are JSON-RPC requests and HTTP requests the client agent sends to this server:
 
 | Event | Protocol Method | Description | Qualifier |
 |-------|-----------------|-------------|-----------|
@@ -37,7 +37,7 @@ A2A events are per-actor scoped. An actor's mode determines which events it obse
 
 `agent_card/get` is an HTTP GET endpoint, not a JSON-RPC method. It uses the `entity/verb` naming pattern for non-RPC endpoints (see [§7](/specification/protocol-bindings/) naming conventions).
 
-**For `a2a_client` actors** — events are responses and SSE events received from the server agent:
+**For `a2a_client` actors**: events are responses and SSE events received from the server agent:
 
 | Event | Protocol Method | Description | Qualifier |
 |-------|-----------------|-------------|-----------|
@@ -111,7 +111,7 @@ state:
         prompt: string             # Supports {{template}} interpolation
 ```
 
-The `task_responses` list follows the same ordered-match semantics as MCP tool `responses` ([§7.1.4](/specification/protocol-bindings/mcp/#714-execution-state-mcp)): entries are evaluated in order, the first match wins, and entries without `when` are catch-alls. Each entry specifies either static content (`messages`/`artifacts`) or LLM `synthesize` — they are mutually exclusive. When `synthesize` is present, the `status` field is still required; the runtime generates the message content but the document author controls the task status. See [§7.4](/specification/protocol-bindings/llm-synthesis/) for cross-protocol synthesis details.
+The `task_responses` list follows the same ordered-match semantics as MCP tool `responses` ([§7.1.4](/specification/protocol-bindings/mcp/#714-execution-state-mcp)): entries are evaluated in order, the first match wins, and entries without `when` are catch-alls. Each entry specifies either static content (`messages`/`artifacts`) or LLM `synthesize`; they are mutually exclusive. When `synthesize` is present, the `status` field is still required; the runtime generates the message content but the document author controls the task status. See [§7.4](/specification/protocol-bindings/llm-synthesis/) for cross-protocol synthesis details.
 
 The `status` values (`submitted`, `working`, `input-required`, `completed`, `failed`, `canceled`) use A2A's protocol-native naming convention, which includes hyphens. These values are serialized directly as A2A task status strings.
 

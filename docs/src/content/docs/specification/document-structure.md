@@ -37,7 +37,7 @@ attack:
 
 The OATF specification version. For this specification, the value MUST be `"0.1"`. The `oatf` field uses `MAJOR.MINOR` format (not full SemVer). The human-readable spec header (`0.1.0-draft`) includes the patch version and pre-release label for editorial tracking; documents declare only `MAJOR.MINOR`.
 
-YAML mappings are conceptually unordered, but the `oatf` field serves as a format identifier — the first thing a human or tool sees when opening a file. Documents SHOULD place `oatf` as the first key. Tools that serialize OATF documents MUST emit `oatf` as the first key in their output (canonical form). Validators MAY warn when `oatf` is not the first key but MUST NOT reject the document on that basis alone.
+YAML mappings are conceptually unordered, but the `oatf` field serves as a format identifier, the first thing a human or tool sees when opening a file. Documents SHOULD place `oatf` as the first key. Tools that serialize OATF documents MUST emit `oatf` as the first key in their output (canonical form). Validators MAY warn when `oatf` is not the first key but MUST NOT reject the document on that basis alone.
 
 ### `$schema` (OPTIONAL)
 
@@ -53,7 +53,7 @@ The attack definition. Exactly one attack per document.
 
 > **Field path convention.** Within [§4](/specification/document-structure/), field headings use full dot-paths from the document root (for example, `attack.severity.level`) so their position in the YAML structure is unambiguous. From [§5](/specification/execution-profile/) onward, headings use paths relative to the section's parent object (for example, `phase.name` rather than `attack.execution.phases[].name`) because each section introduces its own scope.
 >
-> **YAML snippet convention.** Unless a snippet shows the full document (including `oatf:` and `attack:`), YAML code blocks throughout this specification show content **relative to `attack:`** — the outer `attack:` wrapper is omitted for brevity. For example, a snippet beginning with `execution:` represents `attack.execution:` in a complete document.
+> **YAML snippet convention.** Unless a snippet shows the full document (including `oatf:` and `attack:`), YAML code blocks throughout this specification show content **relative to `attack:`**; the outer `attack:` wrapper is omitted for brevity. For example, a snippet beginning with `execution:` represents `attack.execution:` in a complete document.
 
 ## 4.2 Attack Envelope
 
@@ -102,7 +102,7 @@ A prose description of the attack: what it does, why it matters, and what condit
 
 The duration to continue observing protocol traffic after all terminal phases complete, before computing the final verdict. Format: shorthand (`30s`, `5m`) or ISO 8601 (`PT30S`, `PT5M`), parsed by `parse_duration`. When absent, the tool uses its own default observation window.
 
-This field enables attack authors to specify observation time for delayed effects — exfiltration, state changes, or unauthorized actions that manifest after the attack simulation ends. For example, a prompt injection that causes the agent to exfiltrate data on its next autonomous action may need a 60-second observation window.
+This field enables attack authors to specify observation time for delayed effects such as exfiltration, state changes, or unauthorized actions that manifest after the attack simulation ends. For example, a prompt injection that causes the agent to exfiltrate data on its next autonomous action may need a 60-second observation window.
 
 ## 4.3 Severity
 

@@ -10,7 +10,7 @@ OATF documents are untrusted input. Tools MUST parse them defensively:
 - YAML parsing MUST use a safe loader that rejects language-specific type coercion and custom tags (see [§11.1](/specification/conformance/#111-document-conformance) rule 1). Anchors, aliases, and merge keys are banned to eliminate alias-based denial-of-service and parsing ambiguity.
 - Regular expressions within documents MUST be evaluated with RE2-compatible engines or enforced time limits (see [§5.7](/specification/execution-profile/#57-expression-evaluation)). A malicious OATF document MUST NOT be able to deny service to the tool consuming it.
 - JSONPath evaluation MUST enforce traversal depth limits (see [§5.7](/specification/execution-profile/#57-expression-evaluation)).
-- Template interpolation MUST NOT permit recursive expansion — a template that resolves to another `{{...}}` reference MUST NOT be re-evaluated.
+- Template interpolation MUST NOT permit recursive expansion. A template that resolves to another `{{...}}` reference MUST NOT be re-evaluated.
 
 ## 12.2 Trace Data Handling
 

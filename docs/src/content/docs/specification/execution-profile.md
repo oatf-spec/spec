@@ -7,7 +7,7 @@ The execution profile specifies the protocol messages an adversarial tool MUST p
 
 ## 5.1 Structure
 
-**Single-phase form** (simplest — one endpoint, one state):
+**Single-phase form** (simplest: one endpoint, one state):
 
 ```yaml
 execution:
@@ -33,7 +33,7 @@ execution:
       phases: <Phase>[]
 ```
 
-The three forms are mutually exclusive — a document MUST NOT combine `execution.state` with `execution.phases` or `execution.actors`, nor `execution.phases` with `execution.actors`.
+The three forms are mutually exclusive. A document MUST NOT combine `execution.state` with `execution.phases` or `execution.actors`, nor `execution.phases` with `execution.actors`.
 
 All forms are syntactic sugar over the multi-actor form. Conformant tools MUST normalize documents internally:
 
@@ -54,7 +54,7 @@ The attacker posture: which protocol the adversarial tool targets and which side
 
 Additional modes are defined by protocol bindings ([§7](/specification/protocol-bindings/)). Tools that encounter an unrecognized mode MUST parse the document without error but MAY skip execution for bindings they do not implement.
 
-In single-phase and multi-phase forms, `mode` is REQUIRED when `execution.state` is present, and OPTIONAL when `execution.phases` is present. When present with `phases`, all phases inherit it as their default and all indicators inherit its protocol component (the substring before the last `_server` or `_client`). When omitted, every phase MUST specify its own `phase.mode` and every indicator MUST specify its own `indicator.protocol`. In multi-actor form, `execution.mode` is structurally absent — indicators MUST always specify `indicator.protocol` explicitly.
+In single-phase and multi-phase forms, `mode` is REQUIRED when `execution.state` is present, and OPTIONAL when `execution.phases` is present. When present with `phases`, all phases inherit it as their default and all indicators inherit its protocol component (the substring before the last `_server` or `_client`). When omitted, every phase MUST specify its own `phase.mode` and every indicator MUST specify its own `indicator.protocol`. In multi-actor form, `execution.mode` is structurally absent, so indicators MUST always specify `indicator.protocol` explicitly.
 
 ### `execution.state` (OPTIONAL, single-phase form only)
 
@@ -62,7 +62,7 @@ The protocol state for a single-phase attack. This is shorthand for a single-ele
 
 ### `execution.actors` (OPTIONAL, multi-actor form only)
 
-An array of named actors, each representing a concurrent protocol endpoint. Every actor has its own mode and phase sequence. Actors operate simultaneously and independently — each advances through its own phases based on its own triggers.
+An array of named actors, each representing a concurrent protocol endpoint. Every actor has its own mode and phase sequence. Actors operate simultaneously and independently; each advances through its own phases based on its own triggers.
 
 #### `actor.name` (REQUIRED)
 
@@ -80,11 +80,11 @@ The phase sequence for this actor, structured identically to `execution.phases`.
 
 When multiple actors are present, the runtime MUST ensure that all **server-role** actors (modes ending in `_server`) are accepting connections before any **client-role** actor (modes ending in `_client`) begins executing its first phase. This prevents race conditions where a client sends a message before the target server is bound.
 
-An actor is considered ready when its protocol endpoint is bound and accepting connections. The document author does not need to express readiness — it is a runtime guarantee.
+An actor is considered ready when its protocol endpoint is bound and accepting connections. The document author does not need to express readiness; it is a runtime guarantee.
 
 ## 5.2 Phases
 
-Each phase represents a distinct stage of the attack within an actor. Phases execute in order within their actor. The first phase begins when the actor becomes active (after readiness — see [§5.1](/specification/execution-profile/#51-structure)). Subsequent phases begin when their predecessor's trigger condition is met. In multi-actor documents, each actor advances through its own phases independently.
+Each phase represents a distinct stage of the attack within an actor. Phases execute in order within their actor. The first phase begins when the actor becomes active (after readiness; see [§5.1](/specification/execution-profile/#51-structure)). Subsequent phases begin when their predecessor's trigger condition is met. In multi-actor documents, each actor advances through its own phases independently.
 
 ```yaml
 phases:
@@ -111,13 +111,13 @@ Prose describing the purpose of this phase.
 
 ### `phase.mode` (CONDITIONAL)
 
-The attacker posture for this phase. In single-phase and multi-phase forms: when `execution.mode` is present, this defaults to `execution.mode` and is optional; when `execution.mode` is absent, this field is REQUIRED on every phase. In multi-actor form: phases inherit their actor's `mode` and this field is typically omitted (but MAY be specified for cross-protocol phases within an actor — this is uncommon).
+The attacker posture for this phase. In single-phase and multi-phase forms: when `execution.mode` is present, this defaults to `execution.mode` and is optional; when `execution.mode` is absent, this field is REQUIRED on every phase. In multi-actor form: phases inherit their actor's `mode` and this field is typically omitted (but MAY be specified for cross-protocol phases within an actor, though this is uncommon).
 
 ### `phase.state` (CONDITIONAL)
 
 The protocol state the adversarial tool presents during this phase. The structure is protocol-specific and defined in the protocol binding sections ([§7](/specification/protocol-bindings/)). For MCP, this includes the tools, resources, and prompts to expose. For A2A, this includes the Agent Card to present. For AG-UI, this includes the messages or tool results to send.
 
-If omitted, the phase inherits the entire state object from the immediately preceding phase in the same actor (deep copy). If present, it **completely replaces** the inherited state — no merging occurs at any level. Top-level keys (`tools`, `resources`, `prompts`, `capabilities`, etc.) are replaced wholesale. List fields (`tools[]`, `responses[]`, etc.) are replaced entirely. To carry forward part of the previous state while modifying it, authors must explicitly repeat the desired portions in the new `state` object. This full-replacement semantic enables clean rug-pull style attacks where a later phase completely swaps the state established by an earlier phase.
+If omitted, the phase inherits the entire state object from the immediately preceding phase in the same actor (deep copy). If present, it **completely replaces** the inherited state; no merging occurs at any level. Top-level keys (`tools`, `resources`, `prompts`, `capabilities`, etc.) are replaced wholesale. List fields (`tools[]`, `responses[]`, etc.) are replaced entirely. To carry forward part of the previous state while modifying it, authors must explicitly repeat the desired portions in the new `state` object. This full-replacement semantic enables clean rug-pull style attacks where a later phase completely swaps the state established by an earlier phase.
 
 The first phase in the list MUST include `state`.
 
@@ -137,7 +137,7 @@ A trigger object MUST specify at least one of `event` or `after`. An empty trigg
 
 ## 5.3 Triggers
 
-Triggers define conditions for phase advancement. Trigger events are **per-actor scoped** — a trigger on an actor matches only events observed on that actor's own protocol connection. There is no global event bus and no cross-actor event observation.
+Triggers define conditions for phase advancement. Trigger events are **per-actor scoped**: a trigger on an actor matches only events observed on that actor's own protocol connection. There is no global event bus and no cross-actor event observation.
 
 An actor's mode determines event direction. Server-mode actors (`mcp_server`, `a2a_server`) observe incoming requests from the agent. Client-mode actors (`mcp_client`, `a2a_client`, `ag_ui_client`) observe incoming responses or streamed events from the agent. The same event name (e.g., `tools/call`) is unambiguous because the actor's mode determines perspective.
 
@@ -176,7 +176,7 @@ The phase advances only when an event matches both the event type (`event`) and 
 
 ### `trigger.after` (OPTIONAL)
 
-A duration after which the phase advances unconditionally, measured from phase entry. Format: ISO 8601 duration (e.g., `"PT30S"`, `"PT5M"`) or shorthand with units `s` (seconds), `m` (minutes), `h` (hours), `d` (days) — for example, `"30s"`, `"5m"`, `"1h"`, `"2d"`.
+A duration after which the phase advances unconditionally, measured from phase entry. Format: ISO 8601 duration (e.g., `"PT30S"`, `"PT5M"`) or shorthand with units `s` (seconds), `m` (minutes), `h` (hours), `d` (days), for example, `"30s"`, `"5m"`, `"1h"`, `"2d"`.
 
 When both `event` and `after` are specified, the phase advances when either the required number of matching events is reached or the `after` duration elapses, whichever comes first.
 
@@ -184,7 +184,7 @@ The `count` and `match` fields are only meaningful in combination with `event` a
 
 ## 5.4 Match Predicates
 
-Match predicates evaluate structured conditions against protocol message content. A MatchPredicate is a mapping from field paths to conditions. It appears as the *value* of `trigger.match` and `when` fields — the key (`match:` or `when:`) is part of the parent object, not part of the predicate itself.
+Match predicates evaluate structured conditions against protocol message content. A MatchPredicate is a mapping from field paths to conditions. It appears as the *value* of `trigger.match` and `when` fields; the key (`match:` or `when:`) is part of the parent object, not part of the predicate itself.
 
 ```yaml
 # As it appears in a trigger:
@@ -238,7 +238,7 @@ wsegment      = segment / segment "[*]"
 segment       = 1*( ALPHA / DIGIT / "_" / "-" )
 ```
 
-Wildcard paths extend simple paths with `[*]` array traversal. When `[*]` is applied to an array, it expands to every element; the condition matches if **any** element satisfies it (OR semantics). When `[*]` is applied to a non-array value, it produces no match (not an error). Numeric indexing (`[0]`, `[1]`) is not supported — use CEL expressions ([§6.3](/specification/indicators/#63-expression-evaluation)) for positional access.
+Wildcard paths extend simple paths with `[*]` array traversal. When `[*]` is applied to an array, it expands to every element; the condition matches if **any** element satisfies it (OR semantics). When `[*]` is applied to a non-array value, it produces no match (not an error). Numeric indexing (`[0]`, `[1]`) is not supported; use CEL expressions ([§6.3](/specification/indicators/#63-expression-evaluation)) for positional access.
 
 **Common rules for both variants:**
 
@@ -249,7 +249,7 @@ Wildcard paths extend simple paths with `[*]` array traversal. When `[*]` is app
 
 All conditions within a match predicate are combined with AND logic. Every condition must match for the predicate to succeed.
 
-Missing fields never match — except when the condition is `exists: false`, which matches precisely when the field is absent. The `exists` operator checks field presence independent of value: `exists: true` matches if the dot-path resolves to any value (including `null`), `exists: false` matches if the dot-path does not resolve.
+Missing fields never match, except when the condition is `exists: false`, which matches precisely when the field is absent. The `exists` operator checks field presence independent of value: `exists: true` matches if the dot-path resolves to any value (including `null`), `exists: false` matches if the dot-path does not resolve.
 
 All string operators (`contains`, `starts_with`, `ends_with`, `any_of`, and equality) are case-sensitive. Case-insensitive matching is available via the `regex` operator with inline flags (e.g., `regex: "(?i)error"`).
 
@@ -271,7 +271,7 @@ extractors:
 
 ### `extractor.name` (REQUIRED)
 
-The variable name. The name MUST match the pattern `[a-z][a-z0-9_]*`. Extracted values are referenced in subsequent phases and response templates as `{{variable_name}}`. In multi-actor documents, extractors are scoped per-actor by default — `{{name}}` resolves to the current actor's extractor. To reference an extractor from a different actor, use the qualified syntax `{{actor_name.extractor_name}}`.
+The variable name. The name MUST match the pattern `[a-z][a-z0-9_]*`. Extracted values are referenced in subsequent phases and response templates as `{{variable_name}}`. In multi-actor documents, extractors are scoped per-actor by default, so `{{name}}` resolves to the current actor's extractor. To reference an extractor from a different actor, use the qualified syntax `{{actor_name.extractor_name}}`.
 
 ### `extractor.source` (REQUIRED)
 
@@ -288,7 +288,7 @@ The extraction method:
 
 The extraction selector, interpreted according to `type`.
 
-Extracted values are available in all subsequent phases via `{{name}}` template syntax in string fields within `state` and `on_enter`. Within the phase where the extractor is defined, the value becomes available immediately after the message that triggered the extraction — subsequent messages processed in the same phase can use it. Values are strings; consuming fields are responsible for type coercion. When an extractor captures a non-scalar value (an object or array), the value MUST be serialized to its compact JSON string representation for template interpolation. If a later phase defines an extractor with the same name as an earlier phase, the new value overwrites the previous one for all subsequent phases (last-write-wins).
+Extracted values are available in all subsequent phases via `{{name}}` template syntax in string fields within `state` and `on_enter`. Within the phase where the extractor is defined, the value becomes available immediately after the message that triggered the extraction, so subsequent messages processed in the same phase can use it. Values are strings; consuming fields are responsible for type coercion. When an extractor captures a non-scalar value (an object or array), the value MUST be serialized to its compact JSON string representation for template interpolation. If a later phase defines an extractor with the same name as an earlier phase, the new value overwrites the previous one for all subsequent phases (last-write-wins).
 
 ## 5.6 Response Templates
 
@@ -347,5 +347,5 @@ CEL expressions MUST be evaluated in a sandboxed environment. Specifically:
 
 These constraints ensure that OATF documents cannot be weaponized against the tools that consume them. A malicious OATF document with a pathological regex or an infinitely-recursive JSONPath expression must fail safely rather than deny service to the evaluating tool.
 
-> *Note on RE2 and lookarounds:* Practitioners familiar with Sigma rules or YARA signatures may notice that the RE2 subset excludes lookaheads and lookbehinds. This is a deliberate tradeoff. OATF evaluators run against adversarial payloads by design — ReDoS in a security evaluation tool that processes attacker-controlled content is an exploitable vulnerability, not a theoretical concern. Unlike Sigma (which scans flat log lines), OATF pattern indicators operate on structured JSON messages where the `target` dot-path already narrows evaluation to a specific field. Most lookaround use cases are better expressed as multiple entries in a `match` predicate (each targeting a different field, joined with AND logic) or as a CEL expression when the condition genuinely involves intra-string context.
+> *Note on RE2 and lookarounds:* Practitioners familiar with Sigma rules or YARA signatures may notice that the RE2 subset excludes lookaheads and lookbehinds. This is a deliberate tradeoff. OATF evaluators run against adversarial payloads by design, and ReDoS in a security evaluation tool that processes attacker-controlled content is an exploitable vulnerability, not a theoretical concern. Unlike Sigma (which scans flat log lines), OATF pattern indicators operate on structured JSON messages where the `target` dot-path already narrows evaluation to a specific field. Most lookaround use cases are better expressed as multiple entries in a `match` predicate (each targeting a different field, joined with AND logic) or as a CEL expression when the condition genuinely involves intra-string context.
 

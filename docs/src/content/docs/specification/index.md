@@ -3,7 +3,7 @@ title: "Introduction"
 description: "Abstract, purpose, scope, conformance requirements, and notation for the OATF specification."
 ---
 
-This specification defines the Open Agent Threat Format (OATF), a YAML-based format for describing security threats against AI agent communication protocols. OATF is built around three core interaction models — user-to-agent, agent-to-agent, and agent-to-tool — and is designed to accommodate current and future protocols serving these models. Version 0.1 includes protocol bindings for MCP, A2A, and AG-UI.
+This specification defines the Open Agent Threat Format (OATF), a YAML-based format for describing security threats against AI agent communication protocols. OATF is built around three core interaction models (user-to-agent, agent-to-agent, and agent-to-tool) and is designed to accommodate current and future protocols serving these models. Version 0.1 includes protocol bindings for MCP, A2A, and AG-UI.
 
 Each OATF document describes a single attack through an attack envelope (protocol-agnostic metadata, classification, and severity), an execution profile (the protocol messages required to simulate the attack), and optionally a set of indicators (observable patterns that determine whether the attack succeeded). Documents with indicators enable closed-loop testing: conforming tools can reproduce the attack and evaluate its outcome from the document alone, without external configuration. Documents without indicators are valid for simulation only.
 
@@ -29,7 +29,7 @@ Agent-protocol attacks differ fundamentally from traditional web attacks. Web pa
 
 This makes signature-based inline blocking (the "WAF for agents" model) inherently brittle: an attacker who reads the published indicators can trivially rephrase to evade them.
 
-OATF indicators are designed for testing (verifying that a specific known payload is caught) and for monitoring (flagging structural anomalies for human review) — never for live enforcement. Effective runtime defenses against agent-protocol threats operate at other layers: model-level guardrails, architectural controls (sandboxing, least privilege, human-in-the-loop approval), and protocol-level design constraints.
+OATF indicators are designed for testing (verifying that a specific known payload is caught) and for monitoring (flagging structural anomalies for human review), never for live enforcement. Effective runtime defenses against agent-protocol threats operate at other layers, including model-level guardrails, architectural controls (sandboxing, least privilege, human-in-the-loop approval), and protocol-level design constraints.
 
 ## 1.2 Scope
 
@@ -45,7 +45,7 @@ The format is a description language. It does not define how tools implement tra
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
-A conforming OATF document MUST validate against the schema defined in this specification. The normative JSON Schema is published at `https://oatf.io/schemas/v0.1.json` and distributed as a companion file (`v0.1.json`). The schema validates the protocol-agnostic document core (envelope, execution forms, phases, triggers, extractors, indicators, correlation). Binding-specific state validation — MCP tools/resources/prompts structure, A2A agent card, AG-UI run input — is the responsibility of binding-aware tools and is not enforced by the JSON Schema. The schema at a given `MAJOR.MINOR` URL is immutable: once published, it MUST NOT be modified. Patch releases clarify prose but do not change the schema; minor releases publish a new schema at a new URL (e.g., `v0.2.json`). A conforming tool MAY implement support for a subset of protocol bindings (for example, MCP only) but MUST correctly parse and ignore bindings it does not support.
+A conforming OATF document MUST validate against the schema defined in this specification. The normative JSON Schema is published at `https://oatf.io/schemas/v0.1.json` and distributed as a companion file (`v0.1.json`). The schema validates the protocol-agnostic document core (envelope, execution forms, phases, triggers, extractors, indicators, correlation). Binding-specific state validation (MCP tools/resources/prompts structure, A2A agent card, AG-UI run input) is the responsibility of binding-aware tools and is not enforced by the JSON Schema. The schema at a given `MAJOR.MINOR` URL is immutable: once published, it MUST NOT be modified. Patch releases clarify prose but do not change the schema; minor releases publish a new schema at a new URL (e.g., `v0.2.json`). A conforming tool MAY implement support for a subset of protocol bindings (for example, MCP only) but MUST correctly parse and ignore bindings it does not support.
 
 Several MUST-level constraints defined in this specification are not enforced by the JSON Schema in this version, because they involve cross-field or cross-element semantics better validated with richer diagnostics at the SDK level (see the [SDK specification, §3.2](/sdk/entry-points/)):
 
@@ -79,7 +79,7 @@ Schema definitions in this specification use YAML syntax. Type annotations follo
 - `number`: A floating-point number.
 - `boolean`: `true` or `false`.
 - `datetime`: An ISO 8601 date-time string (e.g., `2026-02-15T10:30:00Z`). Bare dates (`2026-02-15`) are accepted and interpreted as midnight UTC.
-- `duration`: A time span. ISO 8601 format (`PT30S`, `PT5M`) or shorthand with units: `s` (seconds), `m` (minutes), `h` (hours), `d` (days) — e.g., `30s`, `5m`, `1h`. Shorthand supports exactly one numeric-unit pair. For compound durations, use ISO 8601 form (e.g., `PT1H30M`). `0s` is a valid duration meaning zero elapsed time.
+- `duration`: A time span. ISO 8601 format (`PT30S`, `PT5M`) or shorthand with units: `s` (seconds), `m` (minutes), `h` (hours), `d` (days), e.g., `30s`, `5m`, `1h`. Shorthand supports exactly one numeric-unit pair. For compound durations, use ISO 8601 form (e.g., `PT1H30M`). `0s` is a valid duration meaning zero elapsed time.
 - `enum(a, b, c)`: One of the listed values.
 - `T[]`: An ordered list of values of type T.
 - `T?`: An optional value of type T. When absent, the field is omitted entirely.

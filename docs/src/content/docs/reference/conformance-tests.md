@@ -3,7 +3,7 @@ title: "Conformance Tests"
 description: "Data-driven, language-agnostic test fixtures for validating OATF SDK implementations."
 ---
 
-The [conformance test suite](https://github.com/oatf-spec/spec/tree/main/conformance) is a collection of **YAML fixtures** — no test code — that validate SDK implementations against the specification. Each SDK writes its own test runner that loads these fixtures and asserts the expected results. This keeps the fixtures portable across Rust, Python, Go, TypeScript, and any future SDK.
+The [conformance test suite](https://github.com/oatf-spec/spec/tree/main/conformance) is a collection of **YAML fixtures**, containing no test code, that validate SDK implementations against the specification. Each SDK writes its own test runner that loads these fixtures and asserts the expected results. This keeps the fixtures portable across Rust, Python, Go, TypeScript, and any future SDK.
 
 ## Structure
 
@@ -119,7 +119,7 @@ For normalization and roundtrip tests, compare document models structurally (not
 1. Find or create an appropriately named `.yaml` file in the corresponding directory.
 2. Follow the format documented above.
 3. Use a descriptive `name` and a unique `id` (e.g., `VAL-044`, `NORM-025`, `EVAL-PAT-23`).
-4. Keep inputs minimal — include only the fields relevant to the behavior being tested.
+4. Keep inputs minimal. Include only the fields relevant to the behavior being tested.
 5. For validation fixtures, reference the rule ID (V-NNN) in the test case name.
 
 The full fixture schema is documented in [`FIXTURE-SCHEMA.md`](https://github.com/oatf-spec/spec/blob/main/conformance/FIXTURE-SCHEMA.md).
