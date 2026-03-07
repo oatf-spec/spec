@@ -396,7 +396,7 @@ state:
       name: string?                    # Human-readable label
 ```
 
-**Action semantics.** The `actions` list is the client-mode equivalent of server tools/resources — it defines what the client does during each phase. Actions are executed sequentially in list order; each action is one MCP JSON-RPC request. Each action object MUST contain exactly one action key (same constraint as §2.7a `on_enter` actions, V-043).
+**Action semantics.** The `actions` list is the client-mode equivalent of server tools/resources — it defines what the client does during each phase. Actions are executed sequentially in list order; each action is one MCP JSON-RPC request. Each action object MUST contain exactly one action key (same constraint as [`on_enter` actions](/sdk/core-types/#27a-action), V-043).
 
 **Excluded methods.** `initialize` and `ping` are not actions — `initialize` is performed automatically by the runtime before phase execution begins (part of connection setup), and `ping` is a transport-level keepalive. The `actions` list covers application-level requests only.
 

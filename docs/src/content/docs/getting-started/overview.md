@@ -47,12 +47,6 @@ OATF v0.1 includes bindings for three protocols:
 
 The binding architecture is extensible — new protocols can be added in future versions without changing the core format.
 
-## Relationship to ThoughtJack
-
-OATF is the **format specification** — it defines how attack documents are structured and validated. [ThoughtJack](https://thoughtjack.dev) is an **adversarial simulation tool** that implements OATF — it reads OATF documents, spins up malicious protocol servers, and evaluates whether agents comply with the attack.
-
-Other tools can implement the OATF specification independently. The [SDK specification](/sdk/) defines the language-agnostic API contract for building OATF-compatible libraries.
-
 ## Next Steps
 
 - [Quick Start](/getting-started/quick-start/) — walk through a minimal OATF document
