@@ -33,7 +33,7 @@ Each binding serves one of three fundamental interaction models:
 | **Agent-to-Agent** | Agents delegate, collaborate, or discover | A2A ([§7.2](/specification/protocol-bindings/a2a/)) |
 | **Agent-to-Tool** | Agent invokes external capabilities | MCP ([§7.1](/specification/protocol-bindings/mcp/)) |
 
-These models are stable abstractions. The specific protocols serving them will evolve; new protocols may emerge, and existing ones may be replaced or forked. OATF's binding architecture ensures the core specification remains stable across protocol changes.
+These models are stable abstractions. The protocols serving them may change; the core specification does not depend on any particular protocol.
 
 ### Extensibility
 

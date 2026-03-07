@@ -22,9 +22,9 @@ Indicators answer the question "did the agent comply with the attack?" Each indi
 
 Documents without indicators are valid for simulation: adversarial tools can reproduce the attack from the execution profile alone. Adding indicators closes the loop: tools can determine whether the agent was exploited and produce a verdict. The progression from simulation-only to fully evaluable is a natural part of attack development.
 
-> *Note:* Indicators SHOULD examine the agent's *response* to the attack, not the attack payload itself. An indicator that checks whether a tool description contains suspicious patterns would always fire in a closed-loop simulation: the execution profile placed that content there. Indicators that check whether the agent *acted on* those suspicious patterns are the ones that close the regression testing loop.
+> Indicators SHOULD examine the agent's *response* to the attack, not the attack payload itself. An indicator on the payload would always fire: the execution profile placed that content there.
 
-> *Note:* Early drafts considered multi-attack bundle documents (one file containing a family of related attacks). This was rejected because it couples the lifecycle of unrelated attacks: updating one attack's indicators would require re-versioning and re-validating the entire bundle. One document per attack keeps versioning, deprecation, and regression testing independent.
+> One document per attack. Multi-attack bundles were considered and rejected: they couple the lifecycle of unrelated attacks.
 
 ## 3.2 Dual-Purpose Design
 

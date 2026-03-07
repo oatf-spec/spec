@@ -116,7 +116,7 @@ expression:
 
 A [Common Expression Language](https://github.com/google/cel-spec) expression that evaluates to a boolean. The expression receives the protocol message as its root context.
 
-> *Note:* CEL was selected over Rego (OPA) and Datalog for expression evaluation. Rego requires a policy engine runtime and uses a logic-programming model unfamiliar to most security practitioners. CEL is designed to be embedded, is side-effect-free by specification (simplifying sandboxing), and has production-quality implementations in Go, Rust, Java, and C++. The tradeoff is lower expressive power for policy-style rules, but OATF expressions evaluate individual messages rather than policy sets, so CEL's expression-oriented model is a better fit.
+> *Note:* CEL was chosen because it is embeddable, side-effect-free by specification, and has implementations in Go, Rust, Java, and C++. OATF expressions evaluate individual messages, not policy sets.
 
 Examples:
 
@@ -176,9 +176,7 @@ The class of malicious intent, used by classification-based inference engines. W
 
 The minimum confidence or similarity score for a positive match. When omitted, SDKs apply a default threshold of `0.7` at evaluation time. The threshold is not materialized during normalization, preserving the distinction between an author-specified threshold and the SDK default.
 
-The threshold is a tool-relative calibration target, not an absolute or cross-tool-comparable score. A threshold of `0.75` means "this tool, using its own inference engine, should consider scores at or above 0.75 as matches." The same threshold value will produce different match boundaries across tools using different models, embedding spaces, or classification architectures. This is inherent to semantic analysis and is the reason `semantic` is a distinct method from `pattern` and `expression`, which are deterministic.
-
-The interoperability mechanism for semantic indicators is the `examples` field, not the threshold. Two conforming tools using different inference engines SHOULD both classify `examples.positive` strings as matches and `examples.negative` strings as non-matches. If a tool's engine does not correctly classify the provided examples, the tool's calibration is incorrect, and the threshold should be adjusted by the tool operator, not the OATF document author.
+Thresholds are tool-relative: the same value produces different match boundaries across different inference engines. Cross-tool interoperability relies on the `examples` field. Conforming tools SHOULD classify `examples.positive` strings as matches and `examples.negative` strings as non-matches under their configured threshold. If a tool fails to classify examples correctly, the tool operator adjusts the threshold.
 
 ### `semantic.examples` (RECOMMENDED)
 

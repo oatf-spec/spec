@@ -7,16 +7,14 @@ The **Open Agent Threat Format (OATF)** is a YAML-based specification for descri
 
 ## The Problem
 
-AI agents communicate through protocols like MCP (Model Context Protocol), A2A (Agent-to-Agent), and AG-UI (Agent-to-UI). These protocols expose new attack surfaces. Tool descriptions can carry prompt injections, agent cards can contain poisoned skill definitions, and server instructions can manipulate agent behavior.
+AI agents communicate through protocols like MCP (Model Context Protocol), A2A (Agent-to-Agent), and AG-UI (Agent-to-UI). These protocols expose attack surfaces that do not exist in traditional software: tool descriptions carry prompt injections, agent cards contain poisoned skill definitions, server instructions manipulate agent behavior.
 
-Today, security researchers describe these attacks in blog posts, proof-of-concept scripts, and ad-hoc tooling. There is no standard way to:
+Attacks against these protocols are currently described in blog posts, proof-of-concept scripts, and one-off tooling. OATF defines a structured format for:
 
-- **Share attack definitions** between tools and teams
-- **Reproduce attacks deterministically** across different environments
-- **Evaluate agent resilience** with consistent success criteria
-- **Build regression suites** that track vulnerability fixes over time
-
-OATF defines a standard format for all of these.
+- **Sharing attack definitions** between tools and teams
+- **Reproducing attacks deterministically** across environments
+- **Evaluating agent resilience** with consistent success criteria
+- **Building regression suites** that track fixes over time
 
 ## Who It's For
 

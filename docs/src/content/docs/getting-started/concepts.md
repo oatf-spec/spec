@@ -3,17 +3,13 @@ title: "Core Concepts"
 description: "The mental model behind OATF: documents describe attacks, tools execute them."
 ---
 
-OATF separates **what** an attack looks like from **how** it's executed. Documents are declarative descriptions; tools are the runtime that executes them.
-
-## Documents Describe, Tools Execute
-
-An OATF document is a data file. It contains no executable code. It declares:
+OATF documents are declarative. They contain no executable code. A document declares:
 
 - What protocol state the attacker presents (tool definitions, agent cards, server responses)
 - What transitions occur between phases (triggers, extractors)
 - What patterns to look for in the agent's behavior (indicators)
 
-A **conforming tool** reads the document and handles the runtime concerns: spinning up protocol servers, capturing traffic, evaluating indicators against observed messages, and producing verdicts.
+A **conforming tool** reads the document and handles runtime: spinning up protocol servers, capturing traffic, evaluating indicators, and producing verdicts.
 
 ## The Three Execution Forms
 
@@ -123,7 +119,7 @@ indicators:
 
 ### Semantic Analysis
 
-LLM-powered intent matching for cases where the attack's success can't be captured by patterns alone. Requires a semantic evaluator at runtime.
+Intent matching using an inference engine (LLM, embedding model, or classifier). Requires a semantic evaluator at runtime.
 
 ```yaml
 indicators:
