@@ -120,12 +120,81 @@
     value: 100
   expected: true
 
-- name: "type mismatch: string operator on number returns false"
+- name: "string operator on number: value coerced to JSON '42', no match"
   id: COND-015
   input:
     condition:
       contains: "x"
     value: 42
+  expected: false
+
+- name: "string operator on number: value coerced to JSON '42', matches"
+  id: COND-022
+  input:
+    condition:
+      contains: "42"
+    value: 42
+  expected: true
+
+- name: "regex on object: value coerced to compact JSON, matches key"
+  id: COND-023
+  input:
+    condition:
+      regex: "account"
+    value:
+      account: "attacker-123"
+  expected: true
+
+- name: "regex on object: value coerced to compact JSON, matches value"
+  id: COND-024
+  input:
+    condition:
+      regex: "attacker-123"
+    value:
+      account: "attacker-123"
+  expected: true
+
+- name: "contains on object: coerced to compact JSON"
+  id: COND-025
+  input:
+    condition:
+      contains: '"account":'
+    value:
+      account: "attacker-123"
+  expected: true
+
+- name: "starts_with on array: coerced to compact JSON starting with '['"
+  id: COND-026
+  input:
+    condition:
+      starts_with: "["
+    value:
+      - "one"
+      - "two"
+  expected: true
+
+- name: "regex on boolean: coerced to 'true'"
+  id: COND-027
+  input:
+    condition:
+      regex: "^true$"
+    value: true
+  expected: true
+
+- name: "regex on null: coerced to 'null'"
+  id: COND-028
+  input:
+    condition:
+      regex: "^null$"
+    value: null
+  expected: true
+
+- name: "numeric operator on string: type mismatch returns false"
+  id: COND-029
+  input:
+    condition:
+      gt: 10
+    value: "not a number"
   expected: false
 
 - name: "lt: strictly less"

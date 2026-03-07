@@ -109,10 +109,10 @@ Evaluates a condition against a resolved value. If `condition` is a bare value (
 
 | Operator | Value Type | Returns True When |
 |---|---|---|
-| `contains` | String | `value` contains `contains` as a substring. Case-sensitive. |
-| `starts_with` | String | `value` starts with the specified prefix. Case-sensitive. |
-| `ends_with` | String | `value` ends with the specified suffix. Case-sensitive. |
-| `regex` | String | `value` matches the RE2 regular expression. |
+| `contains` | Any (coerced) | `value` contains `contains` as a substring. Case-sensitive. Non-strings are coerced to compact JSON. |
+| `starts_with` | Any (coerced) | `value` starts with the specified prefix. Case-sensitive. Non-strings are coerced to compact JSON. |
+| `ends_with` | Any (coerced) | `value` ends with the specified suffix. Case-sensitive. Non-strings are coerced to compact JSON. |
+| `regex` | Any (coerced) | `value` matches the RE2 regular expression. Non-strings are coerced to compact JSON. |
 | `any_of` | Any | `value` equals any element in the list (deep equality). |
 | `gt` | Number | `value > operand`. |
 | `lt` | Number | `value < operand`. |
@@ -121,7 +121,9 @@ Evaluates a condition against a resolved value. If `condition` is a bare value (
 | `exists` | Boolean | See [§5.4](/sdk/execution-primitives/#54-evaluate_predicate). `exists` is evaluated during predicate resolution, not by `evaluate_condition`. |
 | *(equality)* | Any | `value` equals the operand (deep equality). Used when the MatchEntry is a scalar, not a MatchCondition. |
 
-**Type mismatches:** If the operator requires a specific value type (string operators on non-string, numeric operators on non-number), the condition evaluates to `false`. Type mismatches are not errors.
+**Type coercion for string operators:** When a string operator (`contains`, `starts_with`, `ends_with`, `regex`) encounters a non-string value (object, array, number, boolean, or null), the value is first serialized to its compact JSON representation (no extra whitespace), and the operator is applied to the resulting string. This ensures that patterns targeting structured values (e.g., `regex` on tool arguments that resolve to a JSON object) match against the serialized form rather than silently returning `false`.
+
+**Numeric type mismatches:** If a numeric operator (`gt`, `lt`, `gte`, `lte`) is applied to a non-numeric value, the condition evaluates to `false`. Numeric type mismatches are not errors.
 
 **Deep equality:** The `any_of` and scalar equality operators use deep equality with the following rules: numeric values compare by mathematical value (integer `42` equals float `42.0`); object key order is irrelevant; NaN is not equal to any value including itself; null equals only null; arrays compare element-wise by position and length.
 

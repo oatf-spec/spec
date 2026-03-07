@@ -255,7 +255,9 @@ All string operators (`contains`, `starts_with`, `ends_with`, `any_of`, and equa
 
 **Comparison semantics.** Equality comparisons (bare-value matching and `any_of`) use deep equality: numeric values compare by mathematical value (integer `42` equals float `42.0`); object key order is irrelevant; arrays compare element-wise by position and length; `null` equals only `null`; NaN does not equal any value including itself.
 
-Type mismatches evaluate to `false`, not errors. String operators (`contains`, `starts_with`, `ends_with`, `regex`) applied to non-string values produce `false`. Numeric operators (`gt`, `lt`, `gte`, `lte`) applied to non-numeric values produce `false`. Equality comparison is strict and type-aware: integer `42` does not equal string `"42"`, but integer `42` equals float `42.0`.
+**Type coercion for string operators.** When a string operator (`contains`, `starts_with`, `ends_with`, `regex`) encounters a non-string value (object, array, number, boolean, or null), the value is first serialized to its compact JSON representation (no extra whitespace), and the operator is applied to the resulting string. For example, `regex: "account"` applied to the object `{"account": "attacker-123"}` matches because the compact JSON `{"account":"attacker-123"}` contains the substring `account`. This coercion ensures that string operators work intuitively on structured values such as tool arguments.
+
+Numeric operators (`gt`, `lt`, `gte`, `lte`) applied to non-numeric values produce `false`. Equality comparison is strict and type-aware: integer `42` does not equal string `"42"`, but integer `42` equals float `42.0`.
 
 ## 5.5 Extractors
 
