@@ -140,7 +140,7 @@ An entry action executed when a phase begins. Exactly one action key MUST be pre
 | `LogLevel` | `info`, `warn`, `error` |
 | `ElicitationMode` | `form`, `url` |
 
-**Binding-specific actions:** Action objects MAY contain a single key not in the known set above (e.g., `delay_ms: 500`, `send_ui_event: {...}`). The value type is unconstrained — it may be an object, string, number, or any JSON value. SDKs MUST preserve unrecognized action keys through parse → normalize → serialize round-trips. When evaluating, SDKs SHOULD skip actions they do not recognize and emit a warning diagnostic.
+**Binding-specific actions:** Action objects MAY contain a single key not in the known set above (e.g., `delay_ms: 500`, `send_ui_event: {...}`). The value type is unconstrained: it may be an object, string, number, or any JSON value. SDKs MUST preserve unrecognized action keys through parse → normalize → serialize round-trips. When evaluating, SDKs SHOULD skip actions they do not recognize and emit a warning diagnostic.
 
 **Extension fields:** Each action object MAY include `x-` prefixed keys alongside the action key. Extension fields are preserved but do not affect action execution.
 
@@ -207,7 +207,7 @@ This is a type alias, not a struct. In YAML, predicates are written as flat mapp
 
 ## 2.11 MatchCondition
 
-A condition applied to a resolved field value. At least one operator MUST be present. When multiple operators are present, they are combined with AND logic — the value must satisfy every operator for the condition to match. For example, `{contains: "secret", regex: "key_[0-9]+"}` matches only if both conditions are satisfied.
+A condition applied to a resolved field value. At least one operator MUST be present. When multiple operators are present, they are combined with AND logic, so the value must satisfy every operator for the condition to match. For example, `{contains: "secret", regex: "key_[0-9]+"}` matches only if both conditions are satisfied.
 
 | Field | Type | Description |
 |---|---|---|
@@ -282,7 +282,7 @@ Normalization (N-005): When a `PatternMatch` is parsed in shorthand form, the SD
 | `positive` | `Optional<List<String>>` | No | Strings that SHOULD trigger the indicator. |
 | `negative` | `Optional<List<String>>` | No | Strings that SHOULD NOT trigger the indicator. |
 
-When `examples` is present, at least one of `positive` or `negative` MUST be provided (the JSON Schema enforces this via `minProperties: 1`). Documents with `semantic` indicators SHOULD include at least two positive and two negative examples to enable cross-tool calibration ([format specification [§6](/sdk/extension-points/).4](/specification/indicators/#64-semantic-matching)).
+When `examples` is present, at least one of `positive` or `negative` MUST be provided (the JSON Schema enforces this via `minProperties: 1`). Documents with `semantic` indicators SHOULD include at least two positive and two negative examples to enable cross-tool calibration ([format specification §6.4](/specification/indicators/#64-semantic-analysis)).
 
 ## 2.17 Reference
 
@@ -360,10 +360,10 @@ SDKs MUST define named types for the following enumerations. The canonical strin
 | `DiagnosticSeverity` | `error`, `warning` |
 | `LogLevel` | `info`, `warn`, `error` |
 | `ElicitationMode` | `form`, `url` |
-| `Surface` | Open string. Values defined per-protocol in format spec [§7](/sdk/diagnostics/) surface tables. |
+| `Surface` | Open string. Values defined per-protocol in format spec [§7](/specification/protocol-bindings/) surface tables. |
 | `AdvanceReason` | `event_matched`, `timeout` |
 
-**Open vs closed enums:** `Protocol`, `Mode`, `Surface` ([§2.21](/sdk/core-types/#221-surface-registry)), and `Framework` are open strings — unknown values are accepted (with optional warnings for unrecognized bindings, per [§3.2](/sdk/entry-points/#32-validate)). All other enumerations in this table are closed: unknown values MUST be rejected during parsing (`ParseError` with `kind: unknown_variant`). This distinction ensures extensibility for protocol bindings and framework mappings while maintaining strict validation for lifecycle, verdict, and structural enums.
+**Open vs closed enums:** `Protocol`, `Mode`, `Surface` ([§2.21](/sdk/core-types/#221-surface-registry)), and `Framework` are open strings: unknown values are accepted (with optional warnings for unrecognized bindings, per [§3.2](/sdk/entry-points/#32-validate)). All other enumerations in this table are closed: unknown values MUST be rejected during parsing (`ParseError` with `kind: unknown_variant`). This distinction ensures extensibility for protocol bindings and framework mappings while maintaining strict validation for lifecycle, verdict, and structural enums.
 
 ## 2.21 Surface Registry
 
@@ -425,13 +425,13 @@ SDKs MUST define this as a compile-time constant data structure. The complete ma
 
 ## 2.23 SynthesizeBlock
 
-Defines an LLM-powered response generation request. See [format specification [§7](/sdk/diagnostics/).4](/specification/protocol-bindings/llm-synthesis/).
+Defines an LLM-powered response generation request. See [format specification §7.4](/specification/protocol-bindings/llm-synthesis/).
 
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `prompt` | `String` | Yes | Free-text prompt for the LLM. Supports `{{template}}` interpolation from extractors and request fields. |
 
-`SynthesizeBlock` appears within response entries (MCP tool `responses`, MCP prompt `responses`, A2A `task_responses`) as a mutually exclusive alternative to static content, and within AG-UI `run_agent_input` as a mutually exclusive alternative to static `messages`. The SDK parses and validates `SynthesizeBlock` but does not execute LLM generation — that is a runtime concern handled by the consuming tool's `GenerationProvider` ([§6.3](/sdk/extension-points/#63-generationprovider)).
+`SynthesizeBlock` appears within response entries (MCP tool `responses`, MCP prompt `responses`, A2A `task_responses`) as a mutually exclusive alternative to static content, and within AG-UI `run_agent_input` as a mutually exclusive alternative to static `messages`. The SDK parses and validates `SynthesizeBlock` but does not execute LLM generation; that is a runtime concern handled by the consuming tool's `GenerationProvider` ([§6.3](/sdk/extension-points/#63-generationprovider)).
 
 ## 2.24 ResponseEntry
 
@@ -457,9 +457,9 @@ SDKs MUST maintain a compile-time registry mapping `(protocol, base_event)` pair
 | `ag_ui` | `tool_call_end` | `toolCallName` |
 | `ag_ui` | `custom` | `name` |
 
-The content field path is resolved against the event's `content` field using `resolve_simple_path` ([§5.1.1](/sdk/execution-primitives/#511-simple-dot-path)). A qualifier matches when the resolved value, converted to its string representation, equals the qualifier token. Events whose `(protocol, base_event)` pair is not in the registry do not support qualifier resolution — `resolve_event_qualifier` returns `None` for such events.
+The content field path is resolved against the event's `content` field using `resolve_simple_path` ([§5.1.1](/sdk/execution-primitives/#511-simple-dot-path)). A qualifier matches when the resolved value, converted to its string representation, equals the qualifier token. Events whose `(protocol, base_event)` pair is not in the registry do not support qualifier resolution, and `resolve_event_qualifier` returns `None` for such events.
 
-**Correlated response events.** For protocols that use request/response correlation rather than embedding all necessary fields in the response payload (notably MCP JSON-RPC for `mcp_client` actors), SDKs MUST construct `ProtocolEvent.content` for correlated response events so that the qualifier paths in this registry are resolvable. Specifically, for MCP `tools/call` and `prompts/get` events observed in client mode, `content` MUST be an enriched object that includes the originating request's `params` (in addition to any response payload fields), since JSON-RPC responses do not themselves carry `params`. When the registry specifies `params.name` for these MCP entries, it resolves against this enriched `content` derived from the correlated original request. See [format specification [§7.1](/sdk/diagnostics/#71-parseerror).2](/specification/protocol-bindings/mcp/#712-events) for the full correlation semantics.
+**Correlated response events.** For protocols that use request/response correlation rather than embedding all necessary fields in the response payload (notably MCP JSON-RPC for `mcp_client` actors), SDKs MUST construct `ProtocolEvent.content` for correlated response events so that the qualifier paths in this registry are resolvable. Specifically, for MCP `tools/call` and `prompts/get` events observed in client mode, `content` MUST be an enriched object that includes the originating request's `params` (in addition to any response payload fields), since JSON-RPC responses do not themselves carry `params`. When the registry specifies `params.name` for these MCP entries, it resolves against this enriched `content` derived from the correlated original request. See [format specification §7.1.2](/specification/protocol-bindings/mcp/#712-events) for the full correlation semantics.
 
 SDKs SHOULD define this as a compile-time constant data structure, paralleling the Event-Mode Validity Registry ([§2.22](/sdk/core-types/#222-event-mode-validity-registry)) and Surface Registry ([§2.21](/sdk/core-types/#221-surface-registry)).
 

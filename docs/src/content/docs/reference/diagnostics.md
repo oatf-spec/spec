@@ -3,7 +3,7 @@ title: "Diagnostic Codes"
 description: "Non-normative diagnostic warning codes for OATF SDK implementations."
 ---
 
-SDKs that implement the validation and evaluation pipeline (see the [SDK specification](/sdk/)) produce structured diagnostics. The following warning codes are defined for v0.1. These are non-normative summaries — the [SDK specification](/sdk/) is authoritative.
+SDKs that implement the validation and evaluation pipeline (see the [SDK specification](/sdk/)) produce structured diagnostics. The following warning codes are defined for v0.1. These are non-normative summaries; the [SDK specification](/sdk/) is authoritative.
 
 | Code  | Condition |
 |-------|-----------|

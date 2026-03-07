@@ -1,37 +1,26 @@
 ---
 title: "What is OATF?"
-description: "An introduction to the Open Agent Threat Format — what it is, who it's for, and what problems it solves."
+description: "An introduction to the Open Agent Threat Format: what it is, who it's for, and what problems it solves."
 ---
 
-The **Open Agent Threat Format (OATF)** is a YAML-based specification for describing security threats against AI agent communication protocols. Each OATF document captures everything needed to reproduce a specific attack and evaluate whether an agent is vulnerable to it — the attack scenario, the protocol messages involved, and the observable patterns that indicate success or failure.
+The **Open Agent Threat Format (OATF)** is a YAML-based specification for describing security threats against AI agent communication protocols. Each OATF document captures everything needed to reproduce a specific attack and evaluate whether an agent is vulnerable to it: the attack scenario, the protocol messages involved, and the observable patterns that indicate success or failure.
 
-## The Problem
+## Scope
 
-AI agents communicate through protocols like MCP (Model Context Protocol), A2A (Agent-to-Agent), and AG-UI (Agent-to-UI). These protocols expose new attack surfaces — tool descriptions can carry prompt injections, agent cards can contain poisoned skill definitions, and server instructions can manipulate agent behavior.
+OATF defines a structured format for:
 
-Today, security researchers describe these attacks in blog posts, proof-of-concept scripts, and ad-hoc tooling. There is no standard way to:
-
-- **Share attack definitions** between tools and teams
-- **Reproduce attacks deterministically** across different environments
-- **Evaluate agent resilience** with consistent success criteria
-- **Build regression suites** that track vulnerability fixes over time
-
-OATF provides the missing standard format for all of these.
-
-## Who It's For
-
-- **Security researchers** documenting agent protocol vulnerabilities
-- **Agent developers** building regression test suites for their agents
-- **Red teamers** running structured adversarial evaluations
-- **Tool builders** creating security scanners, CI integrations, and IDE plugins
+- Sharing attack definitions between tools and teams
+- Reproducing attacks deterministically across environments
+- Evaluating agent resilience with consistent success criteria
+- Building regression suites that track fixes over time
 
 ## What a Document Contains
 
 Every OATF document describes a single attack through three layers:
 
-1. **Attack envelope** — protocol-agnostic metadata: name, severity, classification mappings (MITRE ATT&CK, OWASP), and lifecycle status
-2. **Execution profile** — the protocol-specific state required to simulate the attack: tool definitions, server responses, agent cards, or UI events
-3. **Indicators** (optional) — observable patterns that determine whether the attack succeeded: regex matches on tool arguments, CEL expressions over protocol messages, or semantic analysis of agent responses
+1. **Attack envelope**: protocol-agnostic metadata including name, severity, classification mappings (MITRE ATT&CK, OWASP), and lifecycle status
+2. **Execution profile**: the protocol-specific state required to simulate the attack (tool definitions, server responses, agent cards, or UI events)
+3. **Indicators** (optional): observable patterns that determine whether the attack succeeded (regex matches on tool arguments, CEL expressions over protocol messages, or semantic analysis of agent responses)
 
 Documents with indicators enable **closed-loop testing**: a conforming tool can reproduce the attack and evaluate its outcome from the document alone, without external configuration.
 
@@ -45,16 +34,10 @@ OATF v0.1 includes bindings for three protocols:
 | **A2A** (Agent-to-Agent) | Provisional | Agent ↔ Agent |
 | **AG-UI** (Agent-to-UI) | Provisional | Agent ↔ User Interface |
 
-The binding architecture is extensible — new protocols can be added in future versions without changing the core format.
-
-## Relationship to ThoughtJack
-
-OATF is the **format specification** — it defines how attack documents are structured and validated. [ThoughtJack](https://thoughtjack.dev) is an **adversarial simulation tool** that implements OATF — it reads OATF documents, spins up malicious protocol servers, and evaluates whether agents comply with the attack.
-
-Other tools can implement the OATF specification independently. The [SDK specification](/sdk/) defines the language-agnostic API contract for building OATF-compatible libraries.
+Additional protocols can be supported by adding new [bindings](/specification/protocol-bindings/).
 
 ## Next Steps
 
-- [Quick Start](/getting-started/quick-start/) — walk through a minimal OATF document
-- [Core Concepts](/getting-started/concepts/) — understand the mental model behind OATF
-- [Format Specification](/specification/) — the full normative specification
+- [Quick Start](/getting-started/quick-start/)
+- [Core Concepts](/getting-started/concepts/)
+- [Format Specification](/specification/)

@@ -1,6 +1,6 @@
 ---
 title: "AG-UI Binding"
-description: "Agent-User Interface protocol binding — surfaces, events, CEL context, and execution state."
+description: "Agent-User Interface protocol binding: surfaces, events, CEL context, and execution state."
 ---
 
 The AG-UI binding covers the Agent-User Interface protocol as defined in the [AG-UI specification](https://docs.ag-ui.com/). AG-UI uses HTTP POST for agent invocation and SSE for streaming responses. This binding is provisional: core surfaces, event types, and execution state are defined, but behavioral modifiers and payload generation are not yet specified. Future OATF minor versions will expand this binding.
@@ -99,13 +99,11 @@ state:
     runId: string?
 ```
 
-**Input synthesis semantics.** Within `run_agent_input`, `messages` and `synthesize` are mutually exclusive. When `synthesize` is present, the adversarial tool MUST generate the `messages` array at runtime using an LLM. The `prompt` field describes the conversation history to fabricate — the LLM produces the messages, not the entire `RunAgentInput`. The structural fields (`tools`, `state`, `forwardedProps`, `threadId`, `runId`) remain static because the attacker typically knows exactly what tool definitions and state to inject; it is the conversation history that benefits from adaptive generation.
+**Input synthesis semantics.** Within `run_agent_input`, `messages` and `synthesize` are mutually exclusive. When `synthesize` is present, the adversarial tool MUST generate the `messages` array at runtime using an LLM. The `prompt` field describes the conversation history to fabricate: the LLM produces the messages, not the entire `RunAgentInput`. The structural fields (`tools`, `state`, `forwardedProps`, `threadId`, `runId`) remain static because the attacker typically knows exactly what tool definitions and state to inject; it is the conversation history that benefits from adaptive generation.
 
 This follows the same principle as server-mode `synthesize` ([§7.4](/specification/protocol-bindings/llm-synthesis/)): the LLM generates the *content*, while the document author controls the *structure*. For MCP/A2A the content is the response payload; for AG-UI the content is the fabricated message history. See [§7.4](/specification/protocol-bindings/llm-synthesis/) for cross-protocol synthesis details.
 
 ## 7.3.5 AG-UI-Specific Attack Considerations
 
-AG-UI's primary attack surface is the client-to-agent direction: the `RunAgentInput` POST body. A malicious AG-UI client can fabricate conversation history (injecting false assistant or system messages), provide false tool results (claiming a tool returned data it never produced), or manipulate the `state` object to influence agent behavior.
-
-The SSE response stream is a secondary attack surface. A compromised agent can emit events that manipulate the client-side UI, inject unauthorized tool calls, or bypass human-in-the-loop approval flows through carefully sequenced events.
+The primary attack surface is the client-to-agent direction: the `RunAgentInput` fields (`messages`, `tools`, `state`) in the POST body. The SSE response stream is a secondary surface: a compromised agent can emit events that manipulate client-side state or tool call flows.
 

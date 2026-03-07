@@ -5,9 +5,9 @@ description: "Pattern matching, expression evaluation, and semantic analysis for
 
 The `indicators` field is OPTIONAL. When absent, the document is valid for simulation only: adversarial tools can execute the attack, but evaluation tools cannot produce verdicts. When present, indicators define patterns for determining whether the agent complied with the attack. Each indicator is independent: it targets a specific protocol and surface, examines the agent's behavior in response to the simulated attack, and produces a verdict.
 
-Indicators SHOULD examine only the agent's *response* to the attack — not the attack payload itself. An indicator that checked whether a tool description contains suspicious text would always fire in a closed-loop simulation: the execution profile placed that text there. The valuable indicators are those that detect whether the agent *acted on* the malicious content — exfiltrating data, complying with injected instructions, or performing unauthorized actions.
+Indicators SHOULD examine only the agent's *response* to the attack, not the attack payload itself. An indicator that checked whether a tool description contains suspicious text would always fire in a closed-loop simulation: the execution profile placed that text there. The valuable indicators are those that detect whether the agent *acted on* the malicious content: exfiltrating data, complying with injected instructions, or performing unauthorized actions.
 
-Evaluation tools evaluate each indicator against protocol traffic observed during the entire execution of the attack profile (all phases of all actors). An indicator matches if **any** applicable message in the observed trace satisfies its condition — the tool does not require a specific message position (first, last, or otherwise). Tools MAY apply a configurable grace period after the terminal phase(s) complete, to capture delayed effects such as exfiltration or state changes that manifest after the attack simulation ends. When `attack.grace_period` is present, tools MUST use the specified duration as the post-terminal-phase observation window. When absent, tools MAY apply their own configurable default.
+Evaluation tools evaluate each indicator against protocol traffic observed during the entire execution of the attack profile (all phases of all actors). An indicator matches if **any** applicable message in the observed trace satisfies its condition; the tool does not require a specific message position (first, last, or otherwise). Tools MAY apply a configurable grace period after the terminal phase(s) complete, to capture delayed effects such as exfiltration or state changes that manifest after the attack simulation ends. When `attack.grace_period` is present, tools MUST use the specified duration as the post-terminal-phase observation window. When absent, tools MAY apply their own configurable default.
 
 ## 6.1 Structure
 
@@ -58,7 +58,7 @@ Known scenarios where this indicator may match benign traffic. Each entry is a p
 
 ## 6.2 Pattern Matching
 
-The `pattern` field governs string and structural matching rules. Pattern matching operates on the parsed protocol message, not the raw wire representation. Attacks that exploit wire-level anomalies (duplicate JSON keys, non-canonical encoding) are outside the scope of pattern indicators. Two forms are supported:
+The `pattern` field governs string and structural matching rules. Two forms are supported:
 
 **Standard form**: explicit target and condition:
 
@@ -96,7 +96,7 @@ When omitted, defaults to the canonical target path for the indicator's `surface
 
 ### `pattern.condition` (CONDITIONAL)
 
-The matching condition applied to the node(s) selected by `pattern.target`. A Condition is a single operator object — one of `contains`, `starts_with`, `ends_with`, `regex`, `any_of`, `gt`, `lt`, `gte`, `lte`, `exists` — or a bare value for equality matching. This is the same set of operators used within MatchPredicates ([§5.4](/specification/execution-profile/#54-match-predicates)), but here applied to an already-selected field rather than a field-path mapping. Required when using the standard form. Absent when using the shorthand form. Note that `exists` is available in the standard form but not in the shorthand form (shorthand omits `target`, so there is no explicit path for `exists` to check).
+The matching condition applied to the node(s) selected by `pattern.target`. A Condition is a single operator object (one of `contains`, `starts_with`, `ends_with`, `regex`, `any_of`, `gt`, `lt`, `gte`, `lte`, `exists`) or a bare value for equality matching. This is the same set of operators used within MatchPredicates ([§5.4](/specification/execution-profile/#54-match-predicates)), but here applied to an already-selected field rather than a field-path mapping. Required when using the standard form. Absent when using the shorthand form. Note that `exists` is available in the standard form but not in the shorthand form (shorthand omits `target`, so there is no explicit path for `exists` to check).
 
 When the condition contains multiple operators, they are combined with AND logic (all must match). For example, `{contains: "secret", regex: "key_[0-9]+"}` matches only if both conditions are satisfied.
 
@@ -116,7 +116,7 @@ expression:
 
 A [Common Expression Language](https://github.com/google/cel-spec) expression that evaluates to a boolean. The expression receives the protocol message as its root context.
 
-> *Note:* CEL was selected over Rego (OPA) and Datalog for expression evaluation. Rego requires a policy engine runtime and uses a logic-programming model unfamiliar to most security practitioners. CEL is designed to be embedded, is side-effect-free by specification (simplifying sandboxing), and has production-quality implementations in Go, Rust, Java, and C++. The tradeoff is lower expressive power for policy-style rules, but OATF expressions evaluate individual messages rather than policy sets, so CEL's expression-oriented model is a better fit.
+> *Note:* CEL was chosen because it is embeddable, side-effect-free by specification, and has implementations in Go, Rust, Java, and C++. OATF expressions evaluate individual messages, not policy sets.
 
 Examples:
 
@@ -176,9 +176,7 @@ The class of malicious intent, used by classification-based inference engines. W
 
 The minimum confidence or similarity score for a positive match. When omitted, SDKs apply a default threshold of `0.7` at evaluation time. The threshold is not materialized during normalization, preserving the distinction between an author-specified threshold and the SDK default.
 
-The threshold is a tool-relative calibration target, not an absolute or cross-tool-comparable score. A threshold of `0.75` means "this tool, using its own inference engine, should consider scores at or above 0.75 as matches." The same threshold value will produce different match boundaries across tools using different models, embedding spaces, or classification architectures. This is inherent to semantic analysis and is the reason `semantic` is a distinct method from `pattern` and `expression`, which are deterministic.
-
-The interoperability mechanism for semantic indicators is the `examples` field, not the threshold. Two conforming tools using different inference engines SHOULD both classify `examples.positive` strings as matches and `examples.negative` strings as non-matches. If a tool's engine does not correctly classify the provided examples, the tool's calibration is incorrect, and the threshold should be adjusted by the tool operator, not the OATF document author.
+Thresholds are tool-relative: the same value produces different match boundaries across different inference engines. Cross-tool interoperability relies on the `examples` field. Conforming tools SHOULD classify `examples.positive` strings as matches and `examples.negative` strings as non-matches under their configured threshold. If a tool fails to classify examples correctly, the tool operator adjusts the threshold.
 
 ### `semantic.examples` (RECOMMENDED)
 

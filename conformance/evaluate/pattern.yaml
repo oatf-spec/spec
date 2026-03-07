@@ -182,7 +182,7 @@
   expected: "matched"
 
 - name: "Numeric comparison with lt — not matched"
-  id: EVAL-PAT-14
+  id: EVAL-PAT-22
   input:
     indicator:
       surface: "tool_arguments"
@@ -209,7 +209,7 @@
   expected: "matched"
 
 - name: "Contains match on tool title"
-  id: EVAL-PAT-14
+  id: EVAL-PAT-23
   input:
     indicator:
       surface: "tool_title"
@@ -329,3 +329,46 @@
     message:
       instructions: "You are a helpful assistant. Answer user questions accurately."
   expected: "not_matched"
+
+- name: "Regex on object value: coerced to compact JSON, matches"
+  id: EVAL-PAT-24
+  input:
+    indicator:
+      surface: "tool_arguments"
+      pattern:
+        target: "arguments"
+        condition:
+          regex: "account"
+    message:
+      arguments:
+        account: "attacker-123"
+        amount: 5000
+  expected: "matched"
+
+- name: "Regex on object value: coerced to compact JSON, no match"
+  id: EVAL-PAT-25
+  input:
+    indicator:
+      surface: "tool_arguments"
+      pattern:
+        target: "arguments"
+        condition:
+          regex: "id_rsa"
+    message:
+      arguments:
+        file: "readme.txt"
+  expected: "not_matched"
+
+- name: "Contains on object value: coerced to compact JSON"
+  id: EVAL-PAT-26
+  input:
+    indicator:
+      surface: "tool_arguments"
+      pattern:
+        target: "arguments"
+        condition:
+          contains: "passwd"
+    message:
+      arguments:
+        path: "/etc/passwd"
+  expected: "matched"

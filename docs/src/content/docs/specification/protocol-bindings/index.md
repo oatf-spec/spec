@@ -5,7 +5,7 @@ description: "Protocol binding architecture, extensibility model, and included b
 
 ## 7.0 Binding Architecture
 
-Protocol bindings are OATF's extension mechanism for supporting specific agent communication protocols. The core specification ([§1](/specification/)–6, [§8](/specification/cross-protocol-chains/)–11) is protocol-agnostic — it defines documents, phases, triggers, extractors, indicators, and verdicts without reference to any particular protocol. Bindings supply the protocol-specific details that make documents concrete and executable.
+Protocol bindings are OATF's extension mechanism for supporting specific agent communication protocols. The core specification ([§1](/specification/) through 6, [§8](/specification/cross-protocol-chains/) through 11) is protocol-agnostic: it defines documents, phases, triggers, extractors, indicators, and verdicts without reference to any particular protocol. Bindings supply the protocol-specific details that make documents concrete and executable.
 
 ### What a Protocol Binding Defines
 
@@ -33,7 +33,7 @@ Each binding serves one of three fundamental interaction models:
 | **Agent-to-Agent** | Agents delegate, collaborate, or discover | A2A ([§7.2](/specification/protocol-bindings/a2a/)) |
 | **Agent-to-Tool** | Agent invokes external capabilities | MCP ([§7.1](/specification/protocol-bindings/mcp/)) |
 
-These models are stable abstractions. The specific protocols serving them will evolve — new protocols may emerge, existing ones may be replaced or forked. OATF's binding architecture ensures the core specification remains stable across protocol changes.
+These models are stable abstractions. The protocols serving them may change; the core specification does not depend on any particular protocol.
 
 ### Extensibility
 
@@ -46,7 +46,7 @@ Third-party bindings (not included in this specification) SHOULD use a namespace
 Each binding carries a maturity level:
 
 - **Stable**: Complete coverage of the protocol's attack surface. All surfaces, event types, execution state structures, CEL context, behavioral modifiers, and payload generation are defined. Suitable for production use.
-- **Provisional**: Structurally sound and usable, but incomplete. Core surfaces and event types are defined. Execution state covers the primary attack vectors. CEL context, behavioral modifiers, and payload generation may be absent. Future OATF minor versions will expand provisional bindings toward stable.
+- **Provisional**: Structurally sound and usable, but incomplete. Core surfaces and event types are defined, and execution state covers the primary attack vectors. CEL context, behavioral modifiers, and payload generation may be absent. Future OATF minor versions will expand provisional bindings toward stable.
 
 ## 7.0.1 Included Bindings Summary
 
@@ -57,7 +57,7 @@ Each binding carries a maturity level:
 | Transport | JSON-RPC 2.0 over stdio/Streamable HTTP | HTTP + SSE | HTTP POST + SSE |
 | Primary attack surface | Tool/resource/prompt descriptions, tool responses | Agent Card, skill descriptions, task messages | Message history, tool results, agent state |
 | Default mode | `mcp_server` | `a2a_server` | `ag_ui_client` |
-| Surfaces defined | 23 | 8 | 7 |
+| Surfaces defined | 30 | 8 | 7 |
 | Event types defined | 23 | 10 | 15 |
 | Execution state | Full (tools, resources, prompts, elicitations, capabilities, behavior) | Partial (agent card, task responses) | Partial (RunAgentInput) |
 | Behavioral modifiers | Defined (delivery, side effects) | Not yet defined | Not yet defined |

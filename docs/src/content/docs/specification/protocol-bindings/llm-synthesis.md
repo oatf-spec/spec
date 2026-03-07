@@ -32,7 +32,7 @@ This specification deliberately excludes model configuration from the document. 
 - **Structured output**: Whether to use JSON mode, function calling, or constrained generation to enforce protocol structure.
 - **Retry policy**: How to handle validation failures or API errors.
 
-An OATF document describes threats universally; a `synthesize` block says "an attacker would craft a response matching this intent" without prescribing which model or configuration produces it. This separation ensures documents are portable across tools and environments.
+This separation ensures documents are portable across tools and environments: the document specifies the intent, not the model or configuration.
 
 ## Distinction from Content-Item Generate
 

@@ -11,7 +11,7 @@ The OATF specification version follows Semantic Versioning:
 - **Minor** versions add new included protocol bindings, surfaces, or optional fields. External protocol bindings (defined outside this specification) do not require a new OATF version.
 - **Patch** versions clarify existing definitions without changing the schema.
 
-The `oatf` field in each document declares the specification version it conforms to. Tools MUST reject documents declaring a version they do not support.
+The `oatf` field in each document declares the specification version it conforms to. Version compatibility rules depend on whether the specification has reached 1.0 (see below).
 
 **Pre-1.0 stability:** During the 0.x series, minor versions MAY introduce breaking changes to the document schema. Tools MUST reject documents declaring an unsupported 0.x version. Authors SHOULD expect that documents written for 0.1 may require migration when 0.2 is released.
 

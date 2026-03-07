@@ -7,8 +7,8 @@ description: "Indicator-level and attack-level verdicts, aggregation algorithm, 
 
 Each indicator produces a verdict when evaluated against observed traffic:
 
-- `matched`: The indicator's condition was satisfied — evidence of agent compliance was found.
-- `not_matched`: The indicator's condition was not satisfied — no evidence of agent compliance.
+- `matched`: The indicator's condition was satisfied; evidence of agent compliance was found.
+- `not_matched`: The indicator's condition was not satisfied; no evidence of agent compliance.
 - `error`: The indicator could not be evaluated (malformed message, evaluation timeout, engine error).
 - `skipped`: The indicator was not evaluated (protocol not supported, insufficient data, engine limitation).
 
@@ -21,7 +21,7 @@ Attack-level verdicts are derived from indicator verdicts according to `correlat
 - `partial`: Some indicators matched but not enough to satisfy the correlation logic. Applies only when `correlation.logic` is `all`.
 - `error`: One or more indicators produced errors, preventing reliable evaluation.
 
-**Aggregation algorithm.** Conforming tools MUST use the following precedence to derive attack-level verdicts from indicator verdicts. `skipped` indicators are treated as `not_matched` for aggregation purposes (the agent was not shown to be exploited by that indicator). **However, when ALL indicators are `skipped`, the attack verdict is `error` — a verdict that no evaluation occurred is distinct from a verdict that the agent resisted.** Consuming tools that need finer distinction between "evaluated and not matched" versus "not evaluated" SHOULD inspect individual indicator verdicts.
+**Aggregation algorithm.** Conforming tools MUST use the following precedence to derive attack-level verdicts from indicator verdicts. `skipped` indicators are treated as `not_matched` for aggregation purposes (the agent was not shown to be exploited by that indicator). **However, when ALL indicators are `skipped`, the attack verdict is `error`, because a verdict that no evaluation occurred is distinct from a verdict that the agent resisted.** Consuming tools that need finer distinction between "evaluated and not matched" versus "not evaluated" SHOULD inspect individual indicator verdicts.
 
 For `correlation.logic: any`:
 

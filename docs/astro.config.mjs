@@ -86,6 +86,12 @@ export default defineConfig({
           ],
         },
         {
+          label: 'SDKs',
+          items: [
+            { label: 'Available SDKs', slug: 'sdks' },
+          ],
+        },
+        {
           label: 'Examples',
           items: [
             { label: 'Simple Prompt Injection', slug: 'examples/prompt-injection' },
@@ -98,6 +104,7 @@ export default defineConfig({
           label: 'Reference',
           items: [
             { label: 'JSON Schema', slug: 'reference/schema' },
+            { label: 'Conformance Tests', slug: 'reference/conformance-tests' },
             { label: 'Diagnostic Codes', slug: 'reference/diagnostics' },
             { label: 'Future Work', slug: 'reference/future-work' },
           ],

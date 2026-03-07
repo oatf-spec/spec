@@ -68,7 +68,7 @@ All entry points and evaluation functions defined in this specification have syn
 - Language SDKs MAY additionally provide async convenience wrappers that delegate to the synchronous core. These wrappers are SDK-specific sugar and not part of the abstract specification.
 - Batch evaluation of multiple indicators against multiple messages is a common workflow. SDKs MAY offer batch evaluation functions that evaluate indicators concurrently where the language supports it.
 
-This pattern — sync core, sync trait interface, optional async wrappers — ensures that the behavioral contracts are uniform across language ecosystems while allowing each SDK to integrate naturally with its language's concurrency model. SDKs SHOULD document whether they provide async convenience wrappers.
+This pattern (sync core, sync trait interface, optional async wrappers) ensures that the behavioral contracts are uniform across language ecosystems while allowing each SDK to integrate naturally with its language's concurrency model. SDKs SHOULD document whether they provide async convenience wrappers.
 
 
 ## 9. Versioning

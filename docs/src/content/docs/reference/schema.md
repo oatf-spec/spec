@@ -18,7 +18,7 @@ The schema validates the **protocol-agnostic document core**:
 
 ## What It Does Not Validate
 
-**Binding-specific state validation** — MCP tool structure, A2A agent cards, AG-UI run input — is handled by SDK-level validators, not the JSON Schema. Cross-field constraints (unique IDs, terminal phase ordering, event-mode validity) are also validated at the SDK level. See [Conformance](/specification/conformance/) for the full list of validation rules.
+**Binding-specific state validation** (MCP tool structure, A2A agent cards, AG-UI run input) is handled by SDK-level validators, not the JSON Schema. Cross-field constraints (unique IDs, terminal phase ordering, event-mode validity) are also validated at the SDK level. See [Conformance](/specification/conformance/) for the full list of validation rules.
 
 ## Download
 
@@ -28,7 +28,7 @@ The normative schema is published at a versioned, immutable URL:
 https://oatf.io/schemas/v0.1.json
 ```
 
-Once published, the schema at a given `MAJOR.MINOR` URL is immutable — it will not be modified. Patch releases clarify prose but do not change the schema; minor releases publish a new schema at a new URL (e.g., `v0.2.json`).
+Once published, the schema at a given `MAJOR.MINOR` URL is immutable; it will not be modified. Patch releases clarify prose but do not change the schema; minor releases publish a new schema at a new URL (e.g., `v0.2.json`).
 
 ## IDE Integration
 

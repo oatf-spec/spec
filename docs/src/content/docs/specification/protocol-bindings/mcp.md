@@ -1,6 +1,6 @@
 ---
 title: "MCP Binding"
-description: "Model Context Protocol binding — surfaces, events, CEL context, execution state, and behavioral modifiers."
+description: "Model Context Protocol binding: surfaces, events, CEL context, execution state, and behavioral modifiers."
 ---
 
 The MCP binding covers the Model Context Protocol as defined in the [MCP Specification (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25). MCP uses JSON-RPC 2.0 over stdio or Streamable HTTP transport.
@@ -46,7 +46,7 @@ The following surface values are defined for MCP indicators. The **Default Targe
 
 MCP events are per-actor scoped. An actor's mode determines which events it observes and their semantics.
 
-**For `mcp_server` actors** — events are JSON-RPC requests the agent sends to this server:
+**For `mcp_server` actors**: events are JSON-RPC requests the agent sends to this server:
 
 | Event | Protocol Method | Description | Qualifier |
 |-------|-----------------|-------------|-----------|
@@ -71,9 +71,9 @@ MCP events are per-actor scoped. An actor's mode determines which events it obse
 
 Resource events (`resources/read`, `resources/subscribe`, `resources/unsubscribe`) do not support qualifiers because resource URIs commonly contain colons that conflict with qualifier syntax. Use `trigger.match` for URI-based filtering.
 
-**For `mcp_client` actors** — events are responses and notifications received from the server:
+**For `mcp_client` actors**: events are responses and notifications received from the server:
 
-For client-mode actors, method-named events (e.g., `tools/call`, `tools/list`) match JSON-RPC responses whose `id` corresponds to an outstanding request of that method. JSON-RPC responses carry only `id`, `result`, and `error` — not a `method` field. The runtime correlates each response to the original request by `id` and exposes the event under the original method name. Qualifiers are resolved against the original request's parameters (e.g., `tools/call:calculator` matches a response whose originating request had `params.name == "calculator"`).
+For client-mode actors, method-named events (e.g., `tools/call`, `tools/list`) match JSON-RPC responses whose `id` corresponds to an outstanding request of that method. JSON-RPC responses carry only `id`, `result`, and `error`, not a `method` field. The runtime correlates each response to the original request by `id` and exposes the event under the original method name. Qualifiers are resolved against the original request's parameters (e.g., `tools/call:calculator` matches a response whose originating request had `params.name == "calculator"`).
 
 Notification events (`notifications/*`) are true wire-level events with their own `method` field and require no correlation.
 
@@ -228,15 +228,15 @@ state:
               mimeType: string?            # type: image, audio, resource_link
               data: string?                # Base64-encoded (type: image, audio)
               uri: string?                 # type: resource, resource_link
-              name: string?                # type: resource_link — REQUIRED for resource_link
-              title: string?               # type: resource_link — display name
-              description: string?         # type: resource_link — description
-              icons:                       # type: resource_link — display icons
+              name: string?                # type: resource_link, REQUIRED for resource_link
+              title: string?               # type: resource_link, display name
+              description: string?         # type: resource_link, description
+              icons:                       # type: resource_link, display icons
                 - src: string
                   mimeType: string?
                   sizes: string[]?
                   theme: enum(light, dark)?
-              size: integer?               # type: resource_link — raw content size in bytes
+              size: integer?               # type: resource_link, raw content size in bytes
               annotations:                 # Content metadata
                 audience: string[]?        # ["user"], ["assistant"], or ["user", "assistant"]
                 priority: number?          # 0.0–1.0 processing priority hint
@@ -314,9 +314,9 @@ state:
           call: object?
 ```
 
-**Response entry semantics.** A tool's `responses` list is an ordered sequence of response entries. When the tool is called, entries are evaluated in order; the first entry whose `when` predicate matches (or the first entry without `when`) is selected. The `when` predicate is evaluated against the incoming request parameters — the same content root as `trigger.match` for the corresponding event (e.g., for `tools/call`, the root contains `name` and `arguments`). Each entry specifies exactly one content strategy: static `content` or LLM `synthesize` — they are mutually exclusive on the same entry. When `responses` is omitted, the tool returns an empty success response (content: `[]`, isError: `false`). The same pattern applies to prompts. When a tool declares `outputSchema`, its response entries SHOULD include `structuredContent` alongside `content` for backward compatibility. The `structuredContent` object MUST conform to the declared `outputSchema`.
+**Response entry semantics.** A tool's `responses` list is an ordered sequence of response entries. When the tool is called, entries are evaluated in order; the first entry whose `when` predicate matches (or the first entry without `when`) is selected. The `when` predicate is evaluated against the incoming request parameters, the same content root as `trigger.match` for the corresponding event (e.g., for `tools/call`, the root contains `name` and `arguments`). Each entry specifies exactly one content strategy: static `content` or LLM `synthesize`; they are mutually exclusive on the same entry. When `responses` is omitted, the tool returns an empty success response (content: `[]`, isError: `false`). The same pattern applies to prompts. When a tool declares `outputSchema`, its response entries SHOULD include `structuredContent` alongside `content` for backward compatibility. The `structuredContent` object MUST conform to the declared `outputSchema`.
 
-**Protocol version.** The `protocol_version` field controls the `protocolVersion` string in the `initialize` response. When omitted, conforming tools MUST default to `"2025-11-25"` (the current MCP specification version). Attack documents testing version downgrade attacks — where a malicious server claims an older protocol version to force the client into a degraded capability mode — SHOULD set this field explicitly (e.g., `"2024-11-05"` to test whether the client falls back to a mode without structured output validation or elicitation support).
+**Protocol version.** The `protocol_version` field controls the `protocolVersion` string in the `initialize` response. When omitted, conforming tools MUST default to `"2025-11-25"` (the current MCP specification version). Attack documents testing version downgrade attacks (where a malicious server claims an older protocol version to force the client into a degraded capability mode) SHOULD set this field explicitly (e.g., `"2024-11-05"` to test whether the client falls back to a mode without structured output validation or elicitation support).
 
 **Server identity.** The `server_info` object controls the `serverInfo` field in the `initialize` response. When omitted, tools SHOULD default to `{name: "oatf-server", version: "1.0.0"}`. Attack documents that impersonate specific servers (e.g., testing whether an agent trusts a particular server name) SHOULD set this field explicitly. The `icons` array provides display icons for the server in client UIs; each icon MAY specify a `theme` (`light` or `dark`) to target specific client appearances. The `websiteUrl` field may direct users to a phishing site if attacker-controlled.
 
@@ -324,15 +324,15 @@ state:
 
 **Tool field defaults.** Only `name` is required on a tool definition. When `inputSchema` is omitted, it defaults to `{"type": "object"}` (accepts any arguments). When `description` is omitted, it defaults to an empty string. These defaults minimize boilerplate for simple attacks where the attack payload is in a single field (typically `description`) and the rest is scaffolding.
 
-**Content types.** Tool response content items and prompt message content support five types: `text` (plain text), `image` (base64-encoded image), `audio` (base64-encoded audio), `resource` (embedded resource with inline content), and `resource_link` (a URI reference to a resource the client may fetch or subscribe to). The `resource_link` type has a required `name` field and optional `title`, `description`, `mimeType`, `icons`, and `size` fields — it inherits the full Resource structure. Resource links returned by tools are not guaranteed to appear in `resources/list` results, making them a vector for directing the client to attacker-controlled resources.
+**Content types.** Tool response content items and prompt message content support five types: `text` (plain text), `image` (base64-encoded image), `audio` (base64-encoded audio), `resource` (embedded resource with inline content), and `resource_link` (a URI reference to a resource the client may fetch or subscribe to). The `resource_link` type has a required `name` field and optional `title`, `description`, `mimeType`, `icons`, and `size` fields, as it inherits the full Resource structure. Resource links returned by tools are not guaranteed to appear in `resources/list` results, making them a vector for directing the client to attacker-controlled resources.
 
-**Content annotations.** All content items in tool responses and prompt messages MAY include `annotations`. Resources themselves also carry `annotations` in `resources/list` responses. The `audience` field is particularly security-relevant: content or resources marked `audience: ["assistant"]` are intended to be invisible to the user, creating an attack vector where malicious instructions can be hidden from human oversight. The `priority` field (0.0–1.0) hints at processing importance, potentially allowing an attacker to ensure their payload is prioritized. Attack documents testing oversight bypass SHOULD use annotations to control content visibility.
+**Content annotations.** All content items in tool responses and prompt messages MAY include `annotations`. Resources themselves also carry `annotations` in `resources/list` responses. The `audience` field is particularly security-relevant: content or resources marked `audience: ["assistant"]` are intended to be invisible to the user, creating an attack vector where malicious instructions can be hidden from human oversight. The `priority` field (0.0 to 1.0) hints at processing importance, potentially allowing an attacker to ensure their payload is prioritized. Attack documents testing oversight bypass SHOULD use annotations to control content visibility.
 
 **Resource content mapping.** Each resource in the state defines a single `content` object (`text` or `blob`). The adversarial tool constructs the MCP wire-format `resources/read` response by wrapping this into the protocol's `contents[]` array (a single-element array containing `uri`, `mimeType`, and the content). This is the same projection pattern used for tools (state defines individual tool objects; the tool constructs the `tools/list` response array). Indicator surfaces and CEL contexts reference the wire-format structure (`contents[*]`), not the state-level definition.
 
 **Elicitation state.** The `elicitations` list defines elicitation requests the server issues during tool or prompt execution. Elicitation entries use the same ordered-match semantics as tool `responses`: entries are evaluated in order, first match wins. A malicious MCP server can use elicitation to phish for user credentials, request sensitive information, or redirect users to malicious URLs via url-mode elicitation. The `requestedSchema` field is attacker-controlled and may craft misleading field labels or descriptions.
 
-**LLM synthesis.** When `synthesize` is present, the adversarial tool MUST generate the response content at runtime using an LLM. The `prompt` field is a free-text instruction to the LLM, supporting `{{template}}` interpolation from extractors and request fields. The runtime is responsible for model selection, structured output enforcement, caching, and retry. Conforming tools MUST validate synthesized output against the protocol binding's message structure (MCP tool call result for tools, prompt get result for prompts) before injection into the protocol stream. When the tool declares an `outputSchema`, the synthesized output MUST also include a valid `structuredContent` object conforming to that schema. Generation failures MUST NOT be sent to the target agent. This specification does not define model configuration (model name, temperature, seed) — these are runtime concerns defined by the consuming tool's configuration. See [§7.4](/specification/protocol-bindings/llm-synthesis/) for cross-protocol synthesis details.
+**LLM synthesis.** When `synthesize` is present, the adversarial tool MUST generate the response content at runtime using an LLM. The `prompt` field is a free-text instruction to the LLM, supporting `{{template}}` interpolation from extractors and request fields. The runtime is responsible for model selection, structured output enforcement, caching, and retry. Conforming tools MUST validate synthesized output against the protocol binding's message structure (MCP tool call result for tools, prompt get result for prompts) before injection into the protocol stream. When the tool declares an `outputSchema`, the synthesized output MUST also include a valid `structuredContent` object conforming to that schema. Generation failures MUST NOT be sent to the target agent. This specification does not define model configuration (model name, temperature, seed); these are runtime concerns defined by the consuming tool's configuration. See [§7.4](/specification/protocol-bindings/llm-synthesis/) for cross-protocol synthesis details.
 
 The `capabilities` object declares which protocol features the adversarial tool supports. Capabilities within the first phase's `state` are sent during the `initialize` handshake before phase execution begins; subsequent phases can modify declared capabilities to simulate capability changes (e.g., rug pull attacks). Declaring `elicitation` enables server-initiated user input requests. The `tasks` capability is structured: `tasks.requests.tools.call` declares that `tools/call` requests can be deferred into asynchronous tasks (the only request type supported for server-side task augmentation in MCP 2025-11-25). For backward compatibility, `tasks: {}` (empty object) is equivalent to declaring task support with no specific request type restrictions. The `list` and `cancel` sub-objects declare whether the server supports listing and cancelling tasks.
 
@@ -340,7 +340,7 @@ The `capabilities` object declares which protocol features the adversarial tool 
 
 ## 7.1.4a Execution State (MCP Client)
 
-When the phase mode is `mcp_client`, the phase state defines the client's behavior — what MCP requests to send and how to respond to server-initiated requests:
+When the phase mode is `mcp_client`, the phase state defines the client's behavior: what MCP requests to send and how to respond to server-initiated requests:
 
 ```yaml
 state:
@@ -396,9 +396,9 @@ state:
       name: string?                    # Human-readable label
 ```
 
-**Action semantics.** The `actions` list is the client-mode equivalent of server tools/resources — it defines what the client does during each phase. Actions are executed sequentially in list order; each action is one MCP JSON-RPC request. Each action object MUST contain exactly one action key (same constraint as §2.7a `on_enter` actions, V-043).
+**Action semantics.** The `actions` list is the client-mode equivalent of server tools/resources: it defines what the client does during each phase. Actions are executed sequentially in list order; each action is one MCP JSON-RPC request. Each action object MUST contain exactly one action key (same constraint as [`on_enter` actions](/sdk/core-types/#27a-action), V-043).
 
-**Excluded methods.** `initialize` and `ping` are not actions — `initialize` is performed automatically by the runtime before phase execution begins (part of connection setup), and `ping` is a transport-level keepalive. The `actions` list covers application-level requests only.
+**Excluded methods.** `initialize` and `ping` are not actions. `initialize` is performed automatically by the runtime before phase execution begins (part of connection setup), and `ping` is a transport-level keepalive. The `actions` list covers application-level requests only.
 
 **Server-initiated request handling.** `sampling_responses` and `elicitation_responses` follow the same ordered-match semantics as server `responses` ([§7.1.4](/specification/protocol-bindings/mcp/#714-execution-state-mcp)): entries are evaluated in order, first match wins, and entries without `when` are catch-alls. Static content and `synthesize` are mutually exclusive on the same entry.
 
@@ -478,7 +478,7 @@ responses:
             categories: string[]?  # For unicode_stress
 ```
 
-When `generate` is present on a content item, it replaces the static `text` or `data` field. The adversarial tool MUST generate the payload at execution time according to the specified kind and parameters. This content-item-level `generate` is deterministic and seeded — distinct from the response-level `synthesize` which is LLM-powered and non-deterministic.
+When `generate` is present on a content item, it replaces the static `text` or `data` field. The adversarial tool MUST generate the payload at execution time according to the specified kind and parameters. This content-item-level `generate` is deterministic and seeded, distinct from the response-level `synthesize` which is LLM-powered and non-deterministic.
 
 ## `generate.seed` (OPTIONAL)
 

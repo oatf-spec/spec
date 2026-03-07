@@ -7,7 +7,7 @@ Shared utility operations used by both entry points and evaluation. SDKs MUST im
 
 ## 5.1 Path Resolution
 
-OATF defines two path variants with different capabilities, matching the format specification ([§5.4](/sdk/execution-primitives/#54-evaluate_predicate)):
+OATF defines two path variants with different capabilities, matching the format specification ([§5.4](/specification/execution-profile/#54-match-predicates)):
 
 ### 5.1.1 Simple Dot-Path
 
@@ -48,7 +48,7 @@ Resolves a wildcard dot-path against a value tree. Returns all values that match
 | `[*]` | Wildcard: all elements of array | `tools[*]` |
 | `.` | Segment separator | `tools[*].description` |
 
-Segments consist of alphanumeric characters, underscores, and hyphens, with optional `[*]` suffix. Numeric indexing (`[0]`, `[1]`) is not supported — use CEL expressions for positional access.
+Segments consist of alphanumeric characters, underscores, and hyphens, with optional `[*]` suffix. Numeric indexing (`[0]`, `[1]`) is not supported; use CEL expressions for positional access.
 
 **Behavior:**
 
@@ -68,7 +68,7 @@ Segments consist of alphanumeric characters, underscores, and hyphens, with opti
 
 SDKs SHOULD enforce a maximum traversal depth to prevent stack overflow on pathological inputs. A depth limit of 64 is RECOMMENDED.
 
-**Limitation:** Dot-path syntax does not support escaping literal dots within field names. A JSON object key containing a dot (for example, `{"content.type": "text"}`) cannot be addressed because the path `content.type` is always interpreted as two segments. This is an intentional simplification; protocol messages in MCP, A2A, and AG-UI do not use dotted key names. Authors MUST use CEL expressions ([format specification [§6](/sdk/extension-points/).3](/specification/indicators/#63-cel-expressions)) to match fields with dots, brackets, or other special characters in their names.
+**Limitation:** Dot-path syntax does not support escaping literal dots within field names. A JSON object key containing a dot (for example, `{"content.type": "text"}`) cannot be addressed because the path `content.type` is always interpreted as two segments. This is an intentional simplification; protocol messages in MCP, A2A, and AG-UI do not use dotted key names. Authors MUST use CEL expressions ([format specification §6.3](/specification/indicators/#63-expression-evaluation)) to match fields with dots, brackets, or other special characters in their names.
 
 ## 5.2 parse_duration
 
@@ -103,31 +103,33 @@ Parses a duration string in either shorthand or ISO 8601 format.
 evaluate_condition(condition: Condition, value: Value) → Boolean
 ```
 
-Evaluates a condition against a resolved value. If `condition` is a bare value (string, number, boolean, array), performs deep equality comparison. If `condition` is a `MatchCondition` object, evaluates each present operator — when multiple operators are present, all must match (AND logic). Returns `true` only if every present operator is satisfied.
+Evaluates a condition against a resolved value. If `condition` is a bare value (string, number, boolean, array), performs deep equality comparison. If `condition` is a `MatchCondition` object, evaluates each present operator. When multiple operators are present, all must match (AND logic). Returns `true` only if every present operator is satisfied.
 
 **Behavior by operator:**
 
 | Operator | Value Type | Returns True When |
 |---|---|---|
-| `contains` | String | `value` contains `contains` as a substring. Case-sensitive. |
-| `starts_with` | String | `value` starts with the specified prefix. Case-sensitive. |
-| `ends_with` | String | `value` ends with the specified suffix. Case-sensitive. |
-| `regex` | String | `value` matches the RE2 regular expression. |
+| `contains` | Any (coerced) | `value` contains `contains` as a substring. Case-sensitive. Non-strings are coerced to compact JSON. |
+| `starts_with` | Any (coerced) | `value` starts with the specified prefix. Case-sensitive. Non-strings are coerced to compact JSON. |
+| `ends_with` | Any (coerced) | `value` ends with the specified suffix. Case-sensitive. Non-strings are coerced to compact JSON. |
+| `regex` | Any (coerced) | `value` matches the RE2 regular expression. Non-strings are coerced to compact JSON. |
 | `any_of` | Any | `value` equals any element in the list (deep equality). |
 | `gt` | Number | `value > operand`. |
 | `lt` | Number | `value < operand`. |
 | `gte` | Number | `value >= operand`. |
 | `lte` | Number | `value <= operand`. |
-| `exists` | Boolean | See [§5.4](/sdk/execution-primitives/#54-evaluate_predicate) — `exists` is evaluated during predicate resolution, not by `evaluate_condition`. |
+| `exists` | Boolean | See [§5.4](/sdk/execution-primitives/#54-evaluate_predicate). `exists` is evaluated during predicate resolution, not by `evaluate_condition`. |
 | *(equality)* | Any | `value` equals the operand (deep equality). Used when the MatchEntry is a scalar, not a MatchCondition. |
 
-**Type mismatches:** If the operator requires a specific value type (string operators on non-string, numeric operators on non-number), the condition evaluates to `false`. Type mismatches are not errors.
+**Type coercion for string operators:** When a string operator (`contains`, `starts_with`, `ends_with`, `regex`) encounters a non-string value (object, array, number, boolean, or null), the value is first serialized to its compact JSON representation (no extra whitespace), and the operator is applied to the resulting string. This ensures that patterns targeting structured values (e.g., `regex` on tool arguments that resolve to a JSON object) match against the serialized form rather than silently returning `false`.
+
+**Numeric type mismatches:** If a numeric operator (`gt`, `lt`, `gte`, `lte`) is applied to a non-numeric value, the condition evaluates to `false`. Numeric type mismatches are not errors.
 
 **Deep equality:** The `any_of` and scalar equality operators use deep equality with the following rules: numeric values compare by mathematical value (integer `42` equals float `42.0`); object key order is irrelevant; NaN is not equal to any value including itself; null equals only null; arrays compare element-wise by position and length.
 
 **Regex:** Patterns MUST be compiled with RE2 semantics (linear-time guarantee). SDKs MUST reject patterns with features outside the RE2 subset during `validate`. The regex is evaluated as a **partial match**: the pattern may match any substring of the value. To require a full-string match, the pattern MUST include `^` and `$` anchors. This matches the default behavior of RE2 libraries across languages (Go's `regexp.MatchString`, Rust's `regex::Regex::is_match`, Python's `re2.search`).
 
-**The `exists` operator:** Unlike all other operators, `exists` does not inspect the resolved value — it inspects whether resolution succeeded. `exists` is evaluated during `evaluate_predicate` ([§5.4](/sdk/execution-primitives/#54-evaluate_predicate)) at the path-resolution step, before `evaluate_condition` is called. When `exists` is the only operator in a MatchCondition, `evaluate_condition` is not called at all (for `exists: true`, the path having resolved is sufficient; for `exists: false`, the path not having resolved is sufficient). When `exists` is combined with other operators, `exists: true` is redundant (all other operators already require a resolved value), and `exists: false` combined with any value-inspecting operator is always false (there is no value to inspect). These are natural consequences of AND logic, not special cases.
+**The `exists` operator:** Unlike all other operators, `exists` does not inspect the resolved value; it inspects whether resolution succeeded. `exists` is evaluated during `evaluate_predicate` ([§5.4](/sdk/execution-primitives/#54-evaluate_predicate)) at the path-resolution step, before `evaluate_condition` is called. When `exists` is the only operator in a MatchCondition, `evaluate_condition` is not called at all (for `exists: true`, the path having resolved is sufficient; for `exists: false`, the path not having resolved is sufficient). When `exists` is combined with other operators, `exists: true` is redundant (all other operators already require a resolved value), and `exists: false` combined with any value-inspecting operator is always false (there is no value to inspect). These are natural consequences of AND logic, not special cases.
 
 ## 5.4 evaluate_predicate
 
@@ -170,7 +172,7 @@ Resolves template expressions in a string. Returns the interpolated string and a
 - `{{response.field.path}}` → replaced with the value at the dot-path in the current response.
 - `\{{` → replaced with a literal `{{` (escape sequence).
 
-The `extractors` map is populated by the calling runtime with both local names (unqualified, from the current actor) and qualified names (`actor_name.extractor_name`, from all actors). The function itself performs simple key lookup — cross-actor resolution is a runtime responsibility.
+The `extractors` map is populated by the calling runtime with both local names (unqualified, from the current actor) and qualified names (`actor_name.extractor_name`, from all actors). The function itself performs simple key lookup; cross-actor resolution is a runtime responsibility.
 
 **Behavior:**
 
@@ -224,7 +226,7 @@ Applies an extractor to a message, capturing a value. The `direction` parameter 
 1. If `extractor.source` ≠ `direction`, return `None`. This extractor targets a different message direction and should not be applied.
 2. Apply the extractor by type:
 
-- `json_path`: Evaluate the JSONPath expression against `message`. If the expression matches one or more nodes, return the first match in document order (per RFC 9535 [§2.6](/sdk/core-types/#26-execution)) serialized to its compact JSON string representation. If no match, return `None`.
+- `json_path`: Evaluate the JSONPath expression against `message`. If the expression matches one or more nodes, return the first match in document order (per RFC 9535 §2.6) serialized to its compact JSON string representation. If no match, return `None`.
 - `regex`: Convert `message` to its string representation, evaluate the regular expression. If the regex matches and has at least one capture group, return the first capture group's value. If no match, return `None`.
 
 `None` means "no match" (the extractor did not find the targeted content). `Some("")` is a valid result when the extractor matched but the captured value is genuinely an empty string. Downstream template interpolation treats `None` as an undefined extractor (triggering W-004 warnings), while `Some("")` substitutes the empty string silently.
