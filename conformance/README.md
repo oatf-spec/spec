@@ -6,12 +6,12 @@ Data-driven, language-agnostic test fixtures for validating OATF SDK implementat
 
 This directory contains **YAML fixtures only** — no test code. Each SDK implementation writes its own test runner that loads these fixtures and asserts the expected results. This keeps the fixtures portable across Rust, Python, Go, TypeScript, and any future SDK.
 
-Fixtures are organized by SDK entry point, matching the operations defined in the [SDK Specification](../spec/sdk.md):
+Fixtures are organized by SDK entry point, matching the operations defined in the [SDK Specification](https://oatf.io/sdk/):
 
 | Directory | SDK Entry Point | What It Tests |
 |---|---|---|
 | `parse/` | `parse()` | YAML deserialization into typed document model |
-| `validate/` | `validate()` | Conformance rule checking (V-001 through V-040) |
+| `validate/` | `validate()` | Conformance rule checking (V-001 through V-043) |
 | `normalize/` | `normalize()` | Default materialization and shorthand expansion |
 | `evaluate/` | `evaluate_indicator()` | Indicator evaluation against protocol messages |
 | `verdict/` | `compute_verdict()` | Attack-level verdict computation from indicator results |

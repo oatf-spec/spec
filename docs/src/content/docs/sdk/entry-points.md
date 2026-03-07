@@ -72,7 +72,7 @@ The following rules are checked. Each rule references the normative requirement 
 | V-012 | §11.1.11 | Each indicator has exactly one detection key (`pattern`, `expression`, or `semantic`). |
 | V-013 | [§6.2](/specification/indicators/#62-pattern-matching) | All regular expressions are syntactically valid RE2. |
 | V-014 | [§6.3](/specification/indicators/#63-expression-evaluation) | All CEL expressions are syntactically valid (parse without error). |
-| V-015 | [§5.6](/specification/execution-profile/#56-extractors) | All JSONPath expressions are syntactically valid. |
+| V-015 | [§5.5](/specification/execution-profile/#55-extractors) | All JSONPath expressions are syntactically valid. |
 | V-016 | [§5.7](/specification/execution-profile/#57-expression-evaluation) | All template references use valid syntax (no unclosed `{{`). Escaped sequences (`\{{`) are not template references and MUST NOT be flagged. |
 | V-017 | [§4.3](/specification/document-structure/#43-severity) | `severity.confidence` is in range 0–100 when present. |
 | V-018 | [§7](/specification/protocol-bindings/) | Indicator `surface` is valid for the indicator's resolved protocol. |

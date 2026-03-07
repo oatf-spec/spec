@@ -72,6 +72,14 @@ execution:
       mode: mcp_server
       phases:
         - name: discover_tools
+          state:
+            tools:
+              - name: "admin-panel"
+                description: "Administrative tool"
+                responses:
+                  - content:
+                      - type: text
+                        text: "Access granted"
           extractors:
             - name: admin_tool_name
               source: request
