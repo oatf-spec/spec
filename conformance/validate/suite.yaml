@@ -304,7 +304,7 @@
       - rule: "V-005"
         path: "attack.severity"
 
-- name: "V-005 invalid: execution.mode does not match pattern"
+- name: "V-036 invalid: execution.mode does not match pattern"
   id: VAL-005c
   input: |
     oatf: "0.1"
@@ -318,10 +318,10 @@
               tools: []
   expected:
     errors:
-      - rule: "V-005"
+      - rule: "V-036"
         path: "attack.execution.mode"
 
-- name: "V-005 invalid: execution.mode missing _{role} suffix"
+- name: "V-036 invalid: execution.mode missing _{role} suffix"
   id: VAL-005d
   input: |
     oatf: "0.1"
@@ -332,7 +332,7 @@
           tools: []
   expected:
     errors:
-      - rule: "V-005"
+      - rule: "V-036"
         path: "attack.execution.mode"
 
 - name: "V-005 invalid: status 'published' is not a valid enum value"
@@ -351,7 +351,7 @@
       - rule: "V-005"
         path: "attack.status"
 
-- name: "V-005 invalid: indicator surface 'invalid_surface' for MCP protocol"
+- name: "V-018 invalid: indicator surface 'invalid_surface' for MCP protocol"
   id: VAL-005f
   input: |
     oatf: "0.1"
@@ -366,7 +366,7 @@
             contains: "test"
   expected:
     errors:
-      - rule: "V-005"
+      - rule: "V-018"
         path: "attack.indicators[0].surface"
 
 - name: "V-005 invalid: correlation.logic 'majority' is not a valid enum value"
@@ -983,10 +983,10 @@
                   description: "A test tool"
                   inputSchema:
                     type: object
-                  response:
-                    content:
-                      - type: text
-                        text: "Result for {{request.arguments.query}}"
+                  responses:
+                    - content:
+                        - type: text
+                          text: "Result for {{request.arguments.query}}"
       indicators:
         - surface: tool_description
           pattern:
@@ -1009,10 +1009,10 @@
                   description: "A test tool"
                   inputSchema:
                     type: object
-                  response:
-                    content:
-                      - type: text
-                        text: "Result for {{unclosed"
+                  responses:
+                    - content:
+                        - type: text
+                          text: "Result for {{unclosed"
       indicators:
         - surface: tool_description
           pattern:
@@ -1020,7 +1020,7 @@
   expected:
     errors:
       - rule: "V-016"
-        path: "attack.execution.phases[0].state.tools[0].response.content[0].text"
+        path: "attack.execution.phases[0].state.tools[0].responses[0].content[0].text"
 
 - name: "V-016 valid: escaped template is not flagged"
   id: VAL-016c
@@ -1037,10 +1037,10 @@
                   description: "A test tool"
                   inputSchema:
                     type: object
-                  response:
-                    content:
-                      - type: text
-                        text: "Literal \\{{not_a_template}} here"
+                  responses:
+                    - content:
+                        - type: text
+                          text: "Literal \\{{not_a_template}} here"
       indicators:
         - surface: tool_description
           pattern:
@@ -2009,7 +2009,7 @@
   expected:
     valid: true
 
-- name: "V-029 valid: mcp_server trigger event notifications/elicitation/complete"
+- name: "V-029 invalid: notifications/elicitation/complete on mcp_server (server-to-client only)"
   id: VAL-029d
   input: |
     oatf: "0.1"
@@ -2020,7 +2020,7 @@
           - name: phase-1
             state:
               tools: []
-              elicitation_requests:
+              elicitations:
                 - message: "Please authenticate."
                   mode: url
                   elicitationId: "elicit-001"
@@ -2028,7 +2028,7 @@
             trigger:
               event: notifications/elicitation/complete
           - name: phase-2
-            description: "Terminal phase — exfiltrate after elicitation completes."
+            description: "Terminal phase."
       indicators:
         - surface: server_notification
           pattern:
@@ -2036,7 +2036,9 @@
             condition:
               contains: "elicit-001"
   expected:
-    valid: true
+    errors:
+      - rule: "V-029"
+        path: "attack.execution.phases[0].trigger.event"
 
 # ---------------------------------------------------------------------------
 # V-032: Cross-actor template references resolve
@@ -2059,10 +2061,10 @@
                       description: "A test tool"
                       inputSchema:
                         type: object
-                      response:
-                        content:
-                          - type: text
-                            text: "Result: {{actor_b.extracted_val}}"
+                      responses:
+                        - content:
+                            - type: text
+                              text: "Result: {{actor_b.extracted_val}}"
                 extractors:
                   - name: local_var
                     source: request
@@ -2108,10 +2110,10 @@
                       description: "A test tool"
                       inputSchema:
                         type: object
-                      response:
-                        content:
-                          - type: text
-                            text: "Result: {{nonexistent.var}}"
+                      responses:
+                        - content:
+                            - type: text
+                              text: "Result: {{nonexistent.var}}"
       indicators:
         - protocol: mcp
           surface: tool_description
@@ -2126,7 +2128,7 @@
 # V-033: content/messages and synthesize mutually exclusive
 # ---------------------------------------------------------------------------
 
-- name: "V-033 valid: MCP tool response with synthesize only"
+- name: "V-033 valid: MCP tool responses entry with synthesize only"
   id: VAL-033a
   input: |
     oatf: "0.1"
@@ -2139,13 +2141,13 @@
               description: "A test tool"
               inputSchema:
                 type: object
-              response:
-                synthesize:
-                  prompt: "Generate a plausible response"
+              responses:
+                - synthesize:
+                    prompt: "Generate a plausible response"
   expected:
     valid: true
 
-- name: "V-033 invalid: MCP tool response with content and synthesize"
+- name: "V-033 invalid: MCP tool responses entry with content and synthesize"
   id: VAL-033b
   input: |
     oatf: "0.1"
@@ -2158,12 +2160,12 @@
               description: "A test tool"
               inputSchema:
                 type: object
-              response:
-                content:
-                  - type: text
-                    text: "static"
-                synthesize:
-                  prompt: "Generate a plausible response"
+              responses:
+                - content:
+                    - type: text
+                      text: "static"
+                  synthesize:
+                    prompt: "Generate a plausible response"
   expected:
     errors:
       - rule: "V-033"
@@ -2240,9 +2242,9 @@
               description: "A test tool"
               inputSchema:
                 type: object
-              response:
-                synthesize:
-                  prompt: "Generate a convincing response"
+              responses:
+                - synthesize:
+                    prompt: "Generate a convincing response"
   expected:
     valid: true
 
@@ -2259,13 +2261,13 @@
               description: "A test tool"
               inputSchema:
                 type: object
-              response:
-                synthesize:
-                  prompt: ""
+              responses:
+                - synthesize:
+                    prompt: ""
   expected:
     errors:
       - rule: "V-035"
-        path: "attack.execution.state.tools[0].response.synthesize.prompt"
+        path: "attack.execution.state.tools[0].responses[0].synthesize.prompt"
 
 # ---------------------------------------------------------------------------
 # Multi-error: document violating multiple rules simultaneously

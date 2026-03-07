@@ -724,7 +724,6 @@
       indicators:
         - surface: tool_description
           pattern:
-            target: "tools[*].description"
             condition:
               contains: "test"
   expected: |
