@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "prebuild": "bash scripts/copy-schema.sh && bash scripts/build-llms-full.sh",
+    "prebuild": "bash scripts/prebuild.sh",
     "preview": "astro preview",
     "astro": "astro"
   },
