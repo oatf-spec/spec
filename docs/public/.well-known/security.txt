@@ -1,0 +1,3 @@
+Contact: https://github.com/oatf-spec/spec/security/advisories
+Preferred-Languages: en
+Canonical: https://oatf.io/.well-known/security.txt

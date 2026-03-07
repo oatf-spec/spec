@@ -1,0 +1,43 @@
+---
+title: Open Agent Threat Format
+description: A specification for describing, simulating, and evaluating security threats against AI agents communicating over MCP, A2A, and AG-UI.
+template: splash
+hero:
+  title: Open Agent Threat Format
+  tagline: A specification for describing, simulating, and evaluating security threats against AI agents communicating over MCP, A2A, and AG-UI.
+  actions:
+    - text: Read the Spec
+      link: /specification/
+      icon: right-arrow
+      variant: primary
+    - text: Quick Start
+      link: /getting-started/quick-start/
+      variant: secondary
+    - text: GitHub
+      link: https://github.com/oatf-spec/spec
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid>
+  <Card title="Protocol Coverage" icon="setting">
+    MCP, A2A, AG-UI with extensible binding architecture. Describe attacks against any agent communication protocol.
+  </Card>
+  <Card title="Closed-Loop Testing" icon="rocket">
+    Execute attacks and evaluate outcomes from a single document. One YAML file defines the threat, the simulation, and the pass/fail criteria.
+  </Card>
+  <Card title="Deterministic Evaluation" icon="approve-check-circle">
+    CEL expressions and field-path matching, not flaky NLP. Indicators produce reliable, reproducible verdicts.
+  </Card>
+  <Card title="Framework Mappings" icon="open-book">
+    Cross-reference MITRE ATLAS, ATT&CK, OWASP, and CWE. Integrate with existing threat intelligence workflows.
+  </Card>
+  <Card title="Regression Suites" icon="list-format">
+    Build a library of OATF documents as a security test suite. Run them continuously against your agent infrastructure.
+  </Card>
+  <Card title="Ecosystem Ready" icon="puzzle">
+    JSON Schema, SDK spec, and Rust SDK (coming soon). Validate documents and build tooling with first-class support.
+  </Card>
+</CardGrid>
