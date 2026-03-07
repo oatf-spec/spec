@@ -173,7 +173,7 @@ Always:
 serialize(document: Document) → String
 ```
 
-Serializes a document to YAML. SDKs SHOULD emit the fully-expanded normalized form per [§11.2](/specification/conformance/#112-tool-conformance-general).
+Serializes a document to its canonical YAML form. SDKs MUST emit the multi-actor normalized form per [§11.2](/specification/conformance/#112-tool-conformance-general). The canonical form ensures that documents produced by different tools are structurally identical and interchangeable.
 
 **Preconditions:** `document` is a well-formed document model (the output of `normalize`).
 

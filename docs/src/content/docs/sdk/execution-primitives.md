@@ -121,7 +121,7 @@ Evaluates a condition against a resolved value. If `condition` is a bare value (
 | `exists` | Boolean | See [§5.4](/sdk/execution-primitives/#54-evaluate_predicate). `exists` is evaluated during predicate resolution, not by `evaluate_condition`. |
 | *(equality)* | Any | `value` equals the operand (deep equality). Used when the MatchEntry is a scalar, not a MatchCondition. |
 
-**Type coercion for string operators:** When a string operator (`contains`, `starts_with`, `ends_with`, `regex`) encounters a non-string value (object, array, number, boolean, or null), the value is first serialized to its compact JSON representation (no extra whitespace), and the operator is applied to the resulting string. This ensures that patterns targeting structured values (e.g., `regex` on tool arguments that resolve to a JSON object) match against the serialized form rather than silently returning `false`.
+**Type coercion for string operators:** When a string operator (`contains`, `starts_with`, `ends_with`, `regex`) encounters a non-string value (object, array, number, boolean, or null), the value is first serialized to its compact JSON representation (no extra whitespace, keys sorted lexicographically), and the operator is applied to the resulting string. This ensures that patterns targeting structured values (e.g., `regex` on tool arguments that resolve to a JSON object) match against the serialized form rather than silently returning `false`.
 
 **Numeric type mismatches:** If a numeric operator (`gt`, `lt`, `gte`, `lte`) is applied to a non-numeric value, the condition evaluates to `false`. Numeric type mismatches are not errors.
 

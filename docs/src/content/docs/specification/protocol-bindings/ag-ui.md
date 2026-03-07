@@ -39,7 +39,7 @@ AG-UI events are defined for `ag_ui_client` mode only. AG-UI uses a unidirection
 | `interrupt` | `CUSTOM` (subtype) | Agent requests human input | — |
 | `custom` | `CUSTOM` | Agent sends custom event | `:event_name` |
 
-Event names use `snake_case` derived from AG-UI's `EventType` enum. The mapping from OATF event names to AG-UI's SCREAMING_SNAKE enum values is a constant translation performed by the runtime.
+Event names use `snake_case` derived from AG-UI's `EventType` enum. The mapping from OATF event names to AG-UI's SCREAMING_SNAKE enum values is a constant translation. Adversarial tools MUST perform this translation when emitting events.
 
 **Qualifier resolution** for AG-UI events:
 
@@ -49,7 +49,7 @@ Event names use `snake_case` derived from AG-UI's `EventType` enum. The mapping 
 
 For filtering by `toolCallId` or other structured fields, use `trigger.match`.
 
-All AG-UI events are valid only on `ag_ui_client` actors. Using AG-UI events on any other mode is a validation error.
+All AG-UI events are valid only on `ag_ui_client` actors. Using AG-UI events on any other mode is a validation error (V-029).
 
 ## 7.3.3 CEL Context (AG-UI)
 
@@ -101,7 +101,7 @@ state:
 
 **Input synthesis semantics.** Within `run_agent_input`, `messages` and `synthesize` are mutually exclusive. When `synthesize` is present, the adversarial tool MUST generate the `messages` array at runtime using an LLM. The `prompt` field describes the conversation history to fabricate: the LLM produces the messages, not the entire `RunAgentInput`. The structural fields (`tools`, `state`, `forwardedProps`, `threadId`, `runId`) remain static because the attacker typically knows exactly what tool definitions and state to inject; it is the conversation history that benefits from adaptive generation.
 
-This follows the same principle as server-mode `synthesize` ([§7.4](/specification/protocol-bindings/llm-synthesis/)): the LLM generates the *content*, while the document author controls the *structure*. For MCP/A2A the content is the response payload; for AG-UI the content is the fabricated message history. See [§7.4](/specification/protocol-bindings/llm-synthesis/) for cross-protocol synthesis details.
+This follows the same principle as server-mode `synthesize` ([§7.4](/specification/protocol-bindings/llm-synthesis/)): the LLM generates the *content*, while the document author controls the *structure*. For MCP/A2A the content is the response payload; for AG-UI the content is the fabricated message history. See [§7.4](/specification/protocol-bindings/llm-synthesis/) for cross-protocol synthesis details. Template interpolation ([§5.6](/specification/execution-profile/#56-response-templates)) applies to string fields in `messages`, `tools`, and `synthesize.prompt`.
 
 ## 7.3.5 AG-UI-Specific Attack Considerations
 

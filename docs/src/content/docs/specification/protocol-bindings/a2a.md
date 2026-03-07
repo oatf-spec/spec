@@ -20,7 +20,7 @@ The A2A binding covers the Agent-to-Agent protocol as defined in the [A2A specif
 
 ## 7.2.2 Event Types
 
-A2A events are per-actor scoped. An actor's mode determines which events it observes.
+A2A events are per-actor scoped. An actor's mode determines which events it observes. Adversarial tools MUST only emit events valid for the actor's mode.
 
 **For `a2a_server` actors**: events are JSON-RPC requests and HTTP requests the client agent sends to this server:
 
@@ -53,7 +53,7 @@ For `a2a_client`, `message/send` fires when the initial HTTP response is receive
 
 - `task/status:X` → matches when `status.state == "X"` (e.g., `task/status:completed`, `task/status:failed`, `task/status:input-required`)
 
-`task/status` and `task/artifact` are client-mode only (SSE events from server). Using them as triggers on an `a2a_server` actor is a validation error.
+`task/status` and `task/artifact` are client-mode only (SSE events from server). Using them as triggers on an `a2a_server` actor is a validation error (V-029).
 
 ## 7.2.3 CEL Context (A2A)
 
@@ -111,7 +111,7 @@ state:
         prompt: string             # Supports {{template}} interpolation
 ```
 
-The `task_responses` list follows the same ordered-match semantics as MCP tool `responses` ([§7.1.4](/specification/protocol-bindings/mcp/#714-execution-state-mcp)): entries are evaluated in order, the first match wins, and entries without `when` are catch-alls. Each entry specifies either static content (`messages`/`artifacts`) or LLM `synthesize`; they are mutually exclusive. When `synthesize` is present, the `status` field is still required; the runtime generates the message content but the document author controls the task status. See [§7.4](/specification/protocol-bindings/llm-synthesis/) for cross-protocol synthesis details.
+The `task_responses` list follows the same ordered-match semantics as MCP tool `responses` ([§7.1.4](/specification/protocol-bindings/mcp/#714-execution-state-mcp)): Entries MUST be evaluated in order; the first matching entry wins. Entries without `when` serve as catch-all defaults. Each entry specifies either static content (`messages`/`artifacts`) or LLM `synthesize`; they are mutually exclusive. When `synthesize` is present, the `status` field is still required; the runtime generates the message content but the document author controls the task status. See [§7.4](/specification/protocol-bindings/llm-synthesis/) for cross-protocol synthesis details.
 
 The `status` values (`submitted`, `working`, `input-required`, `completed`, `failed`, `canceled`) use A2A's protocol-native naming convention, which includes hyphens. These values are serialized directly as A2A task status strings.
 
@@ -134,11 +134,11 @@ state:
   fetch_agent_card: boolean?           # Fetch Agent Card before sending. Default: true.
 ```
 
-**Task message semantics.** Each phase sends one task message. Multi-turn interactions use multi-phase execution where each phase defines the next message to send based on the server's response (observed via triggers and extractors). `task_message` is the client-mode counterpart of `a2a_server`'s `task_responses`. Within `task_message`, `parts` (static content) and `synthesize` (LLM generation) are mutually exclusive.
+**Task message semantics.** Each phase MUST send exactly one task message. Multi-turn interactions use multi-phase execution where each phase defines the next message to send based on the server's response (observed via triggers and extractors). `task_message` is the client-mode counterpart of `a2a_server`'s `task_responses`. Within `task_message`, `parts` (static content) and `synthesize` (LLM generation) are mutually exclusive.
 
-**Transport mode.** `streaming` controls transport mode: `true` uses `message/stream` (SSE), `false` uses `message/send` (polling). Default is `false`.
+**Transport mode.** `streaming` controls transport mode: `true` uses `message/stream` (SSE), `false` uses `message/send` (polling). Default is `false`. Adversarial tools MUST respect this setting.
 
-**Agent Card fetch.** `fetch_agent_card` controls whether the runtime fetches the Agent Card (`GET /.well-known/agent.json`) before sending the first message. Default is `true`. Set to `false` when the Agent Card is not needed or was fetched in a prior phase.
+**Agent Card fetch.** `fetch_agent_card` controls whether the runtime fetches the Agent Card (`GET /.well-known/agent.json`) before sending the first message. Default is `true`. Adversarial tools MUST respect this setting. Set to `false` when the Agent Card is not needed or was fetched in a prior phase.
 
 **Template interpolation** ([§5.6](/specification/execution-profile/#56-response-templates)) applies to string fields in `parts` and `synthesize.prompt`.
 

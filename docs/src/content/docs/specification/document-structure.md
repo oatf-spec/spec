@@ -190,6 +190,8 @@ The attack category within the OATF taxonomy. Categories describe the *mechanism
 - `availability_disruption`: Degrading or denying service through resource exhaustion, malformed payloads, or protocol abuse.
 - `cross_protocol_chain`: Attacks that span multiple protocols, using one protocol as an entry point to exploit another.
 
+**Disambiguation.** When an attack modifies a capability definition itself (tool description, skill description, agent card field), use `capability_poisoning`. When an attack modifies the context *surrounding* existing capabilities — conversation history, system prompts, message ordering — without altering capability definitions, use `context_manipulation`. When both mechanisms apply (e.g., a poisoned tool description that also injects system-level instructions), authors SHOULD select the primary mechanism and note the secondary in `attack.description`. When an attack causes the agent to take actions outside its intended scope, include `unauthorized_actions` in `impact`. When the attack alters agent behavior without resulting in unauthorized actions (e.g., the attack is detected and blocked), `behavior_manipulation` alone is appropriate.
+
 ### `attack.classification.mappings` (OPTIONAL)
 
 An array of mappings to external security frameworks. Each mapping identifies a specific entry in a framework and describes its relationship to this attack:

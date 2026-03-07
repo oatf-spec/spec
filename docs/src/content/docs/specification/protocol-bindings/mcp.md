@@ -60,8 +60,8 @@ MCP events are per-actor scoped. An actor's mode determines which events it obse
 | `prompts/list` | `prompts/list` | Agent discovers prompts | — |
 | `prompts/get` | `prompts/get` | Agent gets a prompt | `:prompt_name` |
 | `completion/complete` | `completion/complete` | Agent requests completion | — |
-| `sampling/createMessage` | `sampling/createMessage` | Agent responds to server-initiated sampling | — |
-| `elicitation/create` | `elicitation/create` | Agent responds to server-initiated elicitation | — |
+| `sampling/createMessage` | `sampling/createMessage` | Server requests LLM sampling from agent | — |
+| `elicitation/create` | `elicitation/create` | Server requests user input via agent | — |
 | `tasks/get` | `tasks/get` | Agent polls task status | — |
 | `tasks/result` | `tasks/result` | Agent retrieves deferred task result | — |
 | `tasks/list` | `tasks/list` | Agent lists known tasks | — |

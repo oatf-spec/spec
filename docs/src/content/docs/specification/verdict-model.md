@@ -38,6 +38,8 @@ For `correlation.logic: all`:
 3. Else if at least one indicator produced `matched` (but not all), the attack verdict is `partial`.
 4. Else the attack verdict is `not_exploited`.
 
+**Rationale.** Error takes precedence over `matched` because a verdict produced alongside evaluation failures cannot establish the full correlation pattern reliably. If one indicator matched but another errored, the error may have masked a `not_matched` result that would have changed the outcome. Surfacing the error forces the operator to investigate rather than act on an incomplete evaluation.
+
 For regression suites, the pass/fail signal is clear: `not_exploited` means the agent resisted, `exploited` means a vulnerability exists. Individual `indicator.severity` and `indicator.confidence` values are for reporting and triage only; the attack-level verdict uses the severity and confidence from the attack envelope (`attack.severity`).
 
 ## 9.3 Verdict Metadata
@@ -60,7 +62,7 @@ verdict:
   source: string?         # The tool that produced the verdict
 ```
 
-Conforming evaluation tools MUST include `evaluation_summary` in attack-level verdicts. The summary provides counts of each indicator result, enabling consumers to distinguish between "all indicators evaluated and none matched" (`not_exploited` with `skipped: 0`) and "most indicators were skipped due to missing protocol support" (`not_exploited` with a high `skipped` count). This prevents the `skipped → not_matched` aggregation rule ([§9.2](/specification/verdict-model/#92-attack-level-verdicts)) from masking evaluation gaps in dashboards and KPI reporting.
+Conforming evaluation tools MUST include `evaluation_summary` in attack-level verdicts. The summary provides counts of each indicator result, enabling consumers to distinguish between "all indicators evaluated and none matched" (`not_exploited` with `skipped: 0`) and "most indicators were skipped due to missing protocol support" (`not_exploited` with a high `skipped` count). This prevents the `skipped → not_matched` aggregation rule ([§9.2](/specification/verdict-model/#92-attack-level-verdicts)) from masking evaluation gaps in dashboards and KPI reporting. The sum `matched + not_matched + error + skipped` MUST equal the number of indicators in `attack.indicators`.
 
 The verdict schema is not part of the OATF document itself. It is the output produced by conforming tools when they evaluate an OATF document against observed traffic. It is defined here to ensure interoperability between tools.
 

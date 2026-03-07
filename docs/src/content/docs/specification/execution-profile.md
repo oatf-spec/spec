@@ -255,7 +255,7 @@ All string operators (`contains`, `starts_with`, `ends_with`, `any_of`, and equa
 
 **Comparison semantics.** Equality comparisons (bare-value matching and `any_of`) use deep equality: numeric values compare by mathematical value (integer `42` equals float `42.0`); object key order is irrelevant; arrays compare element-wise by position and length; `null` equals only `null`; NaN does not equal any value including itself.
 
-**Type coercion for string operators.** When a string operator (`contains`, `starts_with`, `ends_with`, `regex`) encounters a non-string value (object, array, number, boolean, or null), the value is first serialized to its compact JSON representation (no extra whitespace), and the operator is applied to the resulting string. For example, `regex: "account"` applied to the object `{"account": "attacker-123"}` matches because the compact JSON `{"account":"attacker-123"}` contains the substring `account`. This coercion ensures that string operators work intuitively on structured values such as tool arguments.
+**Type coercion for string operators.** When a string operator (`contains`, `starts_with`, `ends_with`, `regex`) encounters a non-string value (object, array, number, boolean, or null), the value is first serialized to its compact JSON representation (no extra whitespace, keys sorted lexicographically), and the operator is applied to the resulting string. For example, `regex: "account"` applied to the object `{"account": "attacker-123"}` matches because the compact JSON `{"account":"attacker-123"}` contains the substring `account`. This coercion ensures that string operators work intuitively on structured values such as tool arguments.
 
 Numeric operators (`gt`, `lt`, `gte`, `lte`) applied to non-numeric values produce `false`. Equality comparison is strict and type-aware: integer `42` does not equal string `"42"`, but integer `42` equals float `42.0`.
 
@@ -294,7 +294,7 @@ Extracted values are available in all subsequent phases via `{{name}}` template 
 
 ## 5.6 Response Templates
 
-String fields within `phase.state` and `phase.on_enter` support template interpolation. Template expressions in `phase.state` are resolved lazily when the state is consumed to construct a protocol response, not at phase entry. This allows `{{request.*}}` and `{{response.*}}` references in tool descriptions and response content to resolve against the actual request/response being processed.
+String fields within `phase.state` and `phase.on_enter` support template interpolation. Template expressions in `phase.state` are resolved lazily when the state is consumed to construct a protocol response, not at phase entry. This allows `{{request.*}}` and `{{response.*}}` references in tool descriptions and response content to resolve against the actual request/response being processed. Template expressions in `phase.on_enter` actions are resolved eagerly at phase entry time, before any protocol messages are processed. Cross-actor extractor references (`{{actor_name.extractor_name}}`) in both contexts resolve against the referenced actor's current extractor values at the time of resolution.
 
 - `{{extractor_name}}`: Replaced with the value captured by the named extractor (current actor scope).
 - `{{actor_name.extractor_name}}`: Replaced with the value captured by a named extractor from a different actor. The actor name MUST match an `actor.name` in the document.
