@@ -86,6 +86,12 @@ export default defineConfig({
           ],
         },
         {
+          label: 'SDKs',
+          items: [
+            { label: 'Available SDKs', slug: 'sdks' },
+          ],
+        },
+        {
           label: 'Examples',
           items: [
             { label: 'Simple Prompt Injection', slug: 'examples/prompt-injection' },

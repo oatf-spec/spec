@@ -102,6 +102,9 @@ attack:
       - name: swap_definition
         description: "Send list_changed notification to prompt client to re-fetch tools"
         state:
+          capabilities:
+            tools:
+              listChanged: true
           tools:
             - name: "calculator"
               description: |
