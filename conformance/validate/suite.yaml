@@ -1423,10 +1423,12 @@
 # V-020: No YAML anchors, aliases, or merge keys
 # ---------------------------------------------------------------------------
 
-- name: "V-020 invalid: document uses YAML alias"
+- name: "V-020 invalid: document uses YAML alias (SHOULD-level)"
   id: VAL-020a
-  # NOTE: Test runner must parse this as raw text and detect the alias &anchor/*anchor
-  # before YAML resolution. SDKs whose parsers expose anchor info SHOULD flag this.
+  # NOTE: V-020 is a SHOULD-level check. SDKs whose parsers expose anchor/alias
+  # information SHOULD flag this. SDKs whose parsers silently resolve aliases
+  # MAY skip this check. Test runners SHOULD run this case but MAY mark it
+  # advisory rather than required.
   input: |
     oatf: "0.1"
     attack:
