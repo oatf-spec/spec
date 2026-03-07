@@ -97,6 +97,9 @@ Each file tests a single [execution primitive](/sdk/execution-primitives/) with 
 | `interpolate-template.yaml` | `interpolate_template()` |
 | `interpolate-value.yaml` | `interpolate_value()` |
 | `resolve-event-qualifier.yaml` | `resolve_event_qualifier()` |
+| `parse-event-qualifier.yaml` | `parse_event_qualifier()` |
+| `select-response.yaml` | `select_response()` |
+| `extract-protocol.yaml` | `extract_protocol()` |
 | `compute-effective-state.yaml` | `compute_effective_state()` |
 
 ## Writing a Test Runner

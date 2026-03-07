@@ -1,0 +1,110 @@
+# =============================================================================
+# OATF Conformance: select_response Primitive Tests
+# Tests SDK select_response(entries, request) per SDK spec §5.7.
+# =============================================================================
+
+- name: "First matching predicate wins"
+  id: SELR-001
+  input:
+    entries:
+      - when:
+          name: "calculator"
+        content:
+          - type: text
+            text: "Calculator response"
+      - when:
+          name: "search"
+        content:
+          - type: text
+            text: "Search response"
+    request:
+      name: "calculator"
+      arguments: {}
+  expected:
+    content:
+      - type: text
+        text: "Calculator response"
+
+- name: "Second entry matches when first does not"
+  id: SELR-002
+  input:
+    entries:
+      - when:
+          name: "calculator"
+        content:
+          - type: text
+            text: "Calculator response"
+      - when:
+          name: "search"
+        content:
+          - type: text
+            text: "Search response"
+    request:
+      name: "search"
+      arguments: {}
+  expected:
+    content:
+      - type: text
+        text: "Search response"
+
+- name: "Default entry (no when) used as fallback"
+  id: SELR-003
+  input:
+    entries:
+      - when:
+          name: "calculator"
+        content:
+          - type: text
+            text: "Calculator response"
+      - content:
+          - type: text
+            text: "Default response"
+    request:
+      name: "unknown_tool"
+      arguments: {}
+  expected:
+    content:
+      - type: text
+        text: "Default response"
+
+- name: "No matching entry and no default returns null"
+  id: SELR-004
+  input:
+    entries:
+      - when:
+          name: "calculator"
+        content:
+          - type: text
+            text: "Calculator response"
+    request:
+      name: "unknown_tool"
+      arguments: {}
+  expected: null
+
+- name: "Predicate match takes priority over default"
+  id: SELR-005
+  input:
+    entries:
+      - when:
+          name: "calculator"
+        content:
+          - type: text
+            text: "Calculator response"
+      - content:
+          - type: text
+            text: "Default response"
+    request:
+      name: "calculator"
+      arguments: {}
+  expected:
+    content:
+      - type: text
+        text: "Calculator response"
+
+- name: "Empty entries list returns null"
+  id: SELR-006
+  input:
+    entries: []
+    request:
+      name: "anything"
+  expected: null

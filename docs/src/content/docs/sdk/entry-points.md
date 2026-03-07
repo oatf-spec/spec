@@ -101,6 +101,8 @@ The following rules are checked. Each rule references the normative requirement 
 | V-041 | §11.1.17 | All `expression.variables` keys MUST be valid CEL identifiers, matching `^[_a-zA-Z][_a-zA-Z0-9]*$`. Names containing hyphens, dots, or other non-identifier characters are rejected because CEL would parse them as operators rather than variable references. |
 | V-042 | [§5.3](/specification/execution-profile/#53-triggers) | Trigger MUST specify at least one of `event` or `after`. An empty trigger object is invalid. |
 | V-043 | §11.1.17 | Binding-specific action objects (those containing no known action key) MUST contain exactly one non-`x-` key. |
+| V-044 | [§5.5](/specification/execution-profile/#55-extractors) | When `extractor.type` is `regex`, the `extractor.selector` MUST contain at least one capture group. |
+| V-045 | [§5.2](/specification/execution-profile/#52-phases) | `phase.on_enter`, when present, MUST contain at least one entry. |
 
 **Unrecognized binding diagnostics:** SDKs SHOULD expose a `known_modes()` function returning the set of modes defined by included protocol bindings (v0.1: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`) and a `known_protocols()` function returning the corresponding protocols (v0.1: `mcp`, `a2a`, `ag_ui`). When a mode or protocol passes V-036 pattern validation but is not in the known set, `validate` SHOULD emit a warning (not an error) indicating the value is unrecognized. This catches typos like `mpc_server` while allowing intentional use of custom bindings. Tools MAY provide a mechanism to suppress these warnings.
 
