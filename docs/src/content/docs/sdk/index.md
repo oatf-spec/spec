@@ -3,7 +3,7 @@ title: "SDK Introduction"
 description: "Scope, purpose, and conformance requirements for OATF SDK implementations."
 ---
 
-This specification defines the language-agnostic API contract for OATF SDK implementations. An OATF SDK is a library that parses, validates, normalizes, evaluates, and serializes OATF documents. Any tool that consumes or produces OATF documents (adversarial simulation tools, evaluation scanners, CI pipeline integrations, IDE plugins) builds on an SDK rather than reimplementing the format's semantics.
+This specification defines the language-agnostic API contract for OATF SDK implementations. An OATF SDK is a library that parses, validates, normalizes, evaluates, and serializes OATF documents. Any tool that consumes or produces OATF documents builds on an SDK rather than reimplementing the format's semantics.
 
 This specification defines the abstract types, entry points, evaluation interfaces, execution primitives, extension points, and error taxonomy that every conforming SDK MUST expose. Language-specific idioms (error signaling mechanisms, collection types, concurrency models, naming conventions) are left to individual SDK implementations. The behavioral contracts are language-agnostic and testable via the OATF conformance test suite.
 

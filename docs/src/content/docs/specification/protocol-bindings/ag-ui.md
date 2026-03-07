@@ -105,7 +105,5 @@ This follows the same principle as server-mode `synthesize` ([§7.4](/specificat
 
 ## 7.3.5 AG-UI-Specific Attack Considerations
 
-AG-UI's primary attack surface is the client-to-agent direction: the `RunAgentInput` POST body. A malicious AG-UI client can fabricate conversation history (injecting false assistant or system messages), provide false tool results (claiming a tool returned data it never produced), or manipulate the `state` object to influence agent behavior.
-
-The SSE response stream is a secondary attack surface. A compromised agent can emit events that manipulate the client-side UI, inject unauthorized tool calls, or bypass human-in-the-loop approval flows through carefully sequenced events.
+The primary attack surface is the client-to-agent direction: the `RunAgentInput` fields (`messages`, `tools`, `state`) in the POST body. The SSE response stream is a secondary surface: a compromised agent can emit events that manipulate client-side state or tool call flows.
 

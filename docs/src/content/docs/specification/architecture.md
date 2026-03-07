@@ -20,7 +20,7 @@ A document MAY also include:
 
 Indicators answer the question "did the agent comply with the attack?" Each indicator targets a specific protocol and surface, examining the agent's behavior in response to the simulated attack: tool calls with exfiltrated data, compliance with injected instructions, unauthorized actions. An attack MAY have indicators for protocols not covered by its execution profile. For example, an attack executed via MCP may include indicators examining the agent's subsequent tool calls or message content for evidence of exploitation.
 
-Documents without indicators are valid for simulation: adversarial tools can reproduce the attack from the execution profile alone. Adding indicators closes the loop: tools can determine whether the agent was exploited and produce a verdict. The progression from simulation-only to fully evaluable is a natural part of attack development.
+Documents without indicators are valid for simulation: adversarial tools can reproduce the attack from the execution profile alone. Adding indicators closes the loop: tools can determine whether the agent was exploited and produce a verdict.
 
 > Indicators SHOULD examine the agent's *response* to the attack, not the attack payload itself. An indicator on the payload would always fire: the execution profile placed that content there.
 
@@ -38,7 +38,7 @@ The two halves of the document are deliberately independent of each other:
 
 Both consumers read the attack envelope for classification and severity metadata.
 
-This independence means a tool MAY implement only one side. A simulation tool may consume only execution profiles. A monitoring tool may consume only indicators. But the format is designed for tools that consume both, and the highest-value use case is closed-loop platforms that execute the attack, capture the resulting protocol traffic, evaluate the indicators against that traffic, and produce a verdict.
+This independence means a tool MAY implement only one side. A simulation tool may consume only execution profiles. A monitoring tool may consume only indicators. The format is designed for tools that consume both.
 
 ## 3.3 Versioning
 

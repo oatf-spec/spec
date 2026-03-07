@@ -145,25 +145,11 @@ The final attack verdict is one of: `exploited`, `not_exploited`, `partial`, or 
 
 ## The Format vs. Runtime Boundary
 
-OATF documents define **what** to test. They do not define:
-
-- How to connect to protocol transports (stdio, HTTP, SSE)
-- How to capture protocol traffic
-- How to manage sessions or authentication
-- How to report results or render UI
-
-These are **runtime concerns** handled by the consuming tool. The [SDK specification](/sdk/) defines the API contract between OATF documents and the tools that process them.
+OATF documents define **what** to test. Runtime concerns (transport, traffic capture, session management, reporting) are handled by the consuming tool. The [SDK specification](/sdk/) defines the API contract between documents and tools.
 
 ## Protocol Bindings
 
-Each supported protocol has a **binding** that defines:
-
-- **Surfaces**: the protocol fields indicators can target (e.g., `tool_description`, `agent_card`, `agent_state`)
-- **Events**: the protocol events that trigger phase transitions (e.g., `tools/call`, `message/send`, `run_started`)
-- **State structure**: the shape of protocol-specific state in execution profiles
-- **Normalization rules**: protocol-specific defaults (e.g., MCP tools get `inputSchema: {type: object}`)
-
-The binding architecture is extensible. New protocols can be added in future versions by defining their surfaces, events, and state structure, without changing the core format.
+Each supported protocol has a [binding](/specification/protocol-bindings/) that defines its surfaces, events, state structure, and normalization rules.
 
 ## Next Steps
 

@@ -23,21 +23,21 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 
 <CardGrid>
   <Card title="Protocol Coverage" icon="setting">
-    MCP, A2A, AG-UI with extensible binding architecture. Describe attacks against any agent communication protocol.
+    Bindings for MCP, A2A, and AG-UI. Extensible to additional agent communication protocols.
   </Card>
-  <Card title="Closed-Loop Testing" icon="rocket">
-    Execute attacks and evaluate outcomes from a single document. One YAML file defines the threat, the simulation, and the pass/fail criteria.
+  <Card title="Closed-Loop Testing" icon="approve-check-circle">
+    Each document defines the attack simulation and the pass/fail indicators in one file.
   </Card>
-  <Card title="Deterministic Evaluation" icon="approve-check-circle">
-    CEL expressions and field-path matching, not flaky NLP. Indicators produce reliable, reproducible verdicts.
+  <Card title="Deterministic Evaluation" icon="seti:config">
+    RE2 regex, field-path matching, and CEL expressions produce reproducible verdicts. Semantic indicators available for intent-based detection.
   </Card>
   <Card title="Framework Mappings" icon="open-book">
-    Cross-reference MITRE ATLAS, ATT&CK, OWASP, and CWE. Integrate with existing threat intelligence workflows.
+    Cross-reference MITRE ATLAS, ATT&CK, OWASP, and CWE identifiers.
   </Card>
   <Card title="Regression Suites" icon="list-format">
-    Build a library of OATF documents as a security test suite. Run them continuously against your agent infrastructure.
+    Documents function as test cases. Libraries of documents form reusable security test suites.
   </Card>
-  <Card title="Ecosystem Ready" icon="puzzle">
-    JSON Schema, SDK spec, and Rust SDK (coming soon). Validate documents and build tooling with first-class support.
+  <Card title="Tooling" icon="puzzle">
+    JSON Schema for editor validation, a language-agnostic SDK specification, and a [Rust SDK](https://github.com/oatf-spec/oatf-rs).
   </Card>
 </CardGrid>

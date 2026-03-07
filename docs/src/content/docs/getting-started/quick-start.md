@@ -93,7 +93,7 @@ The `mode` declares the attacker's role; here, an MCP server. The `state` contai
 
 An indicator watches a specific **surface** (a protocol field like tool arguments, task messages, or agent state) for evidence that the agent complied with the injected instructions. Here, the indicator checks whether the agent's tool call arguments contain references to sensitive files, which would mean the prompt injection worked.
 
-## Defaults You Get for Free
+## Default Values
 
 Several fields are populated automatically during [normalization](/specification/conformance/#112-tool-conformance-general):
 

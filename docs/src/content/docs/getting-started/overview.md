@@ -5,23 +5,14 @@ description: "An introduction to the Open Agent Threat Format: what it is, who i
 
 The **Open Agent Threat Format (OATF)** is a YAML-based specification for describing security threats against AI agent communication protocols. Each OATF document captures everything needed to reproduce a specific attack and evaluate whether an agent is vulnerable to it: the attack scenario, the protocol messages involved, and the observable patterns that indicate success or failure.
 
-## The Problem
+## Scope
 
-AI agents communicate through protocols like MCP (Model Context Protocol), A2A (Agent-to-Agent), and AG-UI (Agent-to-UI). These protocols expose attack surfaces that do not exist in traditional software: tool descriptions carry prompt injections, agent cards contain poisoned skill definitions, server instructions manipulate agent behavior.
+OATF defines a structured format for:
 
-Attacks against these protocols are currently described in blog posts, proof-of-concept scripts, and one-off tooling. OATF defines a structured format for:
-
-- **Sharing attack definitions** between tools and teams
-- **Reproducing attacks deterministically** across environments
-- **Evaluating agent resilience** with consistent success criteria
-- **Building regression suites** that track fixes over time
-
-## Who It's For
-
-- **Security researchers** documenting agent protocol vulnerabilities
-- **Agent developers** building regression test suites for their agents
-- **Red teamers** running structured adversarial evaluations
-- **Tool builders** creating security scanners, CI integrations, and IDE plugins
+- Sharing attack definitions between tools and teams
+- Reproducing attacks deterministically across environments
+- Evaluating agent resilience with consistent success criteria
+- Building regression suites that track fixes over time
 
 ## What a Document Contains
 
@@ -43,7 +34,7 @@ OATF v0.1 includes bindings for three protocols:
 | **A2A** (Agent-to-Agent) | Provisional | Agent ↔ Agent |
 | **AG-UI** (Agent-to-UI) | Provisional | Agent ↔ User Interface |
 
-The binding architecture is extensible. New protocols can be added in future versions without changing the core format.
+Additional protocols can be supported by adding new [bindings](/specification/protocol-bindings/).
 
 ## Next Steps
 

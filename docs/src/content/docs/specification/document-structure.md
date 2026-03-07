@@ -143,7 +143,7 @@ How confident the author is in the assigned severity level, expressed as an inte
 
 The `impact` field describes the categories of harm this attack can cause. While `severity.level` quantifies *how bad* the attack is, `impact` describes *what happens*, enabling appropriate response playbook selection.
 
-The six traditional categories align with ATT&CK's Impact tactic. The two additions are `behavior_manipulation` for the dominant AI agent failure mode (reasoning corrupted through normal protocol inputs, identified by ATLAS AML.TA0011 and OWASP ASI-01) and `data_tampering` for persistent integrity violations against agent memory, context, and capability definitions. Confidentiality splits three ways (`data_exfiltration`, `information_disclosure`, `credential_theft`) because each triggers a different incident response playbook.
+> *Note:* The six traditional categories align with ATT&CK's Impact tactic. `behavior_manipulation` covers reasoning corruption through normal protocol inputs (ATLAS AML.TA0011, OWASP ASI-01). `data_tampering` covers persistent integrity violations against agent memory, context, and capability definitions. Confidentiality is split into `data_exfiltration`, `information_disclosure`, and `credential_theft` for incident response granularity.
 
 ```yaml
 impact:

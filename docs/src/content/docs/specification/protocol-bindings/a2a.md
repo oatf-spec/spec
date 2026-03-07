@@ -144,7 +144,7 @@ state:
 
 ## 7.2.5 A2A-Specific Attack Considerations
 
-A2A attacks frequently involve multi-turn stateful interactions where a malicious agent builds trust over several task exchanges before delivering a payload. OATF models this through multi-phase execution profiles where early phases return benign task results and later phases return poisoned content.
+A2A attacks may involve multi-turn stateful interactions where early phases return benign task results and later phases return poisoned content. OATF models this through multi-phase execution profiles.
 
-A2A's Agent Card is analogous to MCP's tool descriptions as an attack surface. The `description` and `skills[].description` fields are consumed by LLMs to make delegation decisions and are susceptible to the same injection techniques.
+The `description` and `skills[].description` fields in A2A Agent Cards are consumed by LLMs to make delegation decisions, serving the same role as MCP tool descriptions. OATF models attacks against these fields through the `card_description` and `skill_description` surfaces.
 
