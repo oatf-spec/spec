@@ -3,7 +3,7 @@ title: "Core Concepts"
 description: "The mental model behind OATF: documents describe attacks, tools execute them."
 ---
 
-OATF separates **what** an attack looks like from **how** it's executed. Documents are declarative descriptions; tools are the runtime that brings them to life.
+OATF separates **what** an attack looks like from **how** it's executed. Documents are declarative descriptions; tools are the runtime that executes them.
 
 ## Documents Describe, Tools Execute
 
@@ -142,8 +142,8 @@ indicators:
 
 Individual indicators produce **indicator verdicts**: `matched`, `not_matched`, `error`, or `skipped`. These combine into an **attack verdict** based on the document's [correlation logic](/specification/verdict-model/):
 
-- **`any`** (default): the attack succeeded if *any* indicator matched
-- **`all`**: the attack succeeded only if *every* indicator matched
+- **`any`** (default): the attack verdict is `exploited` if *any* indicator matched
+- **`all`**: the attack verdict is `exploited` only if *every* indicator matched
 
 The final attack verdict is one of: `exploited`, `not_exploited`, `partial`, or `error`.
 

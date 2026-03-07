@@ -9,8 +9,6 @@ Each OATF document describes a single attack through an attack envelope (protoco
 
 This specification defines the document structure, schema, protocol binding architecture, detection methods, and conformance requirements for OATF version 0.1.
 
-## 1. Introduction
-
 ## 1.1 Purpose
 
 OATF standardizes how threats against agent communication protocols are described, tested, and evaluated.

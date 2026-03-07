@@ -16,7 +16,7 @@ Today, security researchers describe these attacks in blog posts, proof-of-conce
 - **Evaluate agent resilience** with consistent success criteria
 - **Build regression suites** that track vulnerability fixes over time
 
-OATF provides the missing standard format for all of these.
+OATF defines a standard format for all of these.
 
 ## Who It's For
 

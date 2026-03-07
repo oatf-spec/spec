@@ -9,7 +9,7 @@ The evaluation interface allows tools to assess whether observed protocol traffi
 
 Indicator evaluation operates on protocol messages represented as `Value`, a dynamically-typed JSON-like tree. The SDK does not define message types for specific protocols. The consuming tool is responsible for constructing the `Value` from whatever wire format it captures.
 
-The `Value` passed to indicator evaluation corresponds to the `result` (for responses) or `params` (for requests/notifications) field of the JSON-RPC message, not the full JSON-RPC envelope. This is the convention defined in the [format specification [§7.1](/sdk/diagnostics/#71-parseerror).3](/specification/protocol-bindings/mcp/#713-indicator-evaluation-context). For non-JSON-RPC bindings (e.g., AG-UI, or future protocols that do not use JSON-RPC framing), tools SHOULD pass the protocol-specific message payload, the semantic equivalent of "the content the agent produced or received." Indicators evaluate whatever structure is present; the dot-path and CEL machinery is format-agnostic.
+The `Value` passed to indicator evaluation corresponds to the `result` (for responses) or `params` (for requests/notifications) field of the JSON-RPC message, not the full JSON-RPC envelope. This is the convention defined in the [format specification §7.1.3](/specification/protocol-bindings/mcp/#713-indicator-evaluation-context). For non-JSON-RPC bindings (e.g., AG-UI, or future protocols that do not use JSON-RPC framing), tools SHOULD pass the protocol-specific message payload, the semantic equivalent of "the content the agent produced or received." Indicators evaluate whatever structure is present; the dot-path and CEL machinery is format-agnostic.
 
 SDKs MUST NOT require messages to conform to any particular protocol schema. Indicators evaluate against whatever structure is present. Missing fields produce `not_matched` verdicts, not errors.
 
@@ -76,7 +76,7 @@ Top-level indicator evaluation. Dispatches to the appropriate method evaluator a
    - `semantic` → if `semantic_evaluator` is absent, return verdict with `result: skipped` and evidence indicating semantic evaluation is unavailable. Otherwise:
      a. Resolve `indicator.semantic.target` against `message` using `resolve_wildcard_path` ([§5.1.2](/sdk/execution-primitives/#512-wildcard-dot-path)). If the path resolves to nothing, return verdict with `result: not_matched`.
      b. For each resolved value, serialize to string and call `semantic_evaluator.evaluate(text, indicator.semantic.intent, indicator.semantic.intent_class, indicator.semantic.threshold, indicator.semantic.examples)`. When `intent_class` is absent, pass `None`; the evaluator MUST handle this gracefully.
-     c. Determine the effective threshold: use `indicator.semantic.threshold` if present, otherwise `0.7` (per [format specification [§6](/sdk/extension-points/).4](/specification/indicators/#64-semantic-matching)).
+     c. Determine the effective threshold: use `indicator.semantic.threshold` if present, otherwise `0.7` (per [format specification §6.4](/specification/indicators/#64-semantic-analysis)).
      d. If the highest returned score across all resolved values ≥ the effective threshold, the result is `true` (matched). Otherwise `false` (not matched). Use the highest score as evidence.
 2. Catch any runtime evaluation error. On error, return verdict with `result: error` and the diagnostic as `evidence`.
 3. On successful evaluation, return verdict with `result: matched` (if true) or `result: not_matched` (if false).

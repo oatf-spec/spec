@@ -58,7 +58,7 @@ Known scenarios where this indicator may match benign traffic. Each entry is a p
 
 ## 6.2 Pattern Matching
 
-The `pattern` field governs string and structural matching rules. Pattern matching operates on the parsed protocol message, not the raw wire representation. Attacks that exploit wire-level anomalies (duplicate JSON keys, non-canonical encoding) are outside the scope of pattern indicators. Two forms are supported:
+The `pattern` field governs string and structural matching rules. Two forms are supported:
 
 **Standard form**: explicit target and condition:
 

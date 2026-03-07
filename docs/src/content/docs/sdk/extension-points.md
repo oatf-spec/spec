@@ -50,7 +50,7 @@ Evaluates the semantic similarity or intent match between observed text and the 
 - The evaluator is responsible for all inference logic (LLM calls, embedding similarity, classifier invocation). The SDK provides none of this.
 - When `intent_class` is present, classification-based engines SHOULD use it as a hint. When absent, the evaluator MUST rely on the `intent` text and `examples` alone.
 - When `threshold` is present, the indicator is considered matched if the returned score ≥ `threshold`.
-- When `threshold` is absent, the SDK uses a default threshold of `0.7` (per [format specification [§6](/sdk/extension-points/).4](/specification/indicators/#64-semantic-matching)).
+- When `threshold` is absent, the SDK uses a default threshold of `0.7` (per [format specification §6.4](/specification/indicators/#64-semantic-analysis)).
 - The evaluator MAY use `examples.positive` and `examples.negative` to calibrate its scoring.
 - Evaluation errors (model unavailable, timeout, malformed response) MUST be returned as `EvaluationError`, not thrown as unhandled exceptions.
 
@@ -70,14 +70,14 @@ interface GenerationProvider {
 }
 ```
 
-Generates protocol-conformant content from a prompt. Used by adversarial tools to execute `synthesize` blocks ([format specification [§7](/sdk/diagnostics/).4](/specification/protocol-bindings/llm-synthesis/)). For server-mode actors (MCP, A2A), this generates response payloads. For client-mode actors (AG-UI), this generates input content (message histories).
+Generates protocol-conformant content from a prompt. Used by adversarial tools to execute `synthesize` blocks ([format specification §7.4](/specification/protocol-bindings/llm-synthesis/)). For server-mode actors (MCP, A2A), this generates response payloads. For client-mode actors (AG-UI), this generates input content (message histories).
 
 **Contract:**
 
 - The `prompt` has already been resolved (all `{{template}}` references interpolated). The provider receives the final prompt string.
 - The `protocol` identifies which protocol binding the output must conform to (MCP, A2A, or AG-UI).
 - The `response_context` provides protocol-specific metadata the provider needs to shape its output (for example, the tool's `inputSchema` for MCP, the task's expected `status` for A2A, or the `tools` and `state` from `run_agent_input` for AG-UI). The structure is defined by the consuming tool, not by this specification.
-- The provider MUST return a `Value` that conforms to the protocol's expected structure. The consuming tool MUST validate this value against the protocol binding before injection ([§7.4](/sdk/diagnostics/#74-error-aggregation) of the format specification).
+- The provider MUST return a `Value` that conforms to the protocol's expected structure. The consuming tool MUST validate this value against the protocol binding before injection ([format specification §7.4](/specification/protocol-bindings/llm-synthesis/)).
 - The provider is responsible for all LLM interaction: model selection, API calls, structured output enforcement, caching, and retry.
 - Generation errors (model unavailable, timeout, content policy rejection, validation failure) MUST be returned as `GenerationError`, not thrown as unhandled exceptions.
 

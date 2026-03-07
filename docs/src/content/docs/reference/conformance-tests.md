@@ -9,18 +9,16 @@ The [conformance test suite](https://github.com/oatf-spec/spec/tree/main/conform
 
 Fixtures are organized by [SDK entry point](/sdk/entry-points/):
 
-| Directory | SDK Function | Cases | What It Tests |
-|---|---|---|---|
-| `parse/valid/` | `parse()` | 7 | Valid documents that must parse without error |
-| `parse/invalid/` | `parse()` | 9 | Malformed documents that must produce `ParseError` |
-| `validate/` | `validate()` | 141 | Conformance rule checking (V-001 through V-043) |
-| `normalize/` | `normalize()` | 24 | Default materialization and shorthand expansion |
-| `evaluate/` | `evaluate_indicator()` | 45 | Indicator evaluation (pattern, expression, semantic) |
-| `verdict/` | `compute_verdict()` | 13 | Attack-level verdict computation |
-| `roundtrip/` | `parse` → `normalize` → `serialize` → `parse` | 7 | Serialization stability |
-| `primitives/` | Individual functions | 128 | Execution primitives (path resolution, conditions, triggers, etc.) |
-
-**Total: ~374 test cases.**
+| Directory | SDK Function | What It Tests |
+|---|---|---|
+| `parse/valid/` | `parse()` | Valid documents that must parse without error |
+| `parse/invalid/` | `parse()` | Malformed documents that must produce `ParseError` |
+| `validate/` | `validate()` | Conformance rule checking (V-001 through V-043) |
+| `normalize/` | `normalize()` | Default materialization and shorthand expansion |
+| `evaluate/` | `evaluate_indicator()` | Indicator evaluation (pattern, expression, semantic) |
+| `verdict/` | `compute_verdict()` | Attack-level verdict computation |
+| `roundtrip/` | `parse` → `normalize` → `serialize` → `parse` | Serialization stability |
+| `primitives/` | Individual functions | Execution primitives (path resolution, conditions, triggers, etc.) |
 
 ## Fixture Formats
 
@@ -87,19 +85,19 @@ For validation tests, `expected` contains the rule IDs and field paths that must
 
 Each file tests a single [execution primitive](/sdk/execution-primitives/) with function-specific inputs:
 
-| File | Function | Cases |
-|---|---|---|
-| `resolve-simple-path.yaml` | `resolve_simple_path()` | 9 |
-| `resolve-wildcard-path.yaml` | `resolve_wildcard_path()` | 4 |
-| `parse-duration.yaml` | `parse_duration()` | 15 |
-| `evaluate-condition.yaml` | `evaluate_condition()` | 21 |
-| `evaluate-predicate.yaml` | `evaluate_predicate()` | 12 |
-| `evaluate-trigger.yaml` | `evaluate_trigger()` | 15 |
-| `evaluate-extractor.yaml` | `evaluate_extractor()` | 10 |
-| `interpolate-template.yaml` | `interpolate_template()` | 13 |
-| `interpolate-value.yaml` | `interpolate_value()` | 12 |
-| `resolve-event-qualifier.yaml` | `resolve_event_qualifier()` | 12 |
-| `compute-effective-state.yaml` | `compute_effective_state()` | 5 |
+| File | Function |
+|---|---|
+| `resolve-simple-path.yaml` | `resolve_simple_path()` |
+| `resolve-wildcard-path.yaml` | `resolve_wildcard_path()` |
+| `parse-duration.yaml` | `parse_duration()` |
+| `evaluate-condition.yaml` | `evaluate_condition()` |
+| `evaluate-predicate.yaml` | `evaluate_predicate()` |
+| `evaluate-trigger.yaml` | `evaluate_trigger()` |
+| `evaluate-extractor.yaml` | `evaluate_extractor()` |
+| `interpolate-template.yaml` | `interpolate_template()` |
+| `interpolate-value.yaml` | `interpolate_value()` |
+| `resolve-event-qualifier.yaml` | `resolve_event_qualifier()` |
+| `compute-effective-state.yaml` | `compute_effective_state()` |
 
 ## Writing a Test Runner
 

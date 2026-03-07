@@ -28,9 +28,7 @@ Documents without indicators are valid for simulation: adversarial tools can rep
 
 ## 3.2 Dual-Purpose Design
 
-When indicators are present, a document co-locates the execution profile (how to perform the attack) and the indicators (how to determine if the agent was exploited). A single tool can execute the attack and automatically evaluate the outcome in a closed loop. This is the primary design intent: a library of OATF documents functions as a regression suite that a security testing platform runs end-to-end after each change to an agent deployment.
-
-The verdict model enables fully automatic regression: after executing the attack, indicators verify whether the agent complied with the attacker's intent. A regression suite that runs hundreds of OATF documents can flag exactly which attacks exploit agents and which are resisted, without manual interpretation of results.
+When indicators are present, a document co-locates the execution profile (how to perform the attack) and the indicators (how to determine if the agent was exploited). A single tool can execute the attack and automatically evaluate the outcome in a closed loop, producing a verdict without manual interpretation. A library of OATF documents functions as a regression suite that runs end-to-end after each change to an agent deployment.
 
 The two halves of the document are deliberately independent of each other:
 

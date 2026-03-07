@@ -22,7 +22,7 @@ oatf = "0.1"
 
 ## Building an SDK
 
-The [SDK specification](/sdk/) defines the language-agnostic API contract: entry points, types, evaluation interfaces, and error taxonomy. The [conformance test suite](/reference/conformance-tests/) provides ~374 data-driven YAML fixtures for validating implementations.
+The [SDK specification](/sdk/) defines the language-agnostic API contract: entry points, types, evaluation interfaces, and error taxonomy. The [conformance test suite](/reference/conformance-tests/) provides data-driven YAML fixtures for validating implementations.
 
 Key resources:
 

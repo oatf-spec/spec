@@ -7,7 +7,7 @@ Shared utility operations used by both entry points and evaluation. SDKs MUST im
 
 ## 5.1 Path Resolution
 
-OATF defines two path variants with different capabilities, matching the format specification ([§5.4](/sdk/execution-primitives/#54-evaluate_predicate)):
+OATF defines two path variants with different capabilities, matching the format specification ([§5.4](/specification/execution-profile/#54-match-predicates)):
 
 ### 5.1.1 Simple Dot-Path
 
@@ -68,7 +68,7 @@ Segments consist of alphanumeric characters, underscores, and hyphens, with opti
 
 SDKs SHOULD enforce a maximum traversal depth to prevent stack overflow on pathological inputs. A depth limit of 64 is RECOMMENDED.
 
-**Limitation:** Dot-path syntax does not support escaping literal dots within field names. A JSON object key containing a dot (for example, `{"content.type": "text"}`) cannot be addressed because the path `content.type` is always interpreted as two segments. This is an intentional simplification; protocol messages in MCP, A2A, and AG-UI do not use dotted key names. Authors MUST use CEL expressions ([format specification [§6](/sdk/extension-points/).3](/specification/indicators/#63-cel-expressions)) to match fields with dots, brackets, or other special characters in their names.
+**Limitation:** Dot-path syntax does not support escaping literal dots within field names. A JSON object key containing a dot (for example, `{"content.type": "text"}`) cannot be addressed because the path `content.type` is always interpreted as two segments. This is an intentional simplification; protocol messages in MCP, A2A, and AG-UI do not use dotted key names. Authors MUST use CEL expressions ([format specification §6.3](/specification/indicators/#63-expression-evaluation)) to match fields with dots, brackets, or other special characters in their names.
 
 ## 5.2 parse_duration
 
@@ -224,7 +224,7 @@ Applies an extractor to a message, capturing a value. The `direction` parameter 
 1. If `extractor.source` ≠ `direction`, return `None`. This extractor targets a different message direction and should not be applied.
 2. Apply the extractor by type:
 
-- `json_path`: Evaluate the JSONPath expression against `message`. If the expression matches one or more nodes, return the first match in document order (per RFC 9535 [§2.6](/sdk/core-types/#26-execution)) serialized to its compact JSON string representation. If no match, return `None`.
+- `json_path`: Evaluate the JSONPath expression against `message`. If the expression matches one or more nodes, return the first match in document order (per RFC 9535 §2.6) serialized to its compact JSON string representation. If no match, return `None`.
 - `regex`: Convert `message` to its string representation, evaluate the regular expression. If the regex matches and has at least one capture group, return the first capture group's value. If no match, return `None`.
 
 `None` means "no match" (the extractor did not find the targeted content). `Some("")` is a valid result when the extractor matched but the captured value is genuinely an empty string. Downstream template interpolation treats `None` as an undefined extractor (triggering W-004 warnings), while `Some("")` substitutes the empty string silently.
