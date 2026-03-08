@@ -83,6 +83,7 @@ For server-mode request events (`message/send`, `message/stream` on `a2a_server`
 - `message.messageId`: The message ID.
 - `message.contextId`: The context ID linking related tasks.
 - `message.taskId`: The task ID (when continuing an existing task).
+- `message.metadata`: Untyped key-value metadata attached to the message.
 
 For client-mode response events (`message/send`, `message/stream` on `a2a_client`), `message` contains the response payload. When the response is a Task:
 - `message.id`: The task ID.
@@ -90,6 +91,7 @@ For client-mode response events (`message/send`, `message/stream` on `a2a_client
 - `message.status.state`: The task status.
 - `message.history[]`: Array of messages, each with `role` and `parts[]`.
 - `message.artifacts[]`: Array of artifacts, each with `name` and `parts[]`.
+- `message.metadata`: Untyped key-value metadata attached to the task.
 
 When the response is a direct Message (no task created), the structure matches the server-mode request shape above.
 
@@ -131,11 +133,13 @@ state:
   task_responses:
     - when: <MatchPredicate>?
       status: enum(submitted, working, input-required, completed, failed, canceled, auth-required, rejected)
+      metadata: map?                 # Untyped key-value metadata on the Task
       history:                     # Static content (mutually exclusive with synthesize)
         - role: enum(agent, user)
           parts:
             - type: enum(text, file, data)
               # Type-specific fields
+          metadata: map?             # Untyped key-value metadata on the Message
       artifacts:
         - name: string?
           parts:
@@ -161,6 +165,7 @@ state:
       - type: enum(text, file, data)
         # Type-specific fields (same as a2a_server task_responses history)
     messageId: string?
+    metadata: map?                     # Untyped key-value metadata
     synthesize:                        # LLM generation (mutually exclusive with parts)
       prompt: string
 
