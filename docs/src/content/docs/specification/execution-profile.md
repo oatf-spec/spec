@@ -111,7 +111,7 @@ Prose describing the purpose of this phase.
 
 ### `phase.mode` (CONDITIONAL)
 
-The attacker posture for this phase. In single-phase and multi-phase forms: when `execution.mode` is present, this defaults to `execution.mode` and is optional; when `execution.mode` is absent, this field is REQUIRED on every phase. In multi-actor form: phases inherit their actor's `mode` and MAY be omitted. It MAY be specified for cross-protocol phases within an actor.
+The attacker posture for this phase. In single-phase and multi-phase forms: when `execution.mode` is present, this defaults to `execution.mode` and is optional; when `execution.mode` is absent, this field is REQUIRED on every phase. In multi-actor form: phases inherit their actor's `mode` and MAY be omitted. When specified, `phase.mode` MUST match the actor's mode (V-046). Cross-protocol attacks are modeled using separate actors, each with its own mode.
 
 ### `phase.state` (CONDITIONAL)
 
@@ -131,7 +131,7 @@ Actions executed when this phase begins, before any client interaction is proces
 
 ### `phase.trigger` (OPTIONAL)
 
-The condition that triggers advancement to the next phase. If omitted, this is a **terminal phase** that persists indefinitely. A document MUST have at most one terminal phase, and it MUST be the last phase in the list.
+The condition that triggers advancement to the next phase. If omitted, this is a **terminal phase** that persists indefinitely. Each actor MUST have at most one terminal phase, and it MUST be the last phase in the actor's phase list.
 
 A trigger object MUST specify at least one of `event` or `after`. An empty trigger object is invalid. To designate a terminal phase, omit `trigger` entirely. Tools SHOULD enforce a configurable maximum terminal phase duration (RECOMMENDED default: 5 minutes) to prevent indefinite resource consumption.
 

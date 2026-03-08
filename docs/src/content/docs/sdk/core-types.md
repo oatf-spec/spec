@@ -419,7 +419,7 @@ SDKs MUST maintain a registry mapping each `Surface` value to its protocol and d
 
 ## 2.22 Event-Mode Validity Registry
 
-SDKs MUST maintain a registry mapping each event type to the set of modes for which it is valid. This registry is used during validation (V-029) to reject trigger events that are invalid for the actor's resolved mode. Events are identified by their base name (without qualifier).
+SDKs MUST maintain a registry mapping each event type to the set of modes for which it is valid. This registry is used during validation (V-029) to check trigger events against the actor's resolved mode. Events listed in the registry that are not valid for the actor's mode MUST be rejected. Events not listed in the registry on a recognized mode SHOULD produce a warning but MUST NOT be rejected, since upstream protocols may define events beyond the subset covered by this OATF version. Events are identified by their base name (without qualifier).
 
 SDKs MUST define this as a compile-time constant data structure. Event types with qualifiers are validated by stripping the qualifier (everything after the first `:`) and looking up the base event name. For modes not present in the registry (from unrecognized protocol bindings), SDKs MUST skip event type validation.
 

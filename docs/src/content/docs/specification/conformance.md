@@ -7,7 +7,7 @@ description: "Document conformance rules, tool conformance requirements, and par
 
 A conforming OATF document:
 
-The [SDK specification](/sdk/) ([SDK specification, §3.2](/sdk/entry-points/)) assigns stable rule identifiers (V-001 through V-043) to conformance requirements across this specification. Conformance test suites reference these identifiers. The numbered rules below define the structural requirements; additional V-rules cover field-level validation constraints defined in their respective sections ([§4](/specification/document-structure/) through [§7](/specification/protocol-bindings/)).
+The [SDK specification](/sdk/) ([SDK specification, §3.2](/sdk/entry-points/)) assigns stable rule identifiers (V-001 through V-046) to conformance requirements across this specification. Conformance test suites reference these identifiers. The numbered rules below define the structural requirements; additional V-rules cover field-level validation constraints defined in their respective sections ([§4](/specification/document-structure/) through [§7](/specification/protocol-bindings/)).
 
 **Core structure**
 
@@ -22,14 +22,14 @@ The [SDK specification](/sdk/) ([SDK specification, §3.2](/sdk/entry-points/)) 
 6. MUST have at least one entry in `indicators` when `indicators` is present.
 7. MUST specify exactly one of `execution.state` (single-phase form), `execution.phases` (multi-phase form), or `execution.actors` (multi-actor form); they are mutually exclusive. When `execution.state` is present, `execution.mode` MUST also be present.
 8. In multi-phase form: MUST have at least one entry in `execution.phases`. MUST have at most one terminal phase, and it MUST be the last phase. MUST include `state` on the first phase. Explicitly specified `phase.name` values MUST be unique. When `phase.extractors` is present, it MUST contain at least one entry.
-9. In multi-actor form: MUST have at least one entry in `execution.actors`. Each actor MUST declare `actor.name` (matching `[a-z][a-z0-9_]*`) and `actor.mode`. Actor names MUST be unique. Each actor MUST have at least one phase. Explicitly specified phase names MUST be unique within each actor. Terminal phase rules and first-phase `state` rules apply per-actor.
+9. In multi-actor form: MUST have at least one entry in `execution.actors`. Each actor MUST declare `actor.name` (matching `[a-z][a-z0-9_]*`) and `actor.mode`. Actor names MUST be unique. Each actor MUST have at least one phase. Explicitly specified phase names MUST be unique within each actor. Terminal phase rules and first-phase `state` rules apply per-actor. When `phase.mode` is specified, it MUST match the actor's `actor.mode`; cross-protocol attacks use separate actors.
 
 **Indicators and event validation**
 
 10. MUST use unique `indicator.id` values within the document when IDs are specified explicitly.
 11. Each indicator MUST contain exactly one detection key (`pattern`, `expression`, or `semantic`).
 12. When `execution.mode` is absent and `execution.actors` is absent (the mode-less multi-phase form), every phase MUST specify `phase.mode`. When `execution.mode` is absent, regardless of whether `execution.actors` is present, every indicator (when present) MUST specify `indicator.protocol`. In multi-actor form, `actor.mode` provides phase-level mode inheritance (so `phase.mode` is typically omitted), but indicators are document-level and not scoped to any actor, so `indicator.protocol` remains required.
-13. For modes defined by bindings included in this specification, trigger event types MUST be valid according to the Event-Mode Validity Matrix ([§7](/specification/protocol-bindings/)). Invalid event types MUST be rejected at document load time. For unrecognized modes, tools MUST skip event type validation.
+13. For modes defined by bindings included in this specification, trigger event types listed in the Event-Mode Validity Matrix ([§7](/specification/protocol-bindings/)) MUST be valid for the actor's mode. Event types not listed in the matrix on a recognized mode SHOULD produce a warning but MUST NOT be rejected; upstream protocols may define events beyond the subset covered by this OATF version. For unrecognized modes, tools MUST skip event type validation.
 
 **Response entries and synthesis**
 

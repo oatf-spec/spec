@@ -39,7 +39,7 @@ The format is a description language. It does not define how tools implement tra
 
 ## 1.3 Conformance
 
-The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [BCP 14](https://www.rfc-editor.org/info/bcp14) ([RFC 2119](https://www.ietf.org/rfc/rfc2119.txt), [RFC 8174](https://www.rfc-editor.org/rfc/rfc8174.txt)) when, and only when, they appear in all capitals, as shown here.
 
 A conforming OATF document MUST validate against the schema defined in this specification. The normative JSON Schema is published at `https://oatf.io/schemas/v0.1.json` and distributed as a companion file (`v0.1.json`). The schema validates the protocol-agnostic document core (envelope, execution forms, phases, triggers, extractors, indicators, correlation). Binding-specific state validation (MCP tools/resources/prompts structure, A2A agent card, AG-UI run input) is the responsibility of binding-aware tools and is not enforced by the JSON Schema. The schema at a given `MAJOR.MINOR` URL is immutable: once published, it MUST NOT be modified. Patch releases clarify prose but do not change the schema; minor releases publish a new schema at a new URL (e.g., `v0.2.json`). A conforming tool MAY implement support for a subset of protocol bindings (for example, MCP only) but MUST correctly parse and ignore bindings it does not support.
 

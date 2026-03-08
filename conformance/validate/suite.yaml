@@ -2989,3 +2989,59 @@
     errors:
       - rule: "V-045"
         path: "attack.execution.phases[0].on_enter"
+
+# ---------------------------------------------------------------------------
+# V-046: phase.mode MUST match actor.mode in multi-actor form
+# ---------------------------------------------------------------------------
+
+- name: "V-046 valid: phase.mode matches actor.mode"
+  id: VAL-046a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        actors:
+          - name: server
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                mode: mcp_server
+                state:
+                  tools:
+                    - name: test
+                      description: "A test tool"
+      indicators:
+        - surface: tool_description
+          protocol: mcp
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-046 invalid: phase.mode differs from actor.mode"
+  id: VAL-046b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        actors:
+          - name: server
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                mode: a2a_server
+                state:
+                  agent_card:
+                    name: "Test Agent"
+                    description: "A test agent"
+                    url: "https://example.com"
+                    skills: []
+      indicators:
+        - surface: tool_description
+          protocol: mcp
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-046"
+        path: "attack.execution.actors[0].phases[0].mode"
