@@ -22,6 +22,11 @@
         timestamp: null
   expected:
     result: exploited
+    evaluation_summary:
+      matched: 2
+      not_matched: 0
+      error: 0
+      skipped: 0
 
 - name: "One matched one not — partial"
   id: VERDICT-ALL-02
@@ -39,6 +44,11 @@
         timestamp: null
   expected:
     result: partial
+    evaluation_summary:
+      matched: 1
+      not_matched: 1
+      error: 0
+      skipped: 0
 
 - name: "None matched — not_exploited"
   id: VERDICT-ALL-03
@@ -56,6 +66,11 @@
         timestamp: null
   expected:
     result: not_exploited
+    evaluation_summary:
+      matched: 0
+      not_matched: 2
+      error: 0
+      skipped: 0
 
 - name: "One error — error takes precedence"
   id: VERDICT-ALL-04
@@ -73,6 +88,11 @@
         timestamp: null
   expected:
     result: error
+    evaluation_summary:
+      matched: 1
+      not_matched: 0
+      error: 1
+      skipped: 0
 
 - name: "All skipped — error (no evaluation occurred)"
   id: VERDICT-ALL-05
@@ -90,6 +110,11 @@
         timestamp: null
   expected:
     result: error
+    evaluation_summary:
+      matched: 0
+      not_matched: 0
+      error: 0
+      skipped: 2
 
 - name: "One matched one skipped — partial"
   id: VERDICT-ALL-06
@@ -107,6 +132,11 @@
         timestamp: null
   expected:
     result: partial
+    evaluation_summary:
+      matched: 1
+      not_matched: 0
+      error: 0
+      skipped: 1
 
 - name: "Two matched + one error — error (error takes precedence over matched)"
   id: VERDICT-ALL-07
@@ -128,3 +158,8 @@
         timestamp: null
   expected:
     result: error
+    evaluation_summary:
+      matched: 2
+      not_matched: 0
+      error: 1
+      skipped: 0

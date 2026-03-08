@@ -111,7 +111,7 @@ Prose describing the purpose of this phase.
 
 ### `phase.mode` (CONDITIONAL)
 
-The attacker posture for this phase. In single-phase and multi-phase forms: when `execution.mode` is present, this defaults to `execution.mode` and is optional; when `execution.mode` is absent, this field is REQUIRED on every phase. In multi-actor form: phases inherit their actor's `mode` and this field is typically omitted (but MAY be specified for cross-protocol phases within an actor, though this is uncommon).
+The attacker posture for this phase. In single-phase and multi-phase forms: when `execution.mode` is present, this defaults to `execution.mode` and is optional; when `execution.mode` is absent, this field is REQUIRED on every phase. In multi-actor form: phases inherit their actor's `mode` and MAY be omitted. When specified, `phase.mode` MUST match the actor's mode (V-046). Cross-protocol attacks are modeled using separate actors, each with its own mode.
 
 ### `phase.state` (CONDITIONAL)
 
@@ -131,7 +131,7 @@ Actions executed when this phase begins, before any client interaction is proces
 
 ### `phase.trigger` (OPTIONAL)
 
-The condition that triggers advancement to the next phase. If omitted, this is a **terminal phase** that persists indefinitely. A document MUST have at most one terminal phase, and it MUST be the last phase in the list.
+The condition that triggers advancement to the next phase. If omitted, this is a **terminal phase** that persists indefinitely. Each actor MUST have at most one terminal phase, and it MUST be the last phase in the actor's phase list.
 
 A trigger object MUST specify at least one of `event` or `after`. An empty trigger object is invalid. To designate a terminal phase, omit `trigger` entirely. Tools SHOULD enforce a configurable maximum terminal phase duration (RECOMMENDED default: 5 minutes) to prevent indefinite resource consumption.
 
@@ -255,7 +255,7 @@ All string operators (`contains`, `starts_with`, `ends_with`, `any_of`, and equa
 
 **Comparison semantics.** Equality comparisons (bare-value matching and `any_of`) use deep equality: numeric values compare by mathematical value (integer `42` equals float `42.0`); object key order is irrelevant; arrays compare element-wise by position and length; `null` equals only `null`; NaN does not equal any value including itself.
 
-**Type coercion for string operators.** When a string operator (`contains`, `starts_with`, `ends_with`, `regex`) encounters a non-string value (object, array, number, boolean, or null), the value is first serialized to its compact JSON representation (no extra whitespace), and the operator is applied to the resulting string. For example, `regex: "account"` applied to the object `{"account": "attacker-123"}` matches because the compact JSON `{"account":"attacker-123"}` contains the substring `account`. This coercion ensures that string operators work intuitively on structured values such as tool arguments.
+**Type coercion for string operators.** When a string operator (`contains`, `starts_with`, `ends_with`, `regex`) encounters a non-string value (object, array, number, boolean, or null), the value is first serialized to its compact JSON representation (no extra whitespace, keys sorted lexicographically), and the operator is applied to the resulting string. For example, `regex: "account"` applied to the object `{"account": "attacker-123"}` matches because the compact JSON `{"account":"attacker-123"}` contains the substring `account`. This coercion ensures that string operators work intuitively on structured values such as tool arguments.
 
 Numeric operators (`gt`, `lt`, `gte`, `lte`) applied to non-numeric values produce `false`. Equality comparison is strict and type-aware: integer `42` does not equal string `"42"`, but integer `42` equals float `42.0`.
 
@@ -294,7 +294,7 @@ Extracted values are available in all subsequent phases via `{{name}}` template 
 
 ## 5.6 Response Templates
 
-String fields within `phase.state` and `phase.on_enter` support template interpolation. Template expressions in `phase.state` are resolved lazily when the state is consumed to construct a protocol response, not at phase entry. This allows `{{request.*}}` and `{{response.*}}` references in tool descriptions and response content to resolve against the actual request/response being processed.
+String fields within `phase.state` and `phase.on_enter` support template interpolation. Template expressions in `phase.state` are resolved lazily when the state is consumed to construct a protocol response, not at phase entry. This allows `{{request.*}}` and `{{response.*}}` references in tool descriptions and response content to resolve against the actual request/response being processed. Template expressions in `phase.on_enter` actions are resolved eagerly at phase entry time, before any protocol messages are processed. Cross-actor extractor references (`{{actor_name.extractor_name}}`) in both contexts resolve against the referenced actor's current extractor values at the time of resolution.
 
 - `{{extractor_name}}`: Replaced with the value captured by the named extractor (current actor scope).
 - `{{actor_name.extractor_name}}`: Replaced with the value captured by a named extractor from a different actor. The actor name MUST match an `actor.name` in the document.
@@ -349,5 +349,5 @@ CEL expressions MUST be evaluated in a sandboxed environment. Specifically:
 
 These constraints ensure that OATF documents cannot be weaponized against the tools that consume them. A malicious OATF document with a pathological regex or an infinitely-recursive JSONPath expression must fail safely rather than deny service to the evaluating tool.
 
-> *Note on RE2 and lookarounds:* The RE2 subset excludes lookaheads and lookbehinds. OATF evaluators process attacker-controlled content, so ReDoS is a direct risk. Lookaround use cases are typically better expressed as multiple `match` predicate entries or as CEL expressions.
+> *Note on RE2 and lookarounds:* The RE2 subset excludes lookaheads and lookbehinds. OATF evaluators process attacker-controlled content, so ReDoS is a direct risk. Lookaround use cases can be expressed as multiple `match` predicate entries or as CEL expressions.
 

@@ -1,6 +1,6 @@
 ---
 title: "Core Concepts"
-description: "The mental model behind OATF: documents describe attacks, tools execute them."
+description: "OATF document structure: execution forms, indicators, and verdicts."
 ---
 
 OATF documents are declarative. They contain no executable code. A document declares:
@@ -9,7 +9,7 @@ OATF documents are declarative. They contain no executable code. A document decl
 - What transitions occur between phases (triggers, extractors)
 - What patterns to look for in the agent's behavior (indicators)
 
-A **conforming tool** reads the document and handles runtime: spinning up protocol servers, capturing traffic, evaluating indicators, and producing verdicts.
+A **conforming tool** reads the document and handles runtime: starting protocol servers, capturing traffic, evaluating indicators, and producing verdicts.
 
 ## The Three Execution Forms
 

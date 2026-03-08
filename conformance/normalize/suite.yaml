@@ -724,7 +724,6 @@
       indicators:
         - surface: tool_description
           pattern:
-            target: "tools[*].description"
             condition:
               contains: "test"
   expected: |
@@ -1004,7 +1003,7 @@
 # ---------------------------------------------------------------------------
 
 - name: "N-001 trigger with event but no count gets count: 1"
-  id: NORM-008a
+  id: NORM-001i
   input: |
     oatf: "0.1"
     attack:
@@ -1060,7 +1059,7 @@
         logic: any
 
 - name: "N-001 trigger with event and explicit count: 3 is preserved"
-  id: NORM-008b
+  id: NORM-001j
   input: |
     oatf: "0.1"
     attack:
@@ -1121,7 +1120,7 @@
 # ---------------------------------------------------------------------------
 
 - name: "N-008 MCP tool without inputSchema gets default {type: object}"
-  id: NORM-008c
+  id: NORM-008a
   input: |
     oatf: "0.1"
     attack:
@@ -1157,7 +1156,7 @@
                         type: object
 
 - name: "N-008 MCP tool without description gets default empty string"
-  id: NORM-008d
+  id: NORM-008b
   input: |
     oatf: "0.1"
     attack:

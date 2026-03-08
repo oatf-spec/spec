@@ -21,6 +21,11 @@
         timestamp: null
   expected:
     result: exploited
+    evaluation_summary:
+      matched: 1
+      not_matched: 1
+      error: 0
+      skipped: 0
 
 - name: "None matched — not_exploited"
   id: VERDICT-ANY-02
@@ -38,6 +43,11 @@
         timestamp: null
   expected:
     result: not_exploited
+    evaluation_summary:
+      matched: 0
+      not_matched: 2
+      error: 0
+      skipped: 0
 
 - name: "One error — error takes precedence"
   id: VERDICT-ANY-03
@@ -55,6 +65,11 @@
         timestamp: null
   expected:
     result: error
+    evaluation_summary:
+      matched: 1
+      not_matched: 0
+      error: 1
+      skipped: 0
 
 - name: "All skipped — error (no evaluation occurred)"
   id: VERDICT-ANY-04
@@ -72,6 +87,11 @@
         timestamp: null
   expected:
     result: error
+    evaluation_summary:
+      matched: 0
+      not_matched: 0
+      error: 0
+      skipped: 2
 
 - name: "Mixed skipped and matched — exploited"
   id: VERDICT-ANY-05
@@ -89,6 +109,11 @@
         timestamp: null
   expected:
     result: exploited
+    evaluation_summary:
+      matched: 1
+      not_matched: 0
+      error: 0
+      skipped: 1
 
 - name: "All three indicators matched — exploited"
   id: VERDICT-ANY-06
@@ -110,3 +135,8 @@
         timestamp: null
   expected:
     result: exploited
+    evaluation_summary:
+      matched: 3
+      not_matched: 0
+      error: 0
+      skipped: 0

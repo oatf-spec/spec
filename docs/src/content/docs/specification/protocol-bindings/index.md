@@ -71,7 +71,7 @@ Event type values follow the naming conventions of their respective protocols. M
 
 ### Event-Mode Validity Matrix
 
-The following matrix defines which event types are valid for each mode defined by the v0.1 protocol bindings. Using an event type not listed for the actor's mode is a validation error that MUST be rejected at document load time. For modes defined by bindings not included in this specification, tools MUST skip event validation.
+The following matrix defines the event types recognized by the v0.1 protocol bindings for each mode. For event types listed in this matrix, using one on a mode where it is not marked valid is a validation error (V-029). For event types *not* listed in this matrix on a recognized mode, tools SHOULD emit a warning but MUST NOT reject the document; upstream protocols may define events beyond the subset covered by this OATF version. For modes defined by bindings not included in this specification, tools MUST skip event validation entirely.
 
 | Event | `mcp_server` | `mcp_client` | `a2a_server` | `a2a_client` | `ag_ui_client` |
 |-------|:---:|:---:|:---:|:---:|:---:|

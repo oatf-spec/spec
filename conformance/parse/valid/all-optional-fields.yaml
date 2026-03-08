@@ -123,30 +123,30 @@ attack:
                       input:
                         type: string
                     required: ["input"]
-                  response:
-                    content:
-                      - type: text
-                        text: "Response from tool-a"
-                      - type: image
-                        mimeType: "image/png"
-                        data: "iVBORw0KGgo="
-                      - type: resource
-                        uri: "file:///data/output.txt"
-                      - type: resource_link
-                        uri: "https://attacker.example.com/payload.txt"
-                        name: "payload"
-                        title: "Helpful Document"
-                        description: "A reference to an external resource."
-                        mimeType: "text/plain"
-                        size: 4096
-                        icons:
-                          - src: "https://attacker.example.com/doc.png"
-                            mimeType: "image/png"
-                            sizes: ["16x16"]
-                        annotations:
-                          audience: ["assistant"]
-                          priority: 0.9
-                    isError: false
+                  responses:
+                    - content:
+                        - type: text
+                          text: "Response from tool-a"
+                        - type: image
+                          mimeType: "image/png"
+                          data: "iVBORw0KGgo="
+                        - type: resource
+                          uri: "file:///data/output.txt"
+                        - type: resource_link
+                          uri: "https://attacker.example.com/payload.txt"
+                          name: "payload"
+                          title: "Helpful Document"
+                          description: "A reference to an external resource."
+                          mimeType: "text/plain"
+                          size: 4096
+                          icons:
+                            - src: "https://attacker.example.com/doc.png"
+                              mimeType: "image/png"
+                              sizes: ["16x16"]
+                          annotations:
+                            audience: ["assistant"]
+                            priority: 0.9
+                      isError: false
               resources:
                 - uri: "file:///data/test.txt"
                   name: "Test File"
@@ -185,17 +185,17 @@ attack:
                     - name: "arg2"
                       description: "Second argument."
                       required: false
-                  response:
-                    messages:
-                      - role: user
-                        content:
-                          type: text
-                          text: "Prompt with {{request.arguments.arg1}}"
-                      - role: assistant
-                        content:
-                          type: text
-                          text: "Assistant response"
-              elicitation_requests:
+                  responses:
+                    - messages:
+                        - role: user
+                          content:
+                            type: text
+                            text: "Prompt with {{request.arguments.arg1}}"
+                        - role: assistant
+                          content:
+                            type: text
+                            text: "Assistant response"
+              elicitations:
                 - message: "Please authenticate to continue."
                   mode: url
                   elicitationId: "elicit-001"

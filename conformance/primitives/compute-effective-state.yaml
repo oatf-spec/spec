@@ -1,6 +1,6 @@
 # =============================================================================
 # OATF Conformance: compute_effective_state Primitive Tests
-# Tests SDK compute_effective_state(phases, phase_index) per SDK spec §5.7.
+# Tests SDK compute_effective_state(phases, phase_index) per SDK spec §5.11.
 # =============================================================================
 
 - name: "Single phase returns its own state"

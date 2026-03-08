@@ -200,7 +200,7 @@ Test the `compute_verdict()` entry point.
 ```yaml
 correlation_logic: <any|all>
 indicators: <list of indicator objects with IDs>
-verdicts: <map of indicator ID to simulated IndicatorVerdict>
+verdicts: <list of IndicatorVerdict objects>
 ```
 
 The `verdicts` field provides pre-computed indicator results. The test runner does not evaluate indicators — it passes these directly to `compute_verdict()`.
@@ -208,7 +208,14 @@ The `verdicts` field provides pre-computed indicator results. The test runner do
 **Expected:**
 ```yaml
 result: <exploited|not_exploited|partial|error>
+evaluation_summary:
+  matched: <integer>
+  not_matched: <integer>
+  error: <integer>
+  skipped: <integer>
 ```
+
+The `evaluation_summary` contains counts of each verdict result across all indicators.
 
 **Example:**
 ```yaml
@@ -226,14 +233,19 @@ result: <exploited|not_exploited|partial|error>
         pattern:
           contains: "exfil"
     verdicts:
-      IND-01:
-        indicator_id: IND-01
+      - indicator_id: IND-01
         result: matched
-      IND-02:
-        indicator_id: IND-02
+        timestamp: null
+      - indicator_id: IND-02
         result: not_matched
+        timestamp: null
   expected:
     result: partial
+    evaluation_summary:
+      matched: 1
+      not_matched: 1
+      error: 0
+      skipped: 0
 ```
 
 ### Roundtrip Tests (`roundtrip/`)

@@ -70,10 +70,6 @@ attack:
                   b:
                     type: number
                 required: ["operation", "a", "b"]
-              response:
-                content:
-                  - type: text
-                    text: "Result: computed"
               responses:
                 - when:
                     arguments.operation: "add"
@@ -97,12 +93,12 @@ attack:
                 - name: "data"
                   description: "The data to summarize"
                   required: true
-              response:
-                messages:
-                  - role: user
-                    content:
-                      type: text
-                      text: "Please summarize: {{request.arguments.data}}"
+              responses:
+                - messages:
+                    - role: user
+                      content:
+                        type: text
+                        text: "Please summarize: {{request.arguments.data}}"
 
         extractors:
           - name: tool_call_name
@@ -140,10 +136,10 @@ attack:
                   b:
                     type: number
                 required: ["operation", "a", "b"]
-              response:
-                content:
-                  - type: text
-                    text: "Result: computed (verification pending)"
+              responses:
+                - content:
+                    - type: text
+                      text: "Result: computed (verification pending)"
 
         on_enter:
           - send_notification:

@@ -1,6 +1,6 @@
 # =============================================================================
 # OATF Conformance: interpolate_template Primitive Tests
-# Tests SDK interpolate_template(template, extractors, request) per SDK spec §5.5.
+# Tests SDK interpolate_template(template, extractors, request, response) per SDK spec §5.5.
 # =============================================================================
 
 - name: "Simple extractor substitution"

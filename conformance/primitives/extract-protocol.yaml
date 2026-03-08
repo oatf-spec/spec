@@ -1,0 +1,46 @@
+# =============================================================================
+# OATF Conformance: extract_protocol Primitive Tests
+# Tests SDK extract_protocol(mode) per SDK spec §5.10.
+# =============================================================================
+
+- name: "Strip _server suffix from mcp_server"
+  id: EPROT-001
+  input:
+    mode: "mcp_server"
+  expected: "mcp"
+
+- name: "Strip _client suffix from a2a_client"
+  id: EPROT-002
+  input:
+    mode: "a2a_client"
+  expected: "a2a"
+
+- name: "Strip _client suffix from ag_ui_client"
+  id: EPROT-003
+  input:
+    mode: "ag_ui_client"
+  expected: "ag_ui"
+
+- name: "Strip _server suffix from a2a_server"
+  id: EPROT-004
+  input:
+    mode: "a2a_server"
+  expected: "a2a"
+
+- name: "Strip _client suffix from mcp_client"
+  id: EPROT-005
+  input:
+    mode: "mcp_client"
+  expected: "mcp"
+
+- name: "Custom protocol with _server suffix"
+  id: EPROT-006
+  input:
+    mode: "custom_proto_server"
+  expected: "custom_proto"
+
+- name: "Custom protocol with _client suffix"
+  id: EPROT-007
+  input:
+    mode: "custom_proto_client"
+  expected: "custom_proto"

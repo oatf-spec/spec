@@ -131,3 +131,35 @@
     value:
       name: "test"
   expected: false
+
+- name: "Predicate with exists: false on absent field returns true"
+  id: PRED-013
+  input:
+    predicate:
+      token:
+        exists: false
+    value:
+      name: "test"
+  expected: true
+
+- name: "Predicate with exists: false on present field returns false"
+  id: PRED-014
+  input:
+    predicate:
+      token:
+        exists: false
+    value:
+      token: "abc123"
+      name: "test"
+  expected: false
+
+- name: "Predicate with exists: false combined with other operator is always false"
+  id: PRED-015
+  input:
+    predicate:
+      token:
+        exists: false
+        contains: "abc"
+    value:
+      name: "test"
+  expected: false

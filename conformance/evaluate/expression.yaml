@@ -7,7 +7,7 @@
   id: EVAL-CEL-01
   input:
     indicator:
-      surface: "tool_list"
+      surface: "tool_description"
       expression:
         cel: "size(message.tools) > 2"
         variables: null
@@ -23,7 +23,7 @@
   id: EVAL-CEL-02
   input:
     indicator:
-      surface: "tool_list"
+      surface: "tool_description"
       expression:
         cel: "size(message.tools) > 10"
         variables: null
@@ -66,7 +66,7 @@
   id: EVAL-CEL-05
   input:
     indicator:
-      surface: "tool_list"
+      surface: "tool_description"
       expression:
         cel: "true"
         variables: null
@@ -89,7 +89,7 @@
     cel_evaluator: present
   expected: "matched"
 
-- name: "Missing field access evaluates to not_matched"
+- name: "Missing field access evaluates to error"
   id: EVAL-CEL-07
   input:
     indicator:
@@ -100,7 +100,7 @@
     message:
       other: 1
     cel_evaluator: present
-  expected: "not_matched"
+  expected: "error"
 
 - name: "Non-boolean CEL result returns error (type_error)"
   id: EVAL-CEL-08

@@ -59,7 +59,7 @@ export default defineConfig({
               label: 'Protocol Bindings',
               items: [
                 { label: 'Architecture', slug: 'specification/protocol-bindings' },
-                { label: 'MCP', slug: 'specification/protocol-bindings/mcp', badge: { text: 'Stable', variant: 'success' } },
+                { label: 'MCP', slug: 'specification/protocol-bindings/mcp', badge: { text: 'Provisional', variant: 'caution' } },
                 { label: 'A2A', slug: 'specification/protocol-bindings/a2a', badge: { text: 'Provisional', variant: 'caution' } },
                 { label: 'AG-UI', slug: 'specification/protocol-bindings/ag-ui', badge: { text: 'Provisional', variant: 'caution' } },
                 { label: 'LLM Synthesis', slug: 'specification/protocol-bindings/llm-synthesis' },

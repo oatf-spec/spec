@@ -312,7 +312,7 @@ When `examples` is present, at least one of `positive` or `negative` MUST be pro
 | `result` | `IndicatorResult` | Yes | One of: `matched`, `not_matched`, `error`, `skipped`. |
 | `timestamp` | `Optional<DateTime>` | No | When the verdict was produced. |
 | `evidence` | `Optional<String>` | No | The matched content or error diagnostic. |
-| `source` | `Optional<String>` | No | The tool that produced the verdict. |
+| `source` | `Optional<String>` | No | The tool or engine that produced the verdict. Populated by the consuming tool, not by SDK evaluation functions. |
 
 ### AttackVerdict
 
@@ -323,7 +323,7 @@ When `examples` is present, at least one of `positive` or `negative` MUST be pro
 | `indicator_verdicts` | `List<IndicatorVerdict>` | Yes | All individual indicator results. |
 | `evaluation_summary` | `EvaluationSummary` | Yes | Counts of each indicator result. Prevents `skipped → not_matched` aggregation from masking evaluation gaps. |
 | `timestamp` | `Optional<DateTime>` | No | When the verdict was produced. |
-| `source` | `Optional<String>` | No | The tool that produced the verdict. |
+| `source` | `Optional<String>` | No | The tool or engine that produced the verdict. Populated by the consuming tool, not by SDK evaluation functions. |
 
 ### EvaluationSummary
 
@@ -419,9 +419,63 @@ SDKs MUST maintain a registry mapping each `Surface` value to its protocol and d
 
 ## 2.22 Event-Mode Validity Registry
 
-SDKs MUST maintain a registry mapping each event type to the set of modes for which it is valid. This registry is used during validation (V-029) to reject trigger events that are invalid for the actor's resolved mode. Events are identified by their base name (without qualifier).
+SDKs MUST maintain a registry mapping each event type to the set of modes for which it is valid. This registry is used during validation (V-029) to check trigger events against the actor's resolved mode. Events listed in the registry that are not valid for the actor's mode MUST be rejected. Events not listed in the registry on a recognized mode SHOULD produce a warning but MUST NOT be rejected, since upstream protocols may define events beyond the subset covered by this OATF version. Events are identified by their base name (without qualifier).
 
-SDKs MUST define this as a compile-time constant data structure. The complete mapping for v0.1 bindings is defined in the Event-Mode Validity Matrix ([format specification §7](/specification/protocol-bindings/)). Event types with qualifiers are validated by stripping the qualifier (everything after the first `:`) and looking up the base event name. For modes not present in the registry (from unrecognized protocol bindings), SDKs MUST skip event type validation.
+SDKs MUST define this as a compile-time constant data structure. Event types with qualifiers are validated by stripping the qualifier (everything after the first `:`) and looking up the base event name. For modes not present in the registry (from unrecognized protocol bindings), SDKs MUST skip event type validation.
+
+**v0.1 Event-Mode Validity Matrix:**
+
+This table is reproduced from [format specification §7](/specification/protocol-bindings/) for implementor convenience. The format specification is authoritative.
+
+| Event | `mcp_server` | `mcp_client` | `a2a_server` | `a2a_client` | `ag_ui_client` |
+|-------|:---:|:---:|:---:|:---:|:---:|
+| `initialize` | ✓ | ✓ | | | |
+| `tools/list` | ✓ | ✓ | | | |
+| `tools/call` | ✓ | ✓ | | | |
+| `resources/list` | ✓ | ✓ | | | |
+| `resources/read` | ✓ | ✓ | | | |
+| `resources/subscribe` | ✓ | | | | |
+| `resources/unsubscribe` | ✓ | | | | |
+| `prompts/list` | ✓ | ✓ | | | |
+| `prompts/get` | ✓ | ✓ | | | |
+| `completion/complete` | ✓ | | | | |
+| `sampling/createMessage` | ✓ | ✓ | | | |
+| `elicitation/create` | ✓ | ✓ | | | |
+| `tasks/get` | ✓ | ✓ | ✓ | | |
+| `tasks/result` | ✓ | ✓ | | | |
+| `tasks/list` | ✓ | | | | |
+| `tasks/cancel` | ✓ | | ✓ | | |
+| `roots/list` | ✓ | ✓ | | | |
+| `ping` | ✓ | ✓ | | | |
+| `notifications/tools/list_changed` | | ✓ | | | |
+| `notifications/resources/list_changed` | | ✓ | | | |
+| `notifications/resources/updated` | | ✓ | | | |
+| `notifications/prompts/list_changed` | | ✓ | | | |
+| `notifications/tasks/status` | | ✓ | | | |
+| `notifications/elicitation/complete` | | ✓ | | | |
+| `message/send` | | | ✓ | ✓ | |
+| `message/stream` | | | ✓ | ✓ | |
+| `tasks/resubscribe` | | | ✓ | | |
+| `tasks/pushNotification/set` | | | ✓ | | |
+| `tasks/pushNotification/get` | | | ✓ | | |
+| `agent_card/get` | | | ✓ | ✓ | |
+| `task/status` | | | | ✓ | |
+| `task/artifact` | | | | ✓ | |
+| `run_started` | | | | | ✓ |
+| `run_finished` | | | | | ✓ |
+| `run_error` | | | | | ✓ |
+| `step_started` | | | | | ✓ |
+| `step_finished` | | | | | ✓ |
+| `text_message_start` | | | | | ✓ |
+| `text_message_content` | | | | | ✓ |
+| `text_message_end` | | | | | ✓ |
+| `tool_call_start` | | | | | ✓ |
+| `tool_call_end` | | | | | ✓ |
+| `state_snapshot` | | | | | ✓ |
+| `state_delta` | | | | | ✓ |
+| `messages_snapshot` | | | | | ✓ |
+| `interrupt` | | | | | ✓ |
+| `custom` | | | | | ✓ |
 
 ## 2.23 SynthesizeBlock
 

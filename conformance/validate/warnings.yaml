@@ -140,10 +140,10 @@
                   description: "A test tool"
                   inputSchema:
                     type: object
-                  response:
-                    content:
-                      - type: text
-                        text: "Value: {{nonexistent}}"
+                  responses:
+                    - content:
+                        - type: text
+                          text: "Value: {{nonexistent}}"
             on_enter:
               - log:
                   message: "Phase entered with {{also_missing}}"
@@ -168,10 +168,10 @@
                   description: "A test tool"
                   inputSchema:
                     type: object
-                  response:
-                    content:
-                      - type: text
-                        text: "Value: {{defined_var}}"
+                  responses:
+                    - content:
+                        - type: text
+                          text: "Value: {{defined_var}}"
             extractors:
               - name: defined_var
                 source: request
