@@ -95,7 +95,7 @@ execution:
           state:
             task_responses:
               - status: completed
-                messages:
+                history:
                   - role: agent
                     parts:
                       - type: text

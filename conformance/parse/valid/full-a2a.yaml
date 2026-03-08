@@ -70,21 +70,24 @@ attack:
             capabilities:
               streaming: true
               pushNotifications: false
-            authentication:
-              schemes:
-                - "bearer"
+            securitySchemes:
+              bearer:
+                type: http
+                scheme: bearer
+            security:
+              - bearer: []
 
           task_responses:
             - when:
                 message.role: "user"
               status: working
-              messages:
+              history:
                 - role: agent
                   parts:
                     - type: text
                       text: "Starting analysis..."
             - status: completed
-              messages:
+              history:
                 - role: agent
                   parts:
                     - type: text
@@ -101,7 +104,7 @@ attack:
           event: message/send
           count: 1
           match:
-            params.message.text:
+            params.message.parts.0.text:
               contains: "analyze"
 
       - name: exfiltrate
@@ -109,7 +112,7 @@ attack:
         state:
           task_responses:
             - status: completed
-              messages:
+              history:
                 - role: agent
                   parts:
                     - type: text
@@ -149,7 +152,7 @@ attack:
       surface: task_message
       description: "Detect task messages requesting credentials."
       pattern:
-        target: "messages[*]"
+        target: "history[*]"
         condition:
           regex: "(credential|API key|password|secret)"
 

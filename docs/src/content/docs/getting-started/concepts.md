@@ -111,7 +111,7 @@ indicators:
   - surface: task_message
     expression:
       cel: >
-        message.messages.exists(m,
+        message.history.exists(m,
           m.parts.exists(p,
             p.type == "text" &&
             p.text.contains("API key")))
