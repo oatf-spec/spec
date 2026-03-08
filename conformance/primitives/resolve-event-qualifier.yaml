@@ -44,6 +44,17 @@
       toolCallId: "tc-001"
   expected: "search"
 
+- name: "AG-UI tool_call_args resolves qualifier from toolCallName"
+  id: QUAL-005a
+  input:
+    protocol: "ag_ui"
+    base_event: "tool_call_args"
+    content:
+      toolCallName: "search"
+      toolCallId: "tc-001"
+      delta: '{"query": "test"}'
+  expected: "search"
+
 - name: "AG-UI tool_call_end resolves qualifier from toolCallName"
   id: QUAL-005
   input:
