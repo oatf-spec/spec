@@ -247,23 +247,21 @@ MCP_TYPE_MAP = {
     "ServerCapabilities": {
         "cel": ["message.capabilities"],
         "state": ["capabilities"],
-        # completions, logging, experimental are not attack surfaces;
-        # the binding documents tools, resources, prompts, elicitation, tasks
-        "prose_covered": {"completions", "logging", "experimental"},
+        # completions, logging, experimental are not attack surfaces
+        "ignored": {"completions", "logging", "experimental"},
     },
 
     # --- Tool types ---
     "Tool": {
-        "cel": ["message.tools"],
+        "cel": ["message.tools[]"],
         "state": ["tools"],
     },
     "ToolAnnotations": {
-        # Inline sub-fields from CEL get flattened under message.tools
-        "cel": ["message.tools", "message.tools.annotations"],
+        "cel": ["message.tools[].annotations"],
         "state": ["tools.annotations"],
     },
     "ToolExecution": {
-        "cel": ["message.tools", "message.tools.execution"],
+        "cel": ["message.tools[].execution"],
         "state": ["tools.execution"],
     },
     "CallToolRequestParams": {
@@ -279,70 +277,66 @@ MCP_TYPE_MAP = {
 
     # --- Content types ---
     "TextContent": {
-        "cel": ["message.content"],
+        "cel": ["message.content[]"],
         "state": ["tools.responses.content", "prompts.responses.messages.content"],
-        # "type" is documented as enum discriminator, not by field name
-        "prose_covered": {"type"},
     },
     "ImageContent": {
-        "cel": ["message.content"],
+        "cel": ["message.content[]"],
         "state": ["tools.responses.content"],
-        "prose_covered": {"type"},
     },
     "AudioContent": {
-        "cel": ["message.content"],
+        "cel": ["message.content[]"],
         "state": ["tools.responses.content"],
-        "prose_covered": {"type"},
     },
     "EmbeddedResource": {
-        "cel": ["message.content"],
+        "cel": ["message.content[]"],
         "state": [],  # not separately in state
-        "prose_covered": {"type"},
     },
     "ResourceLink": {
-        "cel": ["message.content"],
+        "cel": ["message.content[]"],
         "state": ["tools.responses.content"],
-        "prose_covered": {"type"},
     },
     "Annotations": {
-        "cel": ["message.content.annotations", "message.resources.annotations"],
+        "cel": ["message.content[].annotations", "message.resources[].annotations"],
         "state": ["tools.responses.content.annotations", "resources.annotations"],
     },
     "Icon": {
-        "cel": ["message.tools"],  # inline sub-fields under tools
+        "cel": ["message.tools[].icons[]", "message.resources[].icons[]",
+                "message.resourceTemplates[].icons[]", "message.prompts[].icons[]",
+                "message.serverInfo.icons[]", "message.content[].icons[]"],
         "state": ["server_info.icons", "tools.icons", "resources.icons",
                   "prompts.icons"],
     },
 
     # --- Resource types ---
     "Resource": {
-        "cel": ["message.resources"],
+        "cel": ["message.resources[]"],
         "state": ["resources"],
     },
     "TextResourceContents": {
-        "cel": ["message.contents"],
+        "cel": ["message.contents[]"],
         "state": ["resources.content"],
     },
     "BlobResourceContents": {
-        "cel": ["message.contents"],
+        "cel": ["message.contents[]"],
         "state": ["resources.content"],
     },
     "ResourceTemplate": {
-        "cel": ["message.resourceTemplates"],
+        "cel": ["message.resourceTemplates[]"],
         "state": ["resource_templates"],
     },
 
     # --- Prompt types ---
     "Prompt": {
-        "cel": ["message.prompts"],
+        "cel": ["message.prompts[]"],
         "state": ["prompts"],
     },
     "PromptArgument": {
-        "cel": ["message.prompts.arguments"],
+        "cel": ["message.prompts[].arguments[]"],
         "state": ["prompts.arguments"],
     },
     "PromptMessage": {
-        "cel": ["message.messages"],
+        "cel": ["message.messages[]"],
         "state": ["prompts.responses.messages"],
     },
     "GetPromptResult": {
@@ -362,10 +356,10 @@ MCP_TYPE_MAP = {
         "cel": [],
         "state": ["sampling_responses.content"],
         # stopReason is a response field, not modeled in state
-        "prose_covered": {"stopReason"},
+        "ignored": {"stopReason"},
     },
     "SamplingMessage": {
-        "cel": ["message.messages"],
+        "cel": ["message.messages[]"],
         "state": [],
     },
     "ModelPreferences": {
@@ -373,11 +367,11 @@ MCP_TYPE_MAP = {
         "state": [],
     },
     "ModelHint": {
-        "cel": ["message.modelPreferences"],  # hints[] inline
+        "cel": ["message.modelPreferences.hints[]"],
         "state": [],
     },
     "ToolChoice": {
-        "cel": ["message.toolChoice", "message"],
+        "cel": ["message.toolChoice"],
         "state": [],
     },
 
@@ -410,7 +404,7 @@ MCP_TYPE_MAP = {
 
     # --- Root types ---
     "Root": {
-        "cel": ["message.roots"],
+        "cel": ["message.roots[]"],
         "state": ["roots"],
     },
 
