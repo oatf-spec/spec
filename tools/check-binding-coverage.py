@@ -5,6 +5,16 @@ Compares upstream JSON schema type definitions against what's documented
 in the OATF protocol binding markdown files. Reports coverage gaps
 (missing fields, missing events, undocumented types).
 
+This is a *coverage* checker, not a *conformance* checker. It answers
+"is the field mentioned somewhere in the binding?" — not "is it described
+with the correct type, requiredness, or shape." Specifically:
+
+- Requiredness is displayed but not validated: a required upstream field
+  documented as optional in the binding still counts as covered.
+- A field covered in ANY mapped context counts as covered globally.
+  Context-specific omissions (e.g., a field present in Task CEL but
+  missing from SSE event CEL) are not detected.
+
 Usage:
     python3 tools/check-binding-coverage.py --protocol a2a --fetch
     python3 tools/check-binding-coverage.py --protocol a2a --strict
@@ -221,11 +231,319 @@ A2A_EXTRA_EVENTS = {
 }
 
 # ---------------------------------------------------------------------------
-# MCP 2025-11-25 configuration (stub — will be expanded)
+# MCP 2025-11-25 configuration
 # ---------------------------------------------------------------------------
 
-MCP_TYPE_MAP = {}   # TODO: populate when MCP binding reaches same rigor
-MCP_UNMAPPED = set()
+# _meta is MCP's generic extension point, present on nearly every type.
+# Not an attack surface — excluded from all MCP type checks.
+MCP_IGNORED_FIELDS = {"_meta"}
+
+MCP_TYPE_MAP = {
+    # --- Initialize / Server identity ---
+    "InitializeResult": {
+        "cel": ["message"],  # initialize response
+        "state": [],
+    },
+    "Implementation": {
+        "cel": ["message.serverInfo"],
+        "state": ["server_info"],
+    },
+    "ServerCapabilities": {
+        "cel": ["message.capabilities"],
+        "state": ["capabilities"],
+        # completions, logging, experimental are not attack surfaces;
+        # the binding documents tools, resources, prompts, elicitation, tasks
+        "prose_covered": {"completions", "logging", "experimental"},
+    },
+
+    # --- Tool types ---
+    "Tool": {
+        "cel": ["message.tools"],
+        "state": ["tools"],
+    },
+    "ToolAnnotations": {
+        # Inline sub-fields from CEL get flattened under message.tools
+        "cel": ["message.tools", "message.tools.annotations"],
+        "state": ["tools.annotations"],
+    },
+    "ToolExecution": {
+        "cel": ["message.tools", "message.tools.execution"],
+        "state": ["tools.execution"],
+    },
+    "CallToolRequestParams": {
+        "cel": ["message"],  # tools/call request
+        "state": ["actions"],
+        # task augmentation param is runtime-level, not documented per-field
+        "ignored": {"task"},
+    },
+    "CallToolResult": {
+        "cel": ["message"],  # tools/call response
+        "state": ["tools.responses"],
+    },
+
+    # --- Content types ---
+    "TextContent": {
+        "cel": ["message.content"],
+        "state": ["tools.responses.content", "prompts.responses.messages.content"],
+        # "type" is documented as enum discriminator, not by field name
+        "prose_covered": {"type"},
+    },
+    "ImageContent": {
+        "cel": ["message.content"],
+        "state": ["tools.responses.content"],
+        "prose_covered": {"type"},
+    },
+    "AudioContent": {
+        "cel": ["message.content"],
+        "state": ["tools.responses.content"],
+        "prose_covered": {"type"},
+    },
+    "EmbeddedResource": {
+        "cel": ["message.content"],
+        "state": [],  # not separately in state
+        "prose_covered": {"type"},
+    },
+    "ResourceLink": {
+        "cel": ["message.content"],
+        "state": ["tools.responses.content"],
+        "prose_covered": {"type"},
+    },
+    "Annotations": {
+        "cel": ["message.content.annotations", "message.resources.annotations"],
+        "state": ["tools.responses.content.annotations", "resources.annotations"],
+    },
+    "Icon": {
+        "cel": ["message.tools"],  # inline sub-fields under tools
+        "state": ["server_info.icons", "tools.icons", "resources.icons",
+                  "prompts.icons"],
+    },
+
+    # --- Resource types ---
+    "Resource": {
+        "cel": ["message.resources"],
+        "state": ["resources"],
+    },
+    "TextResourceContents": {
+        "cel": ["message.contents"],
+        "state": ["resources.content"],
+    },
+    "BlobResourceContents": {
+        "cel": ["message.contents"],
+        "state": ["resources.content"],
+    },
+    "ResourceTemplate": {
+        "cel": ["message.resourceTemplates"],
+        "state": [],
+    },
+
+    # --- Prompt types ---
+    "Prompt": {
+        "cel": ["message.prompts"],
+        "state": ["prompts"],
+    },
+    "PromptArgument": {
+        "cel": ["message.prompts.arguments"],
+        "state": ["prompts.arguments"],
+        # title is in the MCP schema but not in binding (added in 2025-11-25)
+    },
+    "PromptMessage": {
+        "cel": ["message.messages"],
+        "state": ["prompts.responses.messages"],
+    },
+    "GetPromptResult": {
+        "cel": ["message"],  # prompts/get response
+        "state": [],
+    },
+
+    # --- Sampling types ---
+    "CreateMessageRequestParams": {
+        "cel": ["message"],  # sampling/createMessage request
+        "state": [],
+        # Non-attack-relevant params
+        "ignored": {"task", "includeContext", "stopSequences", "temperature",
+                    "metadata"},
+    },
+    "CreateMessageResult": {
+        "cel": [],
+        "state": ["sampling_responses.content"],
+        # stopReason is a response field, not modeled in state
+        "prose_covered": {"stopReason"},
+    },
+    "SamplingMessage": {
+        "cel": ["message.messages"],
+        "state": [],
+    },
+    "ModelPreferences": {
+        "cel": ["message.modelPreferences"],
+        "state": [],
+    },
+    "ModelHint": {
+        "cel": ["message.modelPreferences"],  # hints[] inline
+        "state": [],
+    },
+    "ToolChoice": {
+        "cel": ["message.toolChoice", "message"],
+        "state": [],
+    },
+
+    # --- Elicitation types ---
+    "ElicitRequestFormParams": {
+        "cel": ["message"],  # elicitation/create request (form mode)
+        "state": ["elicitations"],
+        "ignored": {"task"},
+    },
+    "ElicitRequestURLParams": {
+        "cel": ["message"],  # elicitation/create request (url mode)
+        "state": ["elicitations"],
+        "ignored": {"task"},
+    },
+    "ElicitResult": {
+        "cel": ["message"],  # elicitation/create response
+        "state": ["elicitation_responses"],
+    },
+
+    # --- Task types (MCP) ---
+    "Task": {
+        "cel": ["message.task"],
+        "state": [],
+    },
+    "TaskStatus": {
+        "cel": [],
+        "state": [],
+        "enum": True,
+    },
+
+    # --- Root types ---
+    "Root": {
+        "cel": ["message.roots"],
+        "state": ["roots"],
+    },
+
+    # --- Enums ---
+    "Role": {
+        "cel": [],
+        "state": [],
+        "enum": True,
+    },
+}
+
+MCP_UNMAPPED = {
+    # JSON-RPC base/envelope types
+    "JSONRPCMessage", "JSONRPCRequest", "JSONRPCNotification",
+    "JSONRPCResponse", "JSONRPCResultResponse", "JSONRPCErrorResponse",
+    "Request", "RequestParams", "RequestId",
+    "Notification", "NotificationParams",
+    "Result", "EmptyResult",
+    "PaginatedRequest", "PaginatedRequestParams", "PaginatedResult",
+    "Error", "Cursor", "ProgressToken",
+
+    # Request envelope types
+    "InitializeRequest", "PingRequest",
+    "ListToolsRequest", "CallToolRequest",
+    "ListResourcesRequest", "ReadResourceRequest",
+    "ListResourceTemplatesRequest",
+    "SubscribeRequest", "UnsubscribeRequest",
+    "ListPromptsRequest", "GetPromptRequest", "CompleteRequest",
+    "CreateMessageRequest", "ElicitRequest",
+    "SetLevelRequest",
+    "GetTaskRequest", "CancelTaskRequest", "ListTasksRequest",
+    "GetTaskPayloadRequest",
+    "ListRootsRequest",
+
+    # Client capabilities (declared by agent, not attack-controlled)
+    "ClientCapabilities",
+
+    # Request params (not individually mapped — actions use simplified forms)
+    "InitializeRequestParams",
+    "ReadResourceRequestParams", "ResourceRequestParams",
+    "SubscribeRequestParams", "UnsubscribeRequestParams",
+    "GetPromptRequestParams",
+    "CompleteRequestParams",
+    "SetLevelRequestParams",
+    "PaginatedRequestParams",
+    "CancelledNotificationParams",
+    "TaskAugmentedRequestParams",
+
+    # Result envelope types
+    "ListToolsResult", "ListResourcesResult", "ReadResourceResult",
+    "ListResourceTemplatesResult",
+    "ListPromptsResult", "CompleteResult",
+    "ListRootsResult", "ListTasksResult",
+    "CreateTaskResult", "GetTaskResult", "CancelTaskResult",
+    "GetTaskPayloadResult",
+
+    # Notification envelope types
+    "InitializedNotification", "CancelledNotification",
+    "ToolListChangedNotification", "ResourceListChangedNotification",
+    "ResourceUpdatedNotification", "PromptListChangedNotification",
+    "ProgressNotification", "LoggingMessageNotification",
+    "RootsListChangedNotification",
+    "TaskStatusNotification", "ElicitationCompleteNotification",
+
+    # Notification params types
+    "ProgressNotificationParams",
+    "LoggingMessageNotificationParams",
+    "ResourceUpdatedNotificationParams",
+    "TaskStatusNotificationParams",
+
+    # Union types
+    "ClientNotification", "ClientRequest", "ClientResult",
+    "ServerNotification", "ServerRequest", "ServerResult",
+    "ContentBlock", "SamplingMessageContentBlock",
+    "ElicitRequestParams", "PrimitiveSchemaDefinition",
+    "EnumSchema", "SingleSelectEnumSchema", "MultiSelectEnumSchema",
+
+    # Elicitation schema types (form schema internals)
+    "BooleanSchema", "NumberSchema", "StringSchema",
+    "LegacyTitledEnumSchema",
+    "TitledSingleSelectEnumSchema", "UntitledSingleSelectEnumSchema",
+    "TitledMultiSelectEnumSchema", "UntitledMultiSelectEnumSchema",
+
+    # Base types (checked via concrete subtypes)
+    "BaseMetadata", "ResourceContents", "Icons",
+
+    # Error types
+    "URLElicitationRequiredError",
+
+    # Logging levels (not an attack surface)
+    "LoggingLevel",
+
+    # Content types checked via specific subtypes
+    "ToolResultContent", "ToolUseContent",
+
+    # Task metadata (internal)
+    "TaskMetadata", "RelatedTaskMetadata",
+
+    # Reference types (completion)
+    "PromptReference", "ResourceTemplateReference",
+
+    # Prompt message is mapped; sampling message is mapped
+    # PromptMessage is mapped above
+}
+
+# MCP JSON-RPC methods
+MCP_METHODS = {
+    "initialize", "ping",
+    "tools/list", "tools/call",
+    "resources/list", "resources/read",
+    "resources/subscribe", "resources/unsubscribe",
+    "prompts/list", "prompts/get",
+    "completion/complete",
+    "sampling/createMessage",
+    "elicitation/create",
+    "tasks/get", "tasks/result", "tasks/list", "tasks/cancel",
+    "roots/list",
+}
+
+# Notification events (not JSON-RPC methods but documented in binding)
+MCP_EXTRA_EVENTS = {
+    "notifications/tools/list_changed",
+    "notifications/resources/list_changed",
+    "notifications/resources/updated",
+    "notifications/prompts/list_changed",
+    "notifications/tasks/status",
+    "notifications/elicitation/complete",
+}
 
 # ---------------------------------------------------------------------------
 # Protocol registry
@@ -253,8 +571,9 @@ PROTOCOLS = {
         "binding_path": "docs/src/content/docs/specification/protocol-bindings/mcp.md",
         "type_map": MCP_TYPE_MAP,
         "unmapped_types": MCP_UNMAPPED,
-        "methods": set(),
-        "extra_events": set(),
+        "ignored_fields": MCP_IGNORED_FIELDS,
+        "methods": MCP_METHODS,
+        "extra_events": MCP_EXTRA_EVENTS,
     },
 }
 
@@ -457,12 +776,28 @@ def parse_binding_state_fields(text):
 def parse_binding_events(text):
     """Extract event names from event tables in the binding.
 
+    Only scans tables within "Event Types" sections to avoid picking up
+    surface names or other backtick-quoted table entries.
+
     Returns a set of event names like:
         {"message/send", "tasks/get", "agent_card/get", ...}
     """
     events = set()
+    in_event_section = False
 
     for line in text.split("\n"):
+        # Detect event type section headers
+        if re.search(r"Event Types", line, re.IGNORECASE) and re.match(r"^##", line):
+            in_event_section = True
+            continue
+        # Stop at next major section (but not sub-sections within events)
+        if in_event_section and re.match(r"^##\s", line) and "Event" not in line:
+            in_event_section = False
+            continue
+
+        if not in_event_section:
+            continue
+
         # Match table rows: | `event/name` | ...
         m = re.match(r"^\|\s*`([^`]+)`\s*\|", line)
         if m:
@@ -570,15 +905,33 @@ def analyze_type_coverage(protocol_key, schema, binding_text):
             })
             continue
 
-        # Enum types — check values, not fields
+        # Enum types — check values against binding text
         if mapping.get("enum"):
             enum_vals = type_def.get("enum", [])
+            enum_results = []
+            for val in enum_vals:
+                # Check if the enum value appears in the binding text.
+                # Search for the value in backticks, quotes, or as a bare word
+                # in enum() declarations or status lists.
+                found = (
+                    f"`{val}`" in binding_text
+                    or f'"{val}"' in binding_text
+                    or f"'{val}'" in binding_text
+                    or re.search(rf"\benum\([^)]*\b{re.escape(val)}\b", binding_text)
+                    is not None
+                )
+                enum_results.append({
+                    "name": val,
+                    "cel": False,
+                    "state": False,
+                    "covered": found,
+                })
+            covered = sum(1 for r in enum_results if r["covered"])
             results.append({
                 "type": type_name,
                 "total": len(enum_vals),
-                "covered": len(enum_vals),
-                "fields": [{"name": v, "cel": False, "state": True, "covered": True}
-                           for v in enum_vals],
+                "covered": covered,
+                "fields": enum_results,
                 "enum": True,
             })
             continue
@@ -588,6 +941,15 @@ def analyze_type_coverage(protocol_key, schema, binding_text):
 
         if not upstream_fields:
             # Union or enum type with no properties
+            continue
+
+        # Remove globally and per-type ignored fields before checking
+        global_ignored = cfg.get("ignored_fields", set())
+        type_ignored = mapping.get("ignored", set())
+        all_ignored = global_ignored | type_ignored
+        upstream_fields = upstream_fields - all_ignored
+
+        if not upstream_fields:
             continue
 
         cel_paths = mapping.get("cel", [])
@@ -741,8 +1103,8 @@ def print_text_report(protocol_key, type_results, event_results, schema):
     return len(gap_types) == 0 and not event_results["missing"] and not unknown
 
 
-def print_json_report(protocol_key, type_results, event_results, schema):
-    """Print machine-readable JSON report."""
+def build_json_report(protocol_key, type_results, event_results, schema):
+    """Build machine-readable JSON report dict."""
     cfg = PROTOCOLS[protocol_key]
     unknown = discover_unmapped_types(protocol_key, schema)
 
@@ -769,8 +1131,7 @@ def print_json_report(protocol_key, type_results, event_results, schema):
                   and not unknown),
     }
 
-    print(json.dumps(report, indent=2))
-    return report["summary"]["clean"]
+    return report
 
 
 def print_discover(protocol_key, schema):
@@ -794,26 +1155,31 @@ def print_discover(protocol_key, schema):
 # ---------------------------------------------------------------------------
 
 def run_protocol(protocol_key, args):
-    """Run coverage check for a single protocol. Returns True if clean."""
+    """Run coverage check for a single protocol.
+
+    Returns (clean: bool, json_report: dict|None).
+    In JSON mode, the report dict is returned for aggregation by main().
+    In text mode, output is printed directly and json_report is None.
+    """
     cfg = PROTOCOLS[protocol_key]
 
     if not cfg["type_map"]:
         print(f"\n{protocol_key.upper()}: type map not yet configured, skipping.",
               file=sys.stderr)
-        return True
+        return True, None
 
     # Fetch/load schema
     schema = fetch_schema(protocol_key, force=args.fetch)
 
     # Discover mode
     if args.discover:
-        return print_discover(protocol_key, schema)
+        return print_discover(protocol_key, schema), None
 
     # Load binding
     binding_path = REPO_ROOT / cfg["binding_path"]
     if not binding_path.exists():
         print(f"ERROR: Binding not found: {binding_path}", file=sys.stderr)
-        return False
+        return False, None
     binding_text = binding_path.read_text()
 
     # Analyze
@@ -822,9 +1188,11 @@ def run_protocol(protocol_key, args):
 
     # Report
     if args.json:
-        return print_json_report(protocol_key, type_results, event_results, schema)
+        report = build_json_report(protocol_key, type_results, event_results, schema)
+        return report["summary"]["clean"], report
     else:
-        return print_text_report(protocol_key, type_results, event_results, schema)
+        clean = print_text_report(protocol_key, type_results, event_results, schema)
+        return clean, None
 
 
 def main():
@@ -844,11 +1212,21 @@ def main():
 
     protocols = ["a2a", "mcp"] if args.protocol == "all" else [args.protocol]
     all_clean = True
+    json_reports = []
 
     for p in protocols:
-        clean = run_protocol(p, args)
+        clean, report = run_protocol(p, args)
         if not clean:
             all_clean = False
+        if report is not None:
+            json_reports.append(report)
+
+    # In JSON mode, emit a single valid JSON document
+    if args.json and json_reports:
+        if len(json_reports) == 1:
+            print(json.dumps(json_reports[0], indent=2))
+        else:
+            print(json.dumps(json_reports, indent=2))
 
     if args.strict and not all_clean:
         sys.exit(1)
