@@ -97,20 +97,14 @@ A2A_TYPE_MAP = {
     "TextPart": {
         "cel": ["message.parts[]"],
         "state": ["parts"],
-        # "text" is documented as a kind-specific field, not by name
-        "prose_covered": {"text"},
     },
     "FilePart": {
         "cel": ["message.parts[]"],
         "state": ["parts"],
-        # "file" is documented as a kind-specific field, not by name
-        "prose_covered": {"file"},
     },
     "DataPart": {
         "cel": ["message.parts[]"],
         "state": ["parts"],
-        # "data" is documented as a kind-specific field, not by name
-        "prose_covered": {"data"},
     },
     "MessageSendParams": {
         "cel": [],
