@@ -74,8 +74,8 @@ For Agent Card responses (`agent_card/get`), `message` contains:
 - `message.url`: The agent URL.
 - `message.version`: The agent card version.
 - `message.protocolVersion`: The A2A protocol version (e.g., `"0.3.0"`).
-- `message.skills[]`: Array of skills, each with `id`, `name`, `description`, `tags[]`, `examples[]`, `inputModes[]`, `outputModes[]`.
-- `message.capabilities`: Object with `streaming`, `pushNotifications`.
+- `message.skills[]`: Array of skills, each with `id`, `name`, `description`, `tags[]`, `examples[]`, `inputModes[]`, `outputModes[]`, `security[][]`.
+- `message.capabilities`: Object with `streaming`, `pushNotifications`, `stateTransitionHistory`, `extensions[]`.
 - `message.defaultInputModes[]`: Array of default input MIME types.
 - `message.defaultOutputModes[]`: Array of default output MIME types.
 - `message.provider`: Object with `organization`, `url`.
@@ -83,19 +83,23 @@ For Agent Card responses (`agent_card/get`), `message` contains:
 - `message.iconUrl`: Icon URL.
 
 For server-mode request events (`message/send`, `message/stream` on `a2a_server`), `message` contains the inbound `params.message` (a Message object):
+- `message.kind`: The literal `"message"`.
 - `message.role`: The sender role (`"user"` or `"agent"`).
-- `message.parts[]`: Array of content parts, each with `type` and type-specific fields (e.g., `text`, `file`, `data`).
+- `message.parts[]`: Array of content parts, each with `kind` and kind-specific fields (e.g., `"text"`, `"file"`, `"data"`). Each part may have `metadata`.
 - `message.messageId`: The message ID.
 - `message.contextId`: The context ID linking related tasks.
 - `message.taskId`: The task ID (when continuing an existing task).
+- `message.referenceTaskIds[]`: Array of referenced task IDs.
+- `message.extensions[]`: Array of extension identifiers.
 - `message.metadata`: Untyped key-value metadata attached to the message.
 
 For client-mode response events (`message/send`, `message/stream` on `a2a_client`), `message` contains the response payload. When the response is a Task:
+- `message.kind`: The literal `"task"`.
 - `message.id`: The task ID.
 - `message.contextId`: The context ID linking related tasks.
-- `message.status.state`: The task status.
-- `message.history[]`: Array of messages, each with `role` and `parts[]`.
-- `message.artifacts[]`: Array of artifacts, each with `name` and `parts[]`.
+- `message.status`: Object with `state`, `timestamp` (required, RFC 3339), and `message` (optional Message object).
+- `message.history[]`: Array of messages, each with `kind`, `role`, and `parts[]`.
+- `message.artifacts[]`: Array of artifacts, each with `artifactId`, `name`, `description`, and `parts[]`.
 - `message.metadata`: Untyped key-value metadata attached to the task.
 
 When the response is a direct Message (no task created), the structure matches the server-mode request shape above.
@@ -116,29 +120,34 @@ state:
       - id: string
         name: string
         description: string
-        tags: string[]?
+        tags: string[]                     # required (may be empty)
         examples: string[]?
         inputModes: string[]?
         outputModes: string[]?
+        security: object[][]?              # per-skill security requirements (OR-of-AND)
     capabilities:                          # required
       streaming: boolean?
       pushNotifications: boolean?
       stateTransitionHistory: boolean?
-      extensions: string[]?                # extension capability URIs
+      extensions:                          # optional AgentExtension[]
+        - uri: string                      # extension URI (required)
+          required: boolean?               # whether extension is required
+          description: string?
+          params: map?                     # extension-specific parameters
     defaultInputModes: string[]            # required (e.g., ["text/plain"])
     defaultOutputModes: string[]           # required (e.g., ["text/plain"])
     provider:                              # optional
       organization: string
-      url: string?
+      url: string                          # required
     documentationUrl: string?
     iconUrl: string?
     preferredTransport: string?            # "JSONRPC", "GRPC", "HTTP+JSON"
     supportsAuthenticatedExtendedCard: boolean?
     securitySchemes: map?                  # named security scheme definitions
-    security: object[]?                    # required security scheme combinations
+    security: object[][]?                  # required security scheme combinations (OR-of-AND)
     additionalInterfaces:                  # optional additional transport endpoints
       - url: string
-        transport: string?               # "JSONRPC", "GRPC", "HTTP+JSON"
+        transport: string                  # required: "JSONRPC", "GRPC", "HTTP+JSON"
     signatures:                            # optional JWS signatures (RFC 7515)
       - protected: string                # base64url-encoded JWS header
         signature: string                # base64url-encoded signature
@@ -149,16 +158,26 @@ state:
       status: enum(submitted, working, input-required, completed, failed, canceled, auth-required, rejected, unknown)
       metadata: map?                 # Untyped key-value metadata on the Task
       history:                     # Static content (mutually exclusive with synthesize)
-        - role: enum(agent, user)
+        - kind: "message"            # required literal
+          role: enum(agent, user)
           parts:
-            - type: enum(text, file, data)
-              # Type-specific fields
+            - kind: enum(text, file, data)
+              # Kind-specific fields
+              metadata: map?         # Per-part metadata
+          messageId: string?
+          referenceTaskIds: string[]?
+          extensions: string[]?
           metadata: map?             # Untyped key-value metadata on the Message
       artifacts:
-        - name: string?
+        - artifactId: string         # required artifact identifier
+          name: string?
+          description: string?
           parts:
-            - type: enum(text, file, data)
-              # Type-specific fields
+            - kind: enum(text, file, data)
+              # Kind-specific fields
+              metadata: map?         # Per-part metadata
+          extensions: string[]?
+          metadata: map?             # Untyped key-value metadata on the Artifact
       synthesize:                  # LLM generation (mutually exclusive with history/artifacts)
         prompt: string             # Supports {{template}} interpolation
 ```
@@ -175,18 +194,26 @@ When the phase mode is `a2a_client`, the phase state defines the client agent's 
 state:
   task_message:                        # The A2A message to send (MessageSendParams)
     message:
+      kind: "message"                  # required literal
       role: enum(user, agent)
       parts:
-        - type: enum(text, file, data)
-          # Type-specific fields
+        - kind: enum(text, file, data)
+          # Kind-specific fields
+          metadata: map?               # Per-part metadata
       messageId: string?
+      referenceTaskIds: string[]?
+      extensions: string[]?
       metadata: map?                   # Untyped key-value metadata on the Message
     configuration:                     # Optional: MessageSendConfiguration
       acceptedOutputModes: string[]?   # Acceptable response MIME types
       historyLength: integer?          # Max history entries to include in response
-      pushNotificationConfig:          # Inline push config for this request
+      pushNotificationConfig:          # Inline push config for this request (PushNotificationConfig)
         url: string
+        id: string?                    # Config identifier
         token: string?
+        authentication:                # Optional auth for push endpoint
+          schemes: string[]            # required authentication schemes
+          credentials: string?
       blocking: boolean?               # Block until terminal state. Default: false.
     metadata: map?                     # Request-level metadata
     synthesize:                        # LLM generation (mutually exclusive with message)
@@ -217,7 +244,7 @@ state:
       id: string?                      # Config identifier
       token: string?
       authentication:                  # Optional auth for push endpoint
-        scheme: string
+        schemes: string[]             # required authentication schemes
         credentials: string?
 
   get_authenticated_extended_card: boolean?   # Optional: request authenticated card

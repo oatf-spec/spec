@@ -306,9 +306,10 @@ attack:
             state:
               task_message:
                 message:
+                  kind: "message"
                   role: user
                   parts:
-                    - type: text
+                    - kind: text
                       text: "Requesting observation status."
 
   indicators:
