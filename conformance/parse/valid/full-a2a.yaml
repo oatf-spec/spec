@@ -79,7 +79,7 @@ attack:
                 type: http
                 scheme: bearer
             security:
-              - - bearer: []
+              - bearer: []
 
           task_responses:
             - when:

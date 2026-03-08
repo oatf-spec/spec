@@ -441,10 +441,10 @@ This table is reproduced from [format specification §7](/specification/protocol
 | `completion/complete` | ✓ | | | | |
 | `sampling/createMessage` | ✓ | ✓ | | | |
 | `elicitation/create` | ✓ | ✓ | | | |
-| `tasks/get` | ✓ | ✓ | ✓ | | |
+| `tasks/get` | ✓ | ✓ | ✓ | ✓ | |
 | `tasks/result` | ✓ | ✓ | | | |
 | `tasks/list` | ✓ | | | | |
-| `tasks/cancel` | ✓ | | ✓ | | |
+| `tasks/cancel` | ✓ | | ✓ | ✓ | |
 | `roots/list` | ✓ | ✓ | | | |
 | `ping` | ✓ | ✓ | | | |
 | `notifications/tools/list_changed` | | ✓ | | | |
@@ -455,11 +455,11 @@ This table is reproduced from [format specification §7](/specification/protocol
 | `notifications/elicitation/complete` | | ✓ | | | |
 | `message/send` | | | ✓ | ✓ | |
 | `message/stream` | | | ✓ | ✓ | |
-| `tasks/resubscribe` | | | ✓ | | |
-| `tasks/pushNotificationConfig/set` | | | ✓ | | |
-| `tasks/pushNotificationConfig/get` | | | ✓ | | |
-| `tasks/pushNotificationConfig/list` | | | ✓ | | |
-| `tasks/pushNotificationConfig/delete` | | | ✓ | | |
+| `tasks/resubscribe` | | | ✓ | ✓ | |
+| `tasks/pushNotificationConfig/set` | | | ✓ | ✓ | |
+| `tasks/pushNotificationConfig/get` | | | ✓ | ✓ | |
+| `tasks/pushNotificationConfig/list` | | | ✓ | ✓ | |
+| `tasks/pushNotificationConfig/delete` | | | ✓ | ✓ | |
 | `agent/getAuthenticatedExtendedCard` | | | ✓ | ✓ | |
 | `agent_card/get` | | | ✓ | ✓ | |
 | `task/status` | | | | ✓ | |

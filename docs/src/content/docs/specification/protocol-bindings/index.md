@@ -87,10 +87,10 @@ The following matrix defines the event types recognized by the v0.1 protocol bin
 | `completion/complete` | ✓ | | | | |
 | `sampling/createMessage` | ✓ | ✓ | | | |
 | `elicitation/create` | ✓ | ✓ | | | |
-| `tasks/get` | ✓ | ✓ | ✓ | | |
+| `tasks/get` | ✓ | ✓ | ✓ | ✓ | |
 | `tasks/result` | ✓ | ✓ | | | |
 | `tasks/list` | ✓ | | | | |
-| `tasks/cancel` | ✓ | | ✓ | | |
+| `tasks/cancel` | ✓ | | ✓ | ✓ | |
 | `roots/list` | ✓ | ✓ | | | |
 | `ping` | ✓ | ✓ | | | |
 | `notifications/tools/list_changed` | | ✓ | | | |
@@ -101,11 +101,11 @@ The following matrix defines the event types recognized by the v0.1 protocol bin
 | `notifications/elicitation/complete` | | ✓ | | | |
 | `message/send` | | | ✓ | ✓ | |
 | `message/stream` | | | ✓ | ✓ | |
-| `tasks/resubscribe` | | | ✓ | | |
-| `tasks/pushNotificationConfig/set` | | | ✓ | | |
-| `tasks/pushNotificationConfig/get` | | | ✓ | | |
-| `tasks/pushNotificationConfig/list` | | | ✓ | | |
-| `tasks/pushNotificationConfig/delete` | | | ✓ | | |
+| `tasks/resubscribe` | | | ✓ | ✓ | |
+| `tasks/pushNotificationConfig/set` | | | ✓ | ✓ | |
+| `tasks/pushNotificationConfig/get` | | | ✓ | ✓ | |
+| `tasks/pushNotificationConfig/list` | | | ✓ | ✓ | |
+| `tasks/pushNotificationConfig/delete` | | | ✓ | ✓ | |
 | `agent/getAuthenticatedExtendedCard` | | | ✓ | ✓ | |
 | `agent_card/get` | | | ✓ | ✓ | |
 | `task/status` | | | | ✓ | |

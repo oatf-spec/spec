@@ -51,6 +51,13 @@ A2A events are per-actor scoped. An actor's mode determines which events it obse
 |-------|-----------------|-------------|-----------|
 | `message/send` | `message/send` | Server responds to message | — |
 | `message/stream` | `message/stream` | Server opens SSE connection | — |
+| `tasks/get` | `tasks/get` | Server returns task status | — |
+| `tasks/cancel` | `tasks/cancel` | Server returns canceled task | — |
+| `tasks/resubscribe` | `tasks/resubscribe` | Server reopens SSE stream | — |
+| `tasks/pushNotificationConfig/set` | `tasks/pushNotificationConfig/set` | Server confirms push config | — |
+| `tasks/pushNotificationConfig/get` | `tasks/pushNotificationConfig/get` | Server returns push config | — |
+| `tasks/pushNotificationConfig/list` | `tasks/pushNotificationConfig/list` | Server returns push config list | — |
+| `tasks/pushNotificationConfig/delete` | `tasks/pushNotificationConfig/delete` | Server confirms push config deletion | — |
 | `task/status` | SSE `TaskStatusUpdateEvent` | Server streams status update | `:state` |
 | `task/artifact` | SSE `TaskArtifactUpdateEvent` | Server streams artifact | — |
 | `agent/getAuthenticatedExtendedCard` | `agent/getAuthenticatedExtendedCard` | Server returns authenticated card | — |
@@ -74,13 +81,19 @@ For Agent Card responses (`agent_card/get`), `message` contains:
 - `message.url`: The agent URL.
 - `message.version`: The agent card version.
 - `message.protocolVersion`: The A2A protocol version (e.g., `"0.3.0"`).
-- `message.skills[]`: Array of skills, each with `id`, `name`, `description`, `tags[]`, `examples[]`, `inputModes[]`, `outputModes[]`, `security[][]`.
+- `message.skills[]`: Array of skills, each with `id`, `name`, `description`, `tags[]`, `examples[]`, `inputModes[]`, `outputModes[]`, `security[]`.
 - `message.capabilities`: Object with `streaming`, `pushNotifications`, `stateTransitionHistory`, `extensions[]`.
 - `message.defaultInputModes[]`: Array of default input MIME types.
 - `message.defaultOutputModes[]`: Array of default output MIME types.
 - `message.provider`: Object with `organization`, `url`.
 - `message.documentationUrl`: Documentation URL.
 - `message.iconUrl`: Icon URL.
+- `message.preferredTransport`: Preferred transport (e.g., `"JSONRPC"`).
+- `message.supportsAuthenticatedExtendedCard`: Whether the agent supports authenticated extended cards.
+- `message.securitySchemes`: Map of named security scheme definitions.
+- `message.security[]`: Array of security requirement objects.
+- `message.additionalInterfaces[]`: Array of additional transport endpoints, each with `url`, `transport`.
+- `message.signatures[]`: Array of JWS signatures, each with `protected`, `signature`, and optional `header`.
 
 For server-mode request events (`message/send`, `message/stream` on `a2a_server`), `message` contains the inbound `params.message` (a Message object):
 - `message.kind`: The literal `"message"`.
@@ -97,12 +110,29 @@ For client-mode response events (`message/send`, `message/stream` on `a2a_client
 - `message.kind`: The literal `"task"`.
 - `message.id`: The task ID.
 - `message.contextId`: The context ID linking related tasks.
-- `message.status`: Object with `state`, `timestamp` (required, RFC 3339), and `message` (optional Message object).
+- `message.status`: Object with `state` (required), `timestamp` (optional, RFC 3339), and `message` (optional Message object).
 - `message.history[]`: Array of messages, each with `kind`, `role`, and `parts[]`.
 - `message.artifacts[]`: Array of artifacts, each with `artifactId`, `name`, `description`, and `parts[]`.
 - `message.metadata`: Untyped key-value metadata attached to the task.
 
 When the response is a direct Message (no task created), the structure matches the server-mode request shape above.
+
+For `task/status` SSE events (`TaskStatusUpdateEvent`), `message` contains:
+- `message.kind`: The literal `"status-update"`.
+- `message.taskId`: The task ID.
+- `message.contextId`: The context ID.
+- `message.status`: The TaskStatus object with `state` (required), `timestamp` (optional), and `message` (optional Message object).
+- `message.final`: Whether this is the final event in the stream (required boolean).
+- `message.metadata`: Untyped key-value metadata.
+
+For `task/artifact` SSE events (`TaskArtifactUpdateEvent`), `message` contains:
+- `message.kind`: The literal `"artifact-update"`.
+- `message.taskId`: The task ID.
+- `message.contextId`: The context ID.
+- `message.artifact`: The Artifact object with `artifactId`, `parts[]`, and optional `name`, `description`, `extensions`, `metadata`.
+- `message.append`: Whether to append to an existing artifact (optional boolean).
+- `message.lastChunk`: Whether this is the final chunk (optional boolean).
+- `message.metadata`: Untyped key-value metadata.
 
 ## 7.2.4 Execution State (A2A)
 
@@ -124,7 +154,7 @@ state:
         examples: string[]?
         inputModes: string[]?
         outputModes: string[]?
-        security: object[][]?              # per-skill security requirements (OR-of-AND)
+        security: object[]?                # security requirements ({scheme: scopes[]}[])
     capabilities:                          # required
       streaming: boolean?
       pushNotifications: boolean?
@@ -144,7 +174,7 @@ state:
     preferredTransport: string?            # "JSONRPC", "GRPC", "HTTP+JSON"
     supportsAuthenticatedExtendedCard: boolean?
     securitySchemes: map?                  # named security scheme definitions
-    security: object[][]?                  # required security scheme combinations (OR-of-AND)
+    security: object[]?                    # security requirements ({scheme: scopes[]}[])
     additionalInterfaces:                  # optional additional transport endpoints
       - url: string
         transport: string                  # required: "JSONRPC", "GRPC", "HTTP+JSON"
@@ -164,7 +194,7 @@ state:
             - kind: enum(text, file, data)
               # Kind-specific fields
               metadata: map?         # Per-part metadata
-          messageId: string?
+          messageId: string          # required (runtime auto-generates if omitted)
           referenceTaskIds: string[]?
           extensions: string[]?
           metadata: map?             # Untyped key-value metadata on the Message
@@ -200,7 +230,7 @@ state:
         - kind: enum(text, file, data)
           # Kind-specific fields
           metadata: map?               # Per-part metadata
-      messageId: string?
+      messageId: string              # required (runtime auto-generates if omitted)
       referenceTaskIds: string[]?
       extensions: string[]?
       metadata: map?                   # Untyped key-value metadata on the Message
