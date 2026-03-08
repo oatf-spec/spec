@@ -406,7 +406,7 @@ SDKs MUST maintain a registry mapping each `Surface` value to its protocol and d
 | `card_description` | `a2a` | `description` |
 | `skill_description` | `a2a` | `skills[*].description` |
 | `skill_name` | `a2a` | `skills[*].name` |
-| `task_message` | `a2a` | `messages[*]` |
+| `task_message` | `a2a` | `parts[*]` |
 | `task_artifact` | `a2a` | `artifacts[*]` |
 | `task_status` | `a2a` | `status.state` |
 | `message_history` | `ag_ui` | `messages[*]` |
@@ -441,10 +441,10 @@ This table is reproduced from [format specification §7](/specification/protocol
 | `completion/complete` | ✓ | | | | |
 | `sampling/createMessage` | ✓ | ✓ | | | |
 | `elicitation/create` | ✓ | ✓ | | | |
-| `tasks/get` | ✓ | ✓ | ✓ | | |
+| `tasks/get` | ✓ | ✓ | ✓ | ✓ | |
 | `tasks/result` | ✓ | ✓ | | | |
 | `tasks/list` | ✓ | | | | |
-| `tasks/cancel` | ✓ | | ✓ | | |
+| `tasks/cancel` | ✓ | | ✓ | ✓ | |
 | `roots/list` | ✓ | ✓ | | | |
 | `ping` | ✓ | ✓ | | | |
 | `notifications/tools/list_changed` | | ✓ | | | |
@@ -455,9 +455,12 @@ This table is reproduced from [format specification §7](/specification/protocol
 | `notifications/elicitation/complete` | | ✓ | | | |
 | `message/send` | | | ✓ | ✓ | |
 | `message/stream` | | | ✓ | ✓ | |
-| `tasks/resubscribe` | | | ✓ | | |
-| `tasks/pushNotification/set` | | | ✓ | | |
-| `tasks/pushNotification/get` | | | ✓ | | |
+| `tasks/resubscribe` | | | ✓ | ✓ | |
+| `tasks/pushNotificationConfig/set` | | | ✓ | ✓ | |
+| `tasks/pushNotificationConfig/get` | | | ✓ | ✓ | |
+| `tasks/pushNotificationConfig/list` | | | ✓ | ✓ | |
+| `tasks/pushNotificationConfig/delete` | | | ✓ | ✓ | |
+| `agent/getAuthenticatedExtendedCard` | | | ✓ | ✓ | |
 | `agent_card/get` | | | ✓ | ✓ | |
 | `task/status` | | | | ✓ | |
 | `task/artifact` | | | | ✓ | |
@@ -496,7 +499,7 @@ A conditional response entry used for request-specific response dispatch. Appear
 | `when` | `Optional<MatchPredicate>` | No | Predicate evaluated against the incoming request. Absent on the default (fallback) entry. |
 | `synthesize` | `Optional<SynthesizeBlock>` | No | LLM-generated response. Mutually exclusive with static content fields. |
 
-Static content fields are protocol-binding-specific: MCP tools use `content`, MCP prompts use `messages`, A2A uses `messages`/`artifacts`, AG-UI uses `messages`. See [format specification §7](/specification/protocol-bindings/) for the complete structure of each binding's response entries.
+Static content fields are protocol-binding-specific: MCP tools use `content`, MCP prompts use `messages`, A2A uses `history`/`artifacts`, AG-UI uses `messages`. See [format specification §7](/specification/protocol-bindings/) for the complete structure of each binding's response entries.
 
 ## 2.25 Qualifier Resolution Registry
 

@@ -54,11 +54,11 @@ Each binding carries a maturity level:
 |--------|-----------|-----------|-------------|
 | Maturity | Stable | Provisional | Provisional |
 | Interaction model | Agent-to-Tool | Agent-to-Agent | User-to-Agent |
-| Transport | JSON-RPC 2.0 over stdio/Streamable HTTP | HTTP + SSE | HTTP POST + SSE |
+| Transport | JSON-RPC 2.0 over stdio/Streamable HTTP | JSON-RPC 2.0 over HTTP(S), SSE for streaming | HTTP POST + SSE |
 | Primary attack surface | Tool/resource/prompt descriptions, tool responses | Agent Card, skill descriptions, task messages | Message history, tool results, agent state |
 | Default mode | `mcp_server` | `a2a_server` | `ag_ui_client` |
 | Surfaces defined | 30 | 8 | 7 |
-| Event types defined | 23 | 10 | 15 |
+| Event types defined | 23 | 13 | 15 |
 | Execution state | Full (tools, resources, prompts, elicitations, capabilities, behavior) | Partial (agent card, task responses) | Partial (RunAgentInput) |
 | Behavioral modifiers | Defined (delivery, side effects) | Not yet defined | Not yet defined |
 | Payload generation | Defined | Not yet defined | Not yet defined |
@@ -87,10 +87,10 @@ The following matrix defines the event types recognized by the v0.1 protocol bin
 | `completion/complete` | ✓ | | | | |
 | `sampling/createMessage` | ✓ | ✓ | | | |
 | `elicitation/create` | ✓ | ✓ | | | |
-| `tasks/get` | ✓ | ✓ | ✓ | | |
+| `tasks/get` | ✓ | ✓ | ✓ | ✓ | |
 | `tasks/result` | ✓ | ✓ | | | |
 | `tasks/list` | ✓ | | | | |
-| `tasks/cancel` | ✓ | | ✓ | | |
+| `tasks/cancel` | ✓ | | ✓ | ✓ | |
 | `roots/list` | ✓ | ✓ | | | |
 | `ping` | ✓ | ✓ | | | |
 | `notifications/tools/list_changed` | | ✓ | | | |
@@ -101,9 +101,12 @@ The following matrix defines the event types recognized by the v0.1 protocol bin
 | `notifications/elicitation/complete` | | ✓ | | | |
 | `message/send` | | | ✓ | ✓ | |
 | `message/stream` | | | ✓ | ✓ | |
-| `tasks/resubscribe` | | | ✓ | | |
-| `tasks/pushNotification/set` | | | ✓ | | |
-| `tasks/pushNotification/get` | | | ✓ | | |
+| `tasks/resubscribe` | | | ✓ | ✓ | |
+| `tasks/pushNotificationConfig/set` | | | ✓ | ✓ | |
+| `tasks/pushNotificationConfig/get` | | | ✓ | ✓ | |
+| `tasks/pushNotificationConfig/list` | | | ✓ | ✓ | |
+| `tasks/pushNotificationConfig/delete` | | | ✓ | ✓ | |
+| `agent/getAuthenticatedExtendedCard` | | | ✓ | ✓ | |
 | `agent_card/get` | | | ✓ | ✓ | |
 | `task/status` | | | | ✓ | |
 | `task/artifact` | | | | ✓ | |

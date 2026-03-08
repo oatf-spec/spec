@@ -958,7 +958,7 @@
             "message/send",
             "task/status:completed",
             "agent_card/get",
-            "tasks/pushNotification/set",
+            "tasks/pushNotificationConfig/set",
             "sampling/createMessage",
             "tool_call_start:transfer_funds",
             "run_started",
