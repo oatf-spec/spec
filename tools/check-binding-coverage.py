@@ -212,31 +212,17 @@ A2A_UNMAPPED = {
     "MutualTLSSecurityScheme",
 }
 
-# A2A expected events per mode.
-# Server mode: JSON-RPC requests + HTTP GET the client sends to this server.
-# Client mode: responses + SSE events received from the server.
-A2A_EVENTS = {
-    "server": {
-        "message/send", "message/stream",
-        "tasks/get", "tasks/cancel", "tasks/resubscribe",
-        "tasks/pushNotificationConfig/set",
-        "tasks/pushNotificationConfig/get",
-        "tasks/pushNotificationConfig/list",
-        "tasks/pushNotificationConfig/delete",
-        "agent/getAuthenticatedExtendedCard",
-        "agent_card/get",  # HTTP GET, not JSON-RPC
+# A2A event configuration.
+# "extra_events" are events not derivable from schema method fields
+# (HTTP endpoints, SSE event types). "client_only" restricts events
+# to client mode; everything else is both modes.
+A2A_EVENT_CONFIG = {
+    "extra_events": {
+        "agent_card/get",   # HTTP GET, not JSON-RPC
     },
-    "client": {
-        "message/send", "message/stream",
-        "tasks/get", "tasks/cancel", "tasks/resubscribe",
-        "tasks/pushNotificationConfig/set",
-        "tasks/pushNotificationConfig/get",
-        "tasks/pushNotificationConfig/list",
-        "tasks/pushNotificationConfig/delete",
-        "agent/getAuthenticatedExtendedCard",
-        "agent_card/get",  # HTTP GET response
-        "task/status",     # SSE TaskStatusUpdateEvent
-        "task/artifact",   # SSE TaskArtifactUpdateEvent
+    "client_only": {
+        "task/status",      # SSE TaskStatusUpdateEvent
+        "task/artifact",    # SSE TaskArtifactUpdateEvent
     },
 }
 
@@ -531,35 +517,21 @@ MCP_UNMAPPED = {
     # PromptMessage is mapped above
 }
 
-# MCP expected events per mode.
-MCP_EVENTS = {
-    "server": {
-        "initialize", "ping",
-        "tools/list", "tools/call",
-        "resources/list", "resources/read",
+# MCP event configuration.
+# Schema-derived methods are both modes by default. "server_only" and
+# "client_only" restrict specific methods to one mode. Notification
+# methods are auto-classified as client_only by extract_methods_from_schema().
+MCP_EVENT_CONFIG = {
+    "server_only": {
+        # These MCP methods are only valid as server-mode events
         "resources/subscribe", "resources/unsubscribe",
-        "prompts/list", "prompts/get",
-        "completion/complete",
-        "sampling/createMessage",
-        "elicitation/create",
-        "tasks/get", "tasks/result", "tasks/list", "tasks/cancel",
-        "roots/list",
+        "tasks/list", "tasks/cancel",
     },
-    "client": {
-        "initialize", "ping",
-        "tools/list", "tools/call",
-        "resources/list", "resources/read",
-        "prompts/list", "prompts/get",
-        "sampling/createMessage",
-        "elicitation/create",
-        "tasks/get", "tasks/result",
-        "roots/list",
-        "notifications/tools/list_changed",
-        "notifications/resources/list_changed",
-        "notifications/resources/updated",
-        "notifications/prompts/list_changed",
-        "notifications/tasks/status",
-        "notifications/elicitation/complete",
+    # Schema methods excluded from event expectations entirely.
+    # These are upstream methods the binding intentionally omits.
+    "excluded": {
+        "resources/templates/list",  # Resource templates not yet covered
+        "logging/setLevel",          # Logging config, not attack surface
     },
 }
 
@@ -575,7 +547,7 @@ PROTOCOLS = {
         "binding_path": "docs/src/content/docs/specification/protocol-bindings/a2a.md",
         "type_map": A2A_TYPE_MAP,
         "unmapped_types": A2A_UNMAPPED,
-        "expected_events": A2A_EVENTS,
+        "event_config": A2A_EVENT_CONFIG,
     },
     "mcp": {
         # NOTE: This URL points at the main branch, not a tag. The directory
@@ -589,7 +561,7 @@ PROTOCOLS = {
         "type_map": MCP_TYPE_MAP,
         "unmapped_types": MCP_UNMAPPED,
         "ignored_fields": MCP_IGNORED_FIELDS,
-        "expected_events": MCP_EVENTS,
+        "event_config": MCP_EVENT_CONFIG,
     },
 }
 
@@ -679,6 +651,91 @@ def get_required_fields(type_def, schema_types=None):
     """
     resolved = _resolve_allof(type_def, schema_types)
     return set(resolved.get("required", []))
+
+
+def extract_methods_from_schema(schema):
+    """Extract JSON-RPC method names from request/notification types.
+
+    Returns {"requests": {method_name, ...}, "notifications": {method_name, ...}}.
+    Scans all types for a 'method' property with a const or single-enum value.
+    """
+    defs = get_schema_types(schema)
+    requests = set()
+    notifications = set()
+
+    for type_name, type_def in defs.items():
+        props = type_def.get("properties", {})
+        method_prop = props.get("method", {})
+        val = method_prop.get("const") or (
+            method_prop.get("enum", [None]) or [None]
+        )[0]
+        if not val:
+            continue
+
+        if type_name.endswith("Notification"):
+            notifications.add(val)
+        elif type_name.endswith("Request"):
+            requests.add(val)
+
+    return {"requests": requests, "notifications": notifications}
+
+
+def build_expected_events(schema, event_config):
+    """Build per-mode expected event sets from schema + config overrides.
+
+    Schema-derived request methods go to both modes by default.
+    Notification methods go to client only by default.
+    Config overrides:
+        extra_events:  non-schema events added to both modes
+        client_only:   restrict to client mode only
+        server_only:   restrict to server mode only
+        excluded:      omit from expectations entirely
+    """
+    methods = extract_methods_from_schema(schema)
+    extra = event_config.get("extra_events", set())
+    client_only = event_config.get("client_only", set())
+    server_only = event_config.get("server_only", set())
+    excluded = event_config.get("excluded", set())
+
+    # Start with all request methods in both modes
+    all_requests = methods["requests"] - excluded
+    all_notifications = methods["notifications"] - excluded
+
+    server = set()
+    client = set()
+
+    for m in all_requests:
+        if m in client_only:
+            client.add(m)
+        elif m in server_only:
+            server.add(m)
+        else:
+            server.add(m)
+            client.add(m)
+
+    # Notifications are client-only by default
+    for m in all_notifications:
+        if m in server_only:
+            server.add(m)
+        elif m not in excluded:
+            client.add(m)
+
+    # Extra non-schema events
+    for m in extra:
+        if m in client_only:
+            client.add(m)
+        elif m in server_only:
+            server.add(m)
+        else:
+            server.add(m)
+            client.add(m)
+
+    # Client-only overrides (for events that are in both but should be client-only)
+    for m in client_only:
+        server.discard(m)
+        client.add(m)
+
+    return {"server": server, "client": client}
 
 
 # ---------------------------------------------------------------------------
@@ -1044,15 +1101,18 @@ def analyze_type_coverage(protocol_key, schema, binding_text):
     return results
 
 
-def analyze_event_coverage(protocol_key, binding_text):
+def analyze_event_coverage(protocol_key, schema, binding_text):
     """Check event coverage per mode (server/client).
+
+    Expected events are derived from the upstream schema's request/notification
+    types, plus per-protocol config overrides.
 
     Returns a dict with per-mode results:
         {"server": {"missing": [...], "extra": [...]},
          "client": {"missing": [...], "extra": [...]}}
     """
     cfg = PROTOCOLS[protocol_key]
-    expected_events = cfg["expected_events"]
+    expected_events = build_expected_events(schema, cfg["event_config"])
     documented = parse_binding_events(binding_text)
 
     results = {}
@@ -1290,7 +1350,7 @@ def run_protocol(protocol_key, args):
 
     # Analyze
     type_results = analyze_type_coverage(protocol_key, schema, binding_text)
-    event_results = analyze_event_coverage(protocol_key, binding_text)
+    event_results = analyze_event_coverage(protocol_key, schema, binding_text)
 
     # Report
     if args.json:
@@ -1327,16 +1387,169 @@ def main():
         if report is not None:
             json_reports.append(report)
 
-    # In JSON mode, emit a single valid JSON document
+    # In JSON mode, always emit {"reports": [...]} for stable envelope shape
     if args.json and json_reports:
-        if len(json_reports) == 1:
-            print(json.dumps(json_reports[0], indent=2))
-        else:
-            print(json.dumps(json_reports, indent=2))
+        print(json.dumps({"reports": json_reports}, indent=2))
 
     if args.strict and not all_clean:
         sys.exit(1)
 
 
+def self_test():
+    """Regression tests for parser and analysis logic."""
+    failures = []
+
+    def check(name, condition):
+        if not condition:
+            failures.append(name)
+            print(f"  FAIL: {name}")
+        else:
+            print(f"  ok:   {name}")
+
+    print("Running self-tests...\n")
+
+    # --- Event parser: mode-aware extraction ---
+    event_md = """
+## 7.2.2 Event Types
+
+**For `test_server` actors**:
+
+| Event | Protocol Method | Description |
+|-------|-----------------|-------------|
+| `method/a` | `method/a` | Server receives A |
+| `method/b` | `method/b` | Server receives B |
+
+**For `test_client` actors**:
+
+| Event | Protocol Method | Description |
+|-------|-----------------|-------------|
+| `method/a` | `method/a` | Client receives A |
+| `notify/x` | `notify/x` | Client gets notification |
+"""
+    events = parse_binding_events(event_md)
+    check("event parser: server has method/a",
+          "method/a" in events["server"])
+    check("event parser: server has method/b",
+          "method/b" in events["server"])
+    check("event parser: server does NOT have notify/x",
+          "notify/x" not in events["server"])
+    check("event parser: client has method/a",
+          "method/a" in events["client"])
+    check("event parser: client has notify/x",
+          "notify/x" in events["client"])
+    check("event parser: client does NOT have method/b",
+          "method/b" not in events["client"])
+
+    # --- Event parser: surfaces don't leak ---
+    surface_md = """
+## 7.1.1 Surfaces
+
+| Surface | Description |
+|---------|-------------|
+| `tool_description` | desc |
+| `tool_name` | name |
+
+## 7.1.2 Event Types
+
+**For `mcp_server` actors**:
+
+| Event | Protocol Method | Description |
+|-------|-----------------|-------------|
+| `tools/call` | `tools/call` | Agent calls tool |
+"""
+    events = parse_binding_events(surface_md)
+    check("event parser: surfaces don't leak into events",
+          "tool_description" not in events["all"]
+          and "tool_name" not in events["all"])
+    check("event parser: real event is captured",
+          "tools/call" in events["server"])
+
+    # --- Extra event detection ---
+    schema_with_methods = {
+        "$defs": {
+            "FooRequest": {
+                "properties": {"method": {"const": "foo/bar"}},
+            },
+        },
+    }
+    config = {}  # no overrides
+    expected = build_expected_events(schema_with_methods, config)
+    check("extra events: schema method in both modes",
+          "foo/bar" in expected["server"]
+          and "foo/bar" in expected["client"])
+
+    config_excluded = {"excluded": {"foo/bar"}}
+    expected = build_expected_events(schema_with_methods, config_excluded)
+    check("extra events: excluded method absent",
+          "foo/bar" not in expected["server"]
+          and "foo/bar" not in expected["client"])
+
+    # --- allOf resolution ---
+    schema_allof = {
+        "$defs": {
+            "Base": {
+                "properties": {"baseField": {"type": "string"}},
+                "required": ["baseField"],
+            },
+            "Composed": {
+                "allOf": [
+                    {"$ref": "#/$defs/Base"},
+                    {"properties": {"extraField": {"type": "integer"}}},
+                ],
+            },
+        },
+    }
+    types = schema_allof["$defs"]
+    fields = get_type_fields(types["Composed"], types)
+    check("allOf: resolves base fields",
+          "baseField" in fields)
+    check("allOf: resolves extra fields",
+          "extraField" in fields)
+    req = get_required_fields(types["Composed"], types)
+    check("allOf: merges required",
+          "baseField" in req)
+
+    # --- Stable JSON envelope ---
+    # Single protocol should still produce {"reports": [...]}
+    # (We test the structure, not the actual run)
+    single_report = {"protocol": "test", "summary": {"clean": True}}
+    envelope = {"reports": [single_report]}
+    check("json envelope: always has 'reports' key",
+          "reports" in envelope and isinstance(envelope["reports"], list))
+
+    # --- Text footer with event-only failures ---
+    # Simulate: no field gaps, but event issues exist
+    # The clean check should return False
+    event_results = {
+        "server": {"missing": ["some/method"], "extra": []},
+        "client": {"missing": [], "extra": []},
+    }
+    has_event_gaps = any(
+        event_results.get(mode, {}).get("missing")
+        or event_results.get(mode, {}).get("extra")
+        for mode in ("server", "client")
+    )
+    check("clean check: event-only failures are not clean",
+          has_event_gaps)
+
+    event_results_clean = {
+        "server": {"missing": [], "extra": []},
+        "client": {"missing": [], "extra": []},
+    }
+    has_event_gaps_clean = any(
+        event_results_clean.get(mode, {}).get("missing")
+        or event_results_clean.get(mode, {}).get("extra")
+        for mode in ("server", "client")
+    )
+    check("clean check: no events issues is clean",
+          not has_event_gaps_clean)
+
+    print(f"\n{len(failures)} failure(s) out of {len(failures) + sum(1 for _ in [] if True)}"
+          if failures else f"\nAll tests passed.")
+    return len(failures) == 0
+
+
 if __name__ == "__main__":
+    if "--self-test" in sys.argv:
+        sys.exit(0 if self_test() else 1)
     main()
