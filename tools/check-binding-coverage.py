@@ -329,7 +329,7 @@ MCP_TYPE_MAP = {
     },
     "ResourceTemplate": {
         "cel": ["message.resourceTemplates"],
-        "state": [],
+        "state": ["resource_templates"],
     },
 
     # --- Prompt types ---
@@ -340,7 +340,6 @@ MCP_TYPE_MAP = {
     "PromptArgument": {
         "cel": ["message.prompts.arguments"],
         "state": ["prompts.arguments"],
-        # title is in the MCP schema but not in binding (added in 2025-11-25)
     },
     "PromptMessage": {
         "cel": ["message.messages"],
@@ -526,11 +525,18 @@ MCP_EVENT_CONFIG = {
         # These MCP methods are only valid as server-mode events
         "resources/subscribe", "resources/unsubscribe",
         "tasks/list", "tasks/cancel",
+        # Client-to-server notifications (override auto-classification
+        # which assumes all notifications are client_only)
+        "notifications/initialized",
+        "notifications/roots/list_changed",
+    },
+    "both_modes": {
+        # Bidirectional notification (either party can cancel)
+        "notifications/cancelled",
     },
     # Schema methods excluded from event expectations entirely.
     # These are upstream methods the binding intentionally omits.
     "excluded": {
-        "resources/templates/list",  # Resource templates not yet covered
         "logging/setLevel",          # Logging config, not attack surface
     },
 }
@@ -689,12 +695,14 @@ def build_expected_events(schema, event_config):
         extra_events:  non-schema events added to both modes
         client_only:   restrict to client mode only
         server_only:   restrict to server mode only
+        both_modes:    force notification to both modes (overrides client-only default)
         excluded:      omit from expectations entirely
     """
     methods = extract_methods_from_schema(schema)
     extra = event_config.get("extra_events", set())
     client_only = event_config.get("client_only", set())
     server_only = event_config.get("server_only", set())
+    both_modes = event_config.get("both_modes", set())
     excluded = event_config.get("excluded", set())
 
     # Start with all request methods in both modes
@@ -713,11 +721,15 @@ def build_expected_events(schema, event_config):
             server.add(m)
             client.add(m)
 
-    # Notifications are client-only by default
+    # Notifications are client-only by default.
+    # server_only overrides to server-only; both_modes forces both.
     for m in all_notifications:
-        if m in server_only:
+        if m in both_modes:
             server.add(m)
-        elif m not in excluded:
+            client.add(m)
+        elif m in server_only:
+            server.add(m)
+        else:
             client.add(m)
 
     # Extra non-schema events

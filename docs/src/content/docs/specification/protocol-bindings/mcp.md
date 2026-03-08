@@ -57,6 +57,7 @@ MCP events are per-actor scoped. An actor's mode determines which events it obse
 | `resources/read` | `resources/read` | Agent reads a resource | — |
 | `resources/subscribe` | `resources/subscribe` | Agent subscribes to resource | — |
 | `resources/unsubscribe` | `resources/unsubscribe` | Agent unsubscribes | — |
+| `resources/templates/list` | `resources/templates/list` | Agent discovers resource templates | — |
 | `prompts/list` | `prompts/list` | Agent discovers prompts | — |
 | `prompts/get` | `prompts/get` | Agent gets a prompt | `:prompt_name` |
 | `completion/complete` | `completion/complete` | Agent requests completion | — |
@@ -68,6 +69,9 @@ MCP events are per-actor scoped. An actor's mode determines which events it obse
 | `tasks/cancel` | `tasks/cancel` | Agent cancels a task | — |
 | `roots/list` | `roots/list` | Agent responds to roots request | — |
 | `ping` | `ping` | Keepalive | — |
+| `notifications/initialized` | `notifications/initialized` | Client signals initialization complete | — |
+| `notifications/roots/list_changed` | `notifications/roots/list_changed` | Client signals roots changed | — |
+| `notifications/cancelled` | `notifications/cancelled` | Client cancels an outstanding request | — |
 
 Resource events (`resources/read`, `resources/subscribe`, `resources/unsubscribe`) do not support qualifiers because resource URIs commonly contain colons that conflict with qualifier syntax. Use `trigger.match` for URI-based filtering.
 
@@ -84,6 +88,7 @@ Notification events (`notifications/*`) are true wire-level events with their ow
 | `tools/call` | `tools/call` | Server returns tool result | `:tool_name` |
 | `resources/list` | `resources/list` | Server returns resource list | — |
 | `resources/read` | `resources/read` | Server returns resource content | — |
+| `resources/templates/list` | `resources/templates/list` | Server returns resource template list | — |
 | `prompts/list` | `prompts/list` | Server returns prompt list | — |
 | `prompts/get` | `prompts/get` | Server returns prompt content | `:prompt_name` |
 | `notifications/tools/list_changed` | `notifications/tools/list_changed` | Server signals tools changed | — |
@@ -92,6 +97,10 @@ Notification events (`notifications/*`) are true wire-level events with their ow
 | `notifications/prompts/list_changed` | `notifications/prompts/list_changed` | Server signals prompts changed | — |
 | `notifications/tasks/status` | `notifications/tasks/status` | Server signals task status change | — |
 | `notifications/elicitation/complete` | `notifications/elicitation/complete` | Server signals URL-mode elicitation completed | — |
+| `notifications/cancelled` | `notifications/cancelled` | Server cancels an outstanding request | — |
+| `notifications/message` | `notifications/message` | Server sends log message | — |
+| `notifications/progress` | `notifications/progress` | Server sends progress update | — |
+| `completion/complete` | `completion/complete` | Server returns completion suggestions | — |
 | `sampling/createMessage` | `sampling/createMessage` | Server requests LLM sampling (may include tools) | — |
 | `elicitation/create` | `elicitation/create` | Server requests user input | — |
 | `tasks/get` | `tasks/get` | Server returns task status | — |
@@ -99,9 +108,9 @@ Notification events (`notifications/*`) are true wire-level events with their ow
 | `roots/list` | `roots/list` | Server requests filesystem roots | — |
 | `ping` | `ping` | Keepalive | — |
 
-`notifications/*` events are server-to-client only. Using `notifications/*` as a trigger on an `mcp_server` actor is a validation error.
+Most `notifications/*` events are directional: server-to-client notifications (`notifications/tools/list_changed`, `notifications/resources/*`, `notifications/prompts/list_changed`, `notifications/tasks/status`, `notifications/elicitation/complete`, `notifications/message`, `notifications/progress`) appear on `mcp_client` only. Client-to-server notifications (`notifications/initialized`, `notifications/roots/list_changed`) appear on `mcp_server` only. `notifications/cancelled` is bidirectional (either party can cancel an outstanding request).
 
-`tasks/get` and `tasks/result` are valid on both `mcp_server` actors (agent polls this server) and `mcp_client` actors (server returns results). `tasks/list` and `tasks/cancel` are valid on `mcp_server` only. The `notifications/tasks/status` event is server-to-client only.
+`tasks/get` and `tasks/result` are valid on both `mcp_server` actors (agent polls this server) and `mcp_client` actors (server returns results). `tasks/list` and `tasks/cancel` are valid on `mcp_server` only.
 
 **Qualifier resolution** for MCP events:
 
@@ -127,6 +136,9 @@ For `tools/call` responses, `message` contains:
 For `resources/list` responses, `message` contains:
 - `message.resources[]`: Array of resource definitions, each with `uri`, `name`, `title`, `description`, `mimeType`, `icons[]`, `size`, and optional `annotations` (with `audience[]`, `priority`, `lastModified`).
 
+For `resources/templates/list` responses, `message` contains:
+- `message.resourceTemplates[]`: Array of resource template definitions, each with `uriTemplate`, `name`, `title`, `description`, `mimeType`, `icons[]`, and optional `annotations` (with `audience[]`, `priority`, `lastModified`).
+
 For `resources/read` responses, `message` contains:
 - `message.contents[]`: Array of resource contents, each with `uri`, `mimeType`, `text` or `blob`.
 
@@ -134,11 +146,12 @@ For `prompts/list` responses, `message` contains:
 - `message.prompts[]`: Array of prompt definitions, each with `name`, `title`, `description`, `icons[]`, `arguments[]`.
 
 For `prompts/get` responses, `message` contains:
+- `message.description`: Optional description of what the prompt provides.
 - `message.messages[]`: Array of prompt messages, each with `role` and `content` (with `type`, type-specific fields, and optional `annotations`).
 
 For `sampling/createMessage` requests, `message` contains:
 - `message.messages[]`: Array of sampling messages.
-- `message.modelPreferences`: Optional model preference hints.
+- `message.modelPreferences`: Object with `hints[]` (each with `name`), `costPriority`, `speedPriority`, `intelligencePriority`.
 - `message.systemPrompt`: Optional system prompt.
 - `message.maxTokens`: Maximum tokens to generate.
 - `message.tools[]`: Optional array of tool definitions available during sampling (added in MCP 2025-11-25).
@@ -159,6 +172,10 @@ For `tasks/get` responses and `notifications/tasks/status`, `message` contains:
 - `message.task.taskId`: The unique task identifier.
 - `message.task.status`: The task status (`working`, `input_required`, `completed`, `failed`, `cancelled`).
 - `message.task.statusMessage`: Optional human-readable status message.
+- `message.task.createdAt`: ISO 8601 timestamp when the task was created.
+- `message.task.lastUpdatedAt`: ISO 8601 timestamp of the last task update.
+- `message.task.ttl`: Time-to-live in seconds for the task.
+- `message.task.pollInterval`: Optional suggested polling interval in seconds.
 
 For `tasks/result` responses, `message` contains:
 - The result structure matching the original request type (e.g., a `CallToolResult` for a task wrapping `tools/call`).
@@ -265,7 +282,23 @@ state:
       content:
         text: string?
         blob: string?          # Base64-encoded
-  
+
+  resource_templates:
+    - uriTemplate: string              # URI template (RFC 6570)
+      name: string
+      title: string?                   # Human-readable display name
+      description: string?
+      mimeType: string?
+      icons:                           # Display icons
+        - src: string
+          mimeType: string?
+          sizes: string[]?
+          theme: enum(light, dark)?
+      annotations:                     # Resource metadata
+        audience: string[]?
+        priority: number?
+        lastModified: string?
+
   prompts:
     - name: string
       title: string?                 # Human-readable display name
@@ -277,6 +310,7 @@ state:
           theme: enum(light, dark)?
       arguments:
         - name: string
+          title: string?               # Human-readable display name
           description: string?
           required: boolean?
       responses:
@@ -352,6 +386,7 @@ state:
     - list_resources: {}               # Send resources/list request
     - read_resource:                   # Send resources/read request
         uri: string
+    - list_resource_templates: {}     # Send resources/templates/list request
     - list_prompts: {}                 # Send prompts/list request
     - get_prompt:                      # Send prompts/get request
         name: string
