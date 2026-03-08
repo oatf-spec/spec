@@ -212,22 +212,32 @@ A2A_UNMAPPED = {
     "MutualTLSSecurityScheme",
 }
 
-# A2A JSON-RPC methods extracted from the schema's request type method enums
-A2A_METHODS = {
-    "message/send", "message/stream",
-    "tasks/get", "tasks/cancel", "tasks/resubscribe",
-    "tasks/pushNotificationConfig/set",
-    "tasks/pushNotificationConfig/get",
-    "tasks/pushNotificationConfig/list",
-    "tasks/pushNotificationConfig/delete",
-    "agent/getAuthenticatedExtendedCard",
-}
-
-# Non-JSON-RPC events defined by the binding (HTTP endpoints, SSE events)
-A2A_EXTRA_EVENTS = {
-    "agent_card/get",   # HTTP GET, not JSON-RPC
-    "task/status",      # SSE TaskStatusUpdateEvent
-    "task/artifact",    # SSE TaskArtifactUpdateEvent
+# A2A expected events per mode.
+# Server mode: JSON-RPC requests + HTTP GET the client sends to this server.
+# Client mode: responses + SSE events received from the server.
+A2A_EVENTS = {
+    "server": {
+        "message/send", "message/stream",
+        "tasks/get", "tasks/cancel", "tasks/resubscribe",
+        "tasks/pushNotificationConfig/set",
+        "tasks/pushNotificationConfig/get",
+        "tasks/pushNotificationConfig/list",
+        "tasks/pushNotificationConfig/delete",
+        "agent/getAuthenticatedExtendedCard",
+        "agent_card/get",  # HTTP GET, not JSON-RPC
+    },
+    "client": {
+        "message/send", "message/stream",
+        "tasks/get", "tasks/cancel", "tasks/resubscribe",
+        "tasks/pushNotificationConfig/set",
+        "tasks/pushNotificationConfig/get",
+        "tasks/pushNotificationConfig/list",
+        "tasks/pushNotificationConfig/delete",
+        "agent/getAuthenticatedExtendedCard",
+        "agent_card/get",  # HTTP GET response
+        "task/status",     # SSE TaskStatusUpdateEvent
+        "task/artifact",   # SSE TaskArtifactUpdateEvent
+    },
 }
 
 # ---------------------------------------------------------------------------
@@ -521,28 +531,36 @@ MCP_UNMAPPED = {
     # PromptMessage is mapped above
 }
 
-# MCP JSON-RPC methods
-MCP_METHODS = {
-    "initialize", "ping",
-    "tools/list", "tools/call",
-    "resources/list", "resources/read",
-    "resources/subscribe", "resources/unsubscribe",
-    "prompts/list", "prompts/get",
-    "completion/complete",
-    "sampling/createMessage",
-    "elicitation/create",
-    "tasks/get", "tasks/result", "tasks/list", "tasks/cancel",
-    "roots/list",
-}
-
-# Notification events (not JSON-RPC methods but documented in binding)
-MCP_EXTRA_EVENTS = {
-    "notifications/tools/list_changed",
-    "notifications/resources/list_changed",
-    "notifications/resources/updated",
-    "notifications/prompts/list_changed",
-    "notifications/tasks/status",
-    "notifications/elicitation/complete",
+# MCP expected events per mode.
+MCP_EVENTS = {
+    "server": {
+        "initialize", "ping",
+        "tools/list", "tools/call",
+        "resources/list", "resources/read",
+        "resources/subscribe", "resources/unsubscribe",
+        "prompts/list", "prompts/get",
+        "completion/complete",
+        "sampling/createMessage",
+        "elicitation/create",
+        "tasks/get", "tasks/result", "tasks/list", "tasks/cancel",
+        "roots/list",
+    },
+    "client": {
+        "initialize", "ping",
+        "tools/list", "tools/call",
+        "resources/list", "resources/read",
+        "prompts/list", "prompts/get",
+        "sampling/createMessage",
+        "elicitation/create",
+        "tasks/get", "tasks/result",
+        "roots/list",
+        "notifications/tools/list_changed",
+        "notifications/resources/list_changed",
+        "notifications/resources/updated",
+        "notifications/prompts/list_changed",
+        "notifications/tasks/status",
+        "notifications/elicitation/complete",
+    },
 }
 
 # ---------------------------------------------------------------------------
@@ -557,8 +575,7 @@ PROTOCOLS = {
         "binding_path": "docs/src/content/docs/specification/protocol-bindings/a2a.md",
         "type_map": A2A_TYPE_MAP,
         "unmapped_types": A2A_UNMAPPED,
-        "methods": A2A_METHODS,
-        "extra_events": A2A_EXTRA_EVENTS,
+        "expected_events": A2A_EVENTS,
     },
     "mcp": {
         # NOTE: This URL points at the main branch, not a tag. The directory
@@ -572,8 +589,7 @@ PROTOCOLS = {
         "type_map": MCP_TYPE_MAP,
         "unmapped_types": MCP_UNMAPPED,
         "ignored_fields": MCP_IGNORED_FIELDS,
-        "methods": MCP_METHODS,
-        "extra_events": MCP_EXTRA_EVENTS,
+        "expected_events": MCP_EVENTS,
     },
 }
 
@@ -611,9 +627,37 @@ def get_schema_types(schema):
     return schema.get("$defs") or schema.get("definitions") or {}
 
 
-def get_type_fields(type_def):
-    """Get field names from a schema type definition."""
-    props = type_def.get("properties", {})
+def _resolve_allof(type_def, schema_types=None):
+    """Merge properties and required from allOf-composed schemas."""
+    if "allOf" not in type_def:
+        return type_def
+
+    merged_props = dict(type_def.get("properties", {}))
+    merged_required = list(type_def.get("required", []))
+
+    for sub in type_def["allOf"]:
+        # Resolve $ref if present
+        if "$ref" in sub and schema_types:
+            ref_name = sub["$ref"].rsplit("/", 1)[-1]
+            sub = schema_types.get(ref_name, sub)
+        merged_props.update(sub.get("properties", {}))
+        merged_required.extend(sub.get("required", []))
+
+    return {
+        "properties": merged_props,
+        "required": merged_required,
+    }
+
+
+def get_type_fields(type_def, schema_types=None):
+    """Get field names from a schema type definition.
+
+    Resolves allOf composition by merging properties from all sub-schemas.
+    """
+    # Resolve allOf first
+    resolved = _resolve_allof(type_def, schema_types)
+
+    props = resolved.get("properties", {})
     if props:
         return set(props.keys())
 
@@ -628,9 +672,13 @@ def get_type_fields(type_def):
     return set()
 
 
-def get_required_fields(type_def):
-    """Get required field names from a schema type definition."""
-    return set(type_def.get("required", []))
+def get_required_fields(type_def, schema_types=None):
+    """Get required field names from a schema type definition.
+
+    Resolves allOf composition by merging required from all sub-schemas.
+    """
+    resolved = _resolve_allof(type_def, schema_types)
+    return set(resolved.get("required", []))
 
 
 # ---------------------------------------------------------------------------
@@ -774,28 +822,39 @@ def parse_binding_state_fields(text):
 
 
 def parse_binding_events(text):
-    """Extract event names from event tables in the binding.
+    """Extract event names from event tables in the binding, per mode.
 
-    Only scans tables within "Event Types" sections to avoid picking up
-    surface names or other backtick-quoted table entries.
+    Only scans tables within "Event Types" sections. Detects mode headers
+    like "**For `a2a_server` actors**:" to separate server vs client events.
 
-    Returns a set of event names like:
-        {"message/send", "tasks/get", "agent_card/get", ...}
+    Returns a dict:
+        {"server": {"message/send", ...}, "client": {"message/send", ...},
+         "all": {"message/send", ...}}
+    "all" is the union. If no mode headers are found, all events go into "all".
     """
-    events = set()
+    events = {"server": set(), "client": set(), "all": set()}
     in_event_section = False
+    current_mode = None  # "server" or "client"
 
     for line in text.split("\n"):
         # Detect event type section headers
         if re.search(r"Event Types", line, re.IGNORECASE) and re.match(r"^##", line):
             in_event_section = True
+            current_mode = None
             continue
         # Stop at next major section (but not sub-sections within events)
         if in_event_section and re.match(r"^##\s", line) and "Event" not in line:
             in_event_section = False
+            current_mode = None
             continue
 
         if not in_event_section:
+            continue
+
+        # Detect mode headers: **For `xxx_server` actors**:
+        mode_match = re.search(r"For `\w+_(server|client)` actors", line)
+        if mode_match:
+            current_mode = mode_match.group(1)
             continue
 
         # Match table rows: | `event/name` | ...
@@ -805,7 +864,9 @@ def parse_binding_events(text):
             # Skip table headers
             if event in ("Event", "Surface"):
                 continue
-            events.add(event)
+            events["all"].add(event)
+            if current_mode:
+                events[current_mode].add(event)
 
     return events
 
@@ -936,8 +997,8 @@ def analyze_type_coverage(protocol_key, schema, binding_text):
             })
             continue
 
-        upstream_fields = get_type_fields(type_def)
-        required = get_required_fields(type_def)
+        upstream_fields = get_type_fields(type_def, schema_types)
+        required = get_required_fields(type_def, schema_types)
 
         if not upstream_fields:
             # Union or enum type with no properties
@@ -984,20 +1045,32 @@ def analyze_type_coverage(protocol_key, schema, binding_text):
 
 
 def analyze_event_coverage(protocol_key, binding_text):
-    """Check that all upstream methods appear in the binding's event tables."""
+    """Check event coverage per mode (server/client).
+
+    Returns a dict with per-mode results:
+        {"server": {"missing": [...], "extra": [...]},
+         "client": {"missing": [...], "extra": [...]}}
+    """
     cfg = PROTOCOLS[protocol_key]
-    expected = cfg["methods"] | cfg["extra_events"]
+    expected_events = cfg["expected_events"]
     documented = parse_binding_events(binding_text)
 
-    missing = expected - documented
-    extra = documented - expected  # binding events not in upstream
+    results = {}
+    for mode in ("server", "client"):
+        expected = expected_events.get(mode, set())
+        doc_mode = documented.get(mode, set())
 
-    return {
-        "expected": sorted(expected),
-        "documented": sorted(documented),
-        "missing": sorted(missing),
-        "extra": sorted(extra),
-    }
+        missing = expected - doc_mode
+        extra = doc_mode - expected
+
+        results[mode] = {
+            "expected": sorted(expected),
+            "documented": sorted(doc_mode),
+            "missing": sorted(missing),
+            "extra": sorted(extra),
+        }
+
+    return results
 
 
 def discover_unmapped_types(protocol_key, schema):
@@ -1063,12 +1136,20 @@ def print_text_report(protocol_key, type_results, event_results, schema):
 
     print()
 
-    # Event coverage
-    if event_results["missing"]:
-        print("--- Missing Events ---")
-        for e in event_results["missing"]:
-            print(f"  \u2717 {e}")
-        print()
+    # Event coverage (per mode)
+    event_issues = False
+    for mode in ("server", "client"):
+        mode_result = event_results.get(mode, {})
+        missing = mode_result.get("missing", [])
+        extra = mode_result.get("extra", [])
+        if missing or extra:
+            event_issues = True
+            print(f"--- Events ({mode}) ---")
+            for e in missing:
+                print(f"  \u2717 {e}  MISSING")
+            for e in extra:
+                print(f"  ? {e}  EXTRA (not in expected set)")
+            print()
 
     # Skipped types
     unmapped = sorted(cfg["unmapped_types"])
@@ -1100,7 +1181,12 @@ def print_text_report(protocol_key, type_results, event_results, schema):
     else:
         print("\nNo gaps found.")
 
-    return len(gap_types) == 0 and not event_results["missing"] and not unknown
+    has_event_gaps = any(
+        event_results.get(mode, {}).get("missing")
+        or event_results.get(mode, {}).get("extra")
+        for mode in ("server", "client")
+    )
+    return len(gap_types) == 0 and not has_event_gaps and not unknown
 
 
 def build_json_report(protocol_key, type_results, event_results, schema):
@@ -1119,15 +1205,25 @@ def build_json_report(protocol_key, type_results, event_results, schema):
 
     total = sum(tr["total"] for tr in type_results if "error" not in tr)
     covered = sum(tr["covered"] for tr in type_results if "error" not in tr)
+    missing_events = sum(
+        len(event_results.get(m, {}).get("missing", []))
+        for m in ("server", "client")
+    )
+    extra_events = sum(
+        len(event_results.get(m, {}).get("extra", []))
+        for m in ("server", "client")
+    )
     report["summary"] = {
         "total_fields": total,
         "covered_fields": covered,
         "coverage_pct": round(covered / total * 100, 1) if total else 100.0,
         "gaps": total - covered,
-        "missing_events": len(event_results["missing"]),
+        "missing_events": missing_events,
+        "extra_events": extra_events,
         "unknown_types": len(unknown),
         "clean": (total == covered
-                  and not event_results["missing"]
+                  and missing_events == 0
+                  and extra_events == 0
                   and not unknown),
     }
 
@@ -1142,7 +1238,7 @@ def print_discover(protocol_key, schema):
         for t in unknown:
             schema_types = get_schema_types(schema)
             td = schema_types.get(t, {})
-            fields = sorted(get_type_fields(td))
+            fields = sorted(get_type_fields(td, get_schema_types(schema)))
             fields_str = ", ".join(fields) if fields else "(no properties)"
             print(f"  {t}: {fields_str}")
     else:
