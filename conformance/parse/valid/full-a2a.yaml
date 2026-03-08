@@ -48,6 +48,10 @@ attack:
             name: "Helpful Data Analyst"
             description: "Analyzes datasets and produces visualizations."
             url: "https://analyst.example.com"
+            version: "1.0.0"
+            protocolVersion: "0.3.0"
+            defaultInputModes: ["text/plain", "application/json"]
+            defaultOutputModes: ["text/plain"]
             skills:
               - id: "data-analysis"
                 name: "Analyze Dataset"
@@ -152,7 +156,7 @@ attack:
       surface: task_message
       description: "Detect task messages requesting credentials."
       pattern:
-        target: "history[*]"
+        target: "parts[*]"
         condition:
           regex: "(credential|API key|password|secret)"
 

@@ -3,7 +3,7 @@ title: "A2A Binding"
 description: "Agent-to-Agent protocol binding: surfaces, events, CEL context, and execution state."
 ---
 
-The A2A binding covers the Agent-to-Agent protocol as defined in the [A2A specification (v0.3.0)](https://a2a-protocol.org/v0.3.0/specification/). A2A uses JSON-RPC 2.0 over HTTP(S), with support for streaming via SSE. This binding is provisional and models a subset of the A2A v0.3.0 surface area: core surfaces, event types, and execution state are defined, but behavioral modifiers, payload generation, gRPC transport, and HTTP+JSON transport are not yet specified. Future OATF minor versions will expand this binding.
+The A2A binding covers the Agent-to-Agent protocol as defined in the [A2A specification (v0.3.0)](https://a2a-protocol.org/v0.3.0/specification/). A2A uses JSON-RPC 2.0 over HTTP(S), with support for streaming via SSE. This binding is provisional and covers the A2A v0.3.0 data model: surfaces, event types, CEL context, and execution state are defined at full v0.3.0 schema parity, but behavioral modifiers, payload generation, gRPC transport, and HTTP+JSON transport are not yet specified. Future OATF minor versions will expand this binding.
 
 ## 7.2.1 Surfaces
 
@@ -14,9 +14,14 @@ The A2A binding covers the Agent-to-Agent protocol as defined in the [A2A specif
 | `card_description` | The `description` field of the Agent Card | `description` | Agent discovery |
 | `skill_description` | The `description` field of a skill | `skills[*].description` | Agent Card skills array |
 | `skill_name` | The `name` field of a skill | `skills[*].name` | Agent Card skills array |
-| `task_message` | A message in the task history | `history[*]` | Task send/update |
+| `task_message` | A message in an A2A exchange | `parts[*]` | Message send/receive |
 | `task_artifact` | An artifact produced by a task | `artifacts[*]` | Task completion |
 | `task_status` | The status of a task | `status.state` | Task state transitions |
+
+**Surface target resolution notes.** The default targets above assume the most common payload shape for each surface. A2A v0.3.0 responses are polymorphic: `message/send` may return a Task or a direct Message, and SSE streams carry distinct event types. When the actual payload shape differs from the default target, indicators MUST specify an explicit `target`:
+
+- `task_message` defaults to `parts[*]` (Message object). For indicators inspecting Task-shaped responses where messages are nested in history, use `target: history[*].parts[*]`.
+- `task_artifact` defaults to `artifacts[*]` (Task object). For indicators inspecting `task/artifact` SSE events where the artifact is a singular root field, use `target: artifact.parts[*]`.
 
 ## 7.2.2 Event Types
 
@@ -51,7 +56,7 @@ A2A events are per-actor scoped. An actor's mode determines which events it obse
 | `agent/getAuthenticatedExtendedCard` | `agent/getAuthenticatedExtendedCard` | Server returns authenticated card | — |
 | `agent_card/get` | GET `/.well-known/agent-card.json` | Server returns Agent Card | — |
 
-For `a2a_client`, `message/send` fires when the initial HTTP response is received acknowledging task creation. `message/stream` fires when the SSE connection is successfully opened.
+For `a2a_client`, `message/send` fires when the server returns a response, which may be a Task object or a direct Message. `message/stream` fires for each item in the SSE stream; streamed items may be Task objects, Message objects, `TaskStatusUpdateEvent` payloads, or `TaskArtifactUpdateEvent` payloads. The `task/status` and `task/artifact` events fire for the specific SSE event types.
 
 **Qualifier resolution** for A2A events:
 
@@ -102,12 +107,12 @@ When the phase mode is `a2a_server`, the phase state defines the A2A agent's ide
 ```yaml
 state:
   agent_card:
-    name: string
-    description: string
-    url: string
-    version: string?
-    protocolVersion: string?               # default: "0.3.0"
-    skills:
+    name: string                           # required
+    description: string                    # required
+    url: string                            # required
+    version: string                        # required
+    protocolVersion: string                # required (e.g., "0.3.0")
+    skills:                                # required (may be empty)
       - id: string
         name: string
         description: string
@@ -115,11 +120,13 @@ state:
         examples: string[]?
         inputModes: string[]?
         outputModes: string[]?
-    capabilities:
+    capabilities:                          # required
       streaming: boolean?
       pushNotifications: boolean?
-    defaultInputModes: string[]?
-    defaultOutputModes: string[]?
+      stateTransitionHistory: boolean?
+      extensions: string[]?                # extension capability URIs
+    defaultInputModes: string[]            # required (e.g., ["text/plain"])
+    defaultOutputModes: string[]           # required (e.g., ["text/plain"])
     provider:                              # optional
       organization: string
       url: string?
@@ -129,10 +136,17 @@ state:
     supportsAuthenticatedExtendedCard: boolean?
     securitySchemes: map?                  # named security scheme definitions
     security: object[]?                    # required security scheme combinations
+    additionalInterfaces:                  # optional additional transport endpoints
+      - url: string
+        transport: string?               # "JSONRPC", "GRPC", "HTTP+JSON"
+    signatures:                            # optional JWS signatures (RFC 7515)
+      - protected: string                # base64url-encoded JWS header
+        signature: string                # base64url-encoded signature
+        header: map?                     # unprotected header
   
   task_responses:
     - when: <MatchPredicate>?
-      status: enum(submitted, working, input-required, completed, failed, canceled, auth-required, rejected)
+      status: enum(submitted, working, input-required, completed, failed, canceled, auth-required, rejected, unknown)
       metadata: map?                 # Untyped key-value metadata on the Task
       history:                     # Static content (mutually exclusive with synthesize)
         - role: enum(agent, user)
@@ -151,7 +165,7 @@ state:
 
 The `task_responses` list follows the same ordered-match semantics as MCP tool `responses` ([§7.1.4](/specification/protocol-bindings/mcp/#714-execution-state-mcp)): Entries MUST be evaluated in order; the first matching entry wins. Entries without `when` serve as catch-all defaults. Each entry specifies either static content (`history`/`artifacts`) or LLM `synthesize`; they are mutually exclusive. When `synthesize` is present, the `status` field is still required; the runtime generates the message content but the document author controls the task status. See [§7.4](/specification/protocol-bindings/llm-synthesis/) for cross-protocol synthesis details.
 
-The `status` values (`submitted`, `working`, `input-required`, `completed`, `failed`, `canceled`, `auth-required`, `rejected`) use A2A's protocol-native naming convention, which includes hyphens. These values are serialized directly as A2A task status strings.
+The `status` values (`submitted`, `working`, `input-required`, `completed`, `failed`, `canceled`, `auth-required`, `rejected`, `unknown`) use A2A's protocol-native naming convention, which includes hyphens. These values are serialized directly as A2A task status strings. The `unknown` value is the v0.3.0 sentinel for unrecognized states.
 
 ## 7.2.4a Execution State (A2A Client)
 
@@ -159,42 +173,59 @@ When the phase mode is `a2a_client`, the phase state defines the client agent's 
 
 ```yaml
 state:
-  task_message:                        # The A2A message to send
-    role: enum(user)
-    parts:
-      - type: enum(text, file, data)
-        # Type-specific fields (same as a2a_server task_responses history)
-    messageId: string?
-    metadata: map?                     # Untyped key-value metadata
-    synthesize:                        # LLM generation (mutually exclusive with parts)
+  task_message:                        # The A2A message to send (MessageSendParams)
+    message:
+      role: enum(user, agent)
+      parts:
+        - type: enum(text, file, data)
+          # Type-specific fields
+      messageId: string?
+      metadata: map?                   # Untyped key-value metadata on the Message
+    configuration:                     # Optional: MessageSendConfiguration
+      acceptedOutputModes: string[]?   # Acceptable response MIME types
+      historyLength: integer?          # Max history entries to include in response
+      pushNotificationConfig:          # Inline push config for this request
+        url: string
+        token: string?
+      blocking: boolean?               # Block until terminal state. Default: false.
+    metadata: map?                     # Request-level metadata
+    synthesize:                        # LLM generation (mutually exclusive with message)
       prompt: string
 
   streaming: boolean?                  # Use message/stream (SSE) vs message/send. Default: false.
   fetch_agent_card: boolean?           # Fetch Agent Card before sending. Default: true.
 
-  task_query:                          # Optional: tasks/get request
-    taskId: string
+  task_query:                          # Optional: tasks/get (TaskQueryParams)
+    id: string                         # Task ID
     historyLength: integer?
+    metadata: map?
 
-  task_cancel:                         # Optional: tasks/cancel request
-    taskId: string
+  task_cancel:                         # Optional: tasks/cancel (TaskIdParams)
+    id: string                         # Task ID
+    metadata: map?
 
-  task_resubscribe:                    # Optional: tasks/resubscribe request
-    taskId: string
+  task_resubscribe:                    # Optional: tasks/resubscribe (TaskIdParams)
+    id: string                         # Task ID
+    metadata: map?
 
   push_notification_config:            # Optional: push notification config CRUD
     operation: enum(set, get, list, delete)   # default: set
-    taskId: string
+    id: string                         # Task ID
+    pushNotificationConfigId: string?  # Config ID (required for delete, optional for get)
     config:                            # Required for set; ignored for get/list/delete
       url: string
+      id: string?                      # Config identifier
       token: string?
+      authentication:                  # Optional auth for push endpoint
+        scheme: string
+        credentials: string?
 
   get_authenticated_extended_card: boolean?   # Optional: request authenticated card
 ```
 
 `task_message`, `task_query`, `task_cancel`, `task_resubscribe`, `push_notification_config`, and `get_authenticated_extended_card` are mutually exclusive per phase. Each phase performs one client operation.
 
-**Task message semantics.** Each phase MUST send exactly one task message. Multi-turn interactions use multi-phase execution where each phase defines the next message to send based on the server's response (observed via triggers and extractors). `task_message` is the client-mode counterpart of `a2a_server`'s `task_responses`. Within `task_message`, `parts` (static content) and `synthesize` (LLM generation) are mutually exclusive.
+**Task message semantics.** Each phase MUST send exactly one task message. Multi-turn interactions use multi-phase execution where each phase defines the next message to send based on the server's response (observed via triggers and extractors). `task_message` models A2A's `MessageSendParams`: `message` contains the Message object, `configuration` contains optional delivery parameters, and `metadata` carries request-level metadata. Within `task_message`, `message` (static content) and `synthesize` (LLM generation) are mutually exclusive.
 
 **Transport mode.** `streaming` controls transport mode: `true` uses `message/stream` (SSE), `false` uses `message/send` (polling). Default is `false`. Adversarial tools MUST respect this setting.
 

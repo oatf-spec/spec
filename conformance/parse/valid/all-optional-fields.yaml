@@ -305,10 +305,11 @@ attack:
           - name: observe
             state:
               task_message:
-                role: user
-                parts:
-                  - type: text
-                    text: "Requesting observation status."
+                message:
+                  role: user
+                  parts:
+                    - type: text
+                      text: "Requesting observation status."
 
   indicators:
     - id: OATF-904-01

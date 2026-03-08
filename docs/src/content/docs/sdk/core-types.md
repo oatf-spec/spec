@@ -406,7 +406,7 @@ SDKs MUST maintain a registry mapping each `Surface` value to its protocol and d
 | `card_description` | `a2a` | `description` |
 | `skill_description` | `a2a` | `skills[*].description` |
 | `skill_name` | `a2a` | `skills[*].name` |
-| `task_message` | `a2a` | `history[*]` |
+| `task_message` | `a2a` | `parts[*]` |
 | `task_artifact` | `a2a` | `artifacts[*]` |
 | `task_status` | `a2a` | `status.state` |
 | `message_history` | `ag_ui` | `messages[*]` |
