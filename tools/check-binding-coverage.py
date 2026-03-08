@@ -1176,17 +1176,27 @@ def print_text_report(protocol_key, type_results, event_results, schema):
     else:
         print("TOTAL: no mapped types with fields")
 
-    if gap_types:
-        print(f"\n{len(gap_types)} gap(s) found.")
-    else:
-        print("\nNo gaps found.")
-
     has_event_gaps = any(
         event_results.get(mode, {}).get("missing")
         or event_results.get(mode, {}).get("extra")
         for mode in ("server", "client")
     )
-    return len(gap_types) == 0 and not has_event_gaps and not unknown
+    clean = len(gap_types) == 0 and not has_event_gaps and not unknown
+
+    issues = []
+    if gap_types:
+        issues.append(f"{len(gap_types)} field gap(s)")
+    if has_event_gaps:
+        issues.append("event issues")
+    if unknown:
+        issues.append(f"{len(unknown)} unknown type(s)")
+
+    if issues:
+        print(f"\nIssues: {', '.join(issues)}.")
+    else:
+        print("\nNo issues found.")
+
+    return clean
 
 
 def build_json_report(protocol_key, type_results, event_results, schema):
