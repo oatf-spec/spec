@@ -781,46 +781,17 @@ def _parse_cel_table_rows(cel_text, shared_groups=None):
     return fields
 
 
-def _parse_cel_prose(cel_text):
-    """Parse prose-format CEL fields from CEL section text (legacy)."""
-    fields = set()
-    for line in cel_text.split("\n"):
-        # Match lines like: - `message.name`: description
-        m = re.match(r"^-\s+`?(message\.\S+?)`?[:\s]", line)
-        if m:
-            path = _normalize_path(m.group(1).rstrip("`.,: "))
-            fields.add(path)
-
-            # "each with `id`, `name`, ..." pattern
-            inline = re.findall(r"each with (.+)", line)
-            if inline:
-                sub_fields = re.findall(r"`(\w+)(?:\[\])?`", inline[0])
-                for sf in sub_fields:
-                    fields.add(f"{path}.{sf}")
-
-            # "Object with `field1`, `field2`" pattern
-            obj_match = re.findall(r"[Oo]bject with (.+)", line)
-            if obj_match:
-                sub_fields = re.findall(r"`(\w+)(?:\[\])?`", obj_match[0])
-                for sf in sub_fields:
-                    fields.add(f"{path}.{sf}")
-
-    return fields
-
-
 def parse_binding_cel_fields(text, shared_groups=None):
-    """Extract field paths documented in CEL context sections.
+    """Extract field paths documented in CEL context tables.
 
     Returns a set of normalized dotted field paths (no [] suffixes) like:
         {"message.name", "message.description", "message.skills.id", ...}
 
-    Auto-detects format: if the CEL section contains table rows
-    (| `message.` ...), parses as table; otherwise falls back to prose.
-    Expands shared-group references ({{Icon}}, {{Annotations}}) when
-    shared_groups dict is provided.
+    Parses table rows (| `message.` ...) and expands shared-group
+    references ({{Icon}}, {{Annotations}}) when shared_groups dict
+    is provided.
     """
     # Extract CEL section text
-    cel_text = ""
     in_cel = False
     cel_lines = []
 
@@ -835,14 +806,7 @@ def parse_binding_cel_fields(text, shared_groups=None):
             cel_lines.append(line)
 
     cel_text = "\n".join(cel_lines)
-
-    # Auto-detect format: table rows vs prose bullets
-    has_table_rows = bool(re.search(r"^\|\s*`message\.", cel_text, re.MULTILINE))
-
-    if has_table_rows:
-        return _parse_cel_table_rows(cel_text, shared_groups)
-    else:
-        return _parse_cel_prose(cel_text)
+    return _parse_cel_table_rows(cel_text, shared_groups)
 
 
 def parse_binding_state_fields(text):
@@ -1749,19 +1713,6 @@ def self_test():
           "message.parts.kind" in cond_fields)
     check("table parser: regular field extracts path",
           "message.parts.metadata" in cond_fields)
-
-    # --- Prose fallback still works ---
-    prose_md = """
-## 7.x.x CEL Context (Test)
-
-For `tools/list` responses, `message` contains:
-- `message.tools[]`: Array of tool definitions, each with `name`, `title`.
-"""
-    prose_fields = parse_binding_cel_fields(prose_md)
-    check("prose fallback: extracts message.tools",
-          "message.tools" in prose_fields)
-    check("prose fallback: extracts message.tools.name",
-          "message.tools.name" in prose_fields)
 
     # --- Golden test: MCP Tool type paths (coupled-failure safeguard) ---
     golden_table_md = """
