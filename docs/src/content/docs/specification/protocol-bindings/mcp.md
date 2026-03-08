@@ -35,11 +35,11 @@ The following surface values are defined for MCP indicators. The **Default Targe
 | `server_capability` | The server's declared capabilities | `capabilities` | `initialize` response |
 | `server_info` | The server's identity (name, title, version, description, icons, websiteUrl) | `serverInfo` | `initialize` response |
 | `server_instructions` | Server-provided instructions injected into the LLM's context | `instructions` | `initialize` response |
-| `sampling_request` | A server-initiated request for LLM completion (may include tool definitions) | `params` | `sampling/createMessage` request |
-| `elicitation_request` | A server-initiated request for user input | `params` | `elicitation/create` request |
-| `elicitation_response` | The user's response to an elicitation request | `result` | `elicitation/create` response |
+| `sampling_request` | A server-initiated request for LLM completion (may include tool definitions) | `""` (root) | `sampling/createMessage` request |
+| `elicitation_request` | A server-initiated request for user input | `""` (root) | `elicitation/create` request |
+| `elicitation_response` | The user's response to an elicitation request | `""` (root) | `elicitation/create` response |
 | `mcp_task_status` | The status of an MCP task | `task` | `tasks/get` response, `notifications/tasks/status` |
-| `mcp_task_result` | The deferred result of a completed task | `result` | `tasks/result` response |
+| `mcp_task_result` | The deferred result of a completed task | `""` (root) | `tasks/result` response |
 | `roots_response` | The client's filesystem roots | `roots[*]` | `roots/list` response |
 
 ## 7.1.2 Event Types
@@ -105,12 +105,14 @@ Notification events (`notifications/*`) are true wire-level events with their ow
 | `elicitation/create` | `elicitation/create` | Server requests user input | — |
 | `tasks/get` | `tasks/get` | Server returns task status | — |
 | `tasks/result` | `tasks/result` | Server returns deferred task result | — |
+| `tasks/list` | `tasks/list` | Server returns task list | — |
+| `tasks/cancel` | `tasks/cancel` | Server confirms task cancellation | — |
 | `roots/list` | `roots/list` | Server requests filesystem roots | — |
 | `ping` | `ping` | Keepalive | — |
 
 Most `notifications/*` events are directional: server-to-client notifications (`notifications/tools/list_changed`, `notifications/resources/*`, `notifications/prompts/list_changed`, `notifications/tasks/status`, `notifications/elicitation/complete`, `notifications/message`, `notifications/progress`) appear on `mcp_client` only. Client-to-server notifications (`notifications/initialized`, `notifications/roots/list_changed`) appear on `mcp_server` only. `notifications/cancelled` is bidirectional (either party can cancel an outstanding request).
 
-`tasks/get` and `tasks/result` are valid on both `mcp_server` actors (agent polls this server) and `mcp_client` actors (server returns results). `tasks/list` and `tasks/cancel` are valid on `mcp_server` only.
+`tasks/get`, `tasks/result`, `tasks/list`, and `tasks/cancel` are valid on both `mcp_server` actors (agent sends requests to this server) and `mcp_client` actors (server returns responses). MCP 2025-11-25 tasks are bidirectional: both client and server can be requestor or receiver.
 
 **Qualifier resolution** for MCP events:
 
@@ -180,12 +182,35 @@ For `tasks/get` responses and `notifications/tasks/status`, `message` contains:
 For `tasks/result` responses, `message` contains:
 - The result structure matching the original request type (e.g., a `CallToolResult` for a task wrapping `tools/call`).
 
-For notifications, `message` contains:
-- `message.method`: The notification method name.
-- `message.params`: The notification parameters object (may be absent).
+For `notifications/tools/list_changed`, `notifications/resources/list_changed`, `notifications/prompts/list_changed`, and `notifications/initialized`, `message` is an empty object (these notifications carry no parameters).
 
-For `notifications/elicitation/complete`, `message` additionally contains:
-- `message.params.elicitationId`: The ID of the elicitation that completed.
+For `notifications/resources/updated`, `message` contains:
+- `message.uri`: The URI of the resource that was updated.
+
+For `notifications/tasks/status`, see `tasks/get` responses above (same `message.task` structure).
+
+For `notifications/elicitation/complete`, `message` contains:
+- `message.elicitationId`: The ID of the elicitation that completed.
+
+For `notifications/cancelled`, `message` contains:
+- `message.requestId`: The ID of the request being cancelled.
+- `message.reason`: Optional human-readable cancellation reason.
+
+For `notifications/message` (logging), `message` contains:
+- `message.level`: The log level (`debug`, `info`, `notice`, `warning`, `error`, `critical`, `alert`, `emergency`).
+- `message.logger`: Optional logger name.
+- `message.data`: The log message data (any type).
+
+For `notifications/progress`, `message` contains:
+- `message.progressToken`: The progress token from the original request.
+- `message.progress`: Numeric progress value.
+- `message.total`: Optional total value for percentage calculation.
+- `message.message`: Optional human-readable progress description.
+
+For `completion/complete` responses, `message` contains:
+- `message.completion.values[]`: Array of completion value strings.
+- `message.completion.total`: Optional total number of completions available.
+- `message.completion.hasMore`: Whether additional completions exist.
 
 For `initialize` responses, `message` contains:
 - `message.protocolVersion`: The negotiated MCP protocol version string.
@@ -193,7 +218,7 @@ For `initialize` responses, `message` contains:
 - `message.serverInfo`: Object with `name`, `version`, and optionally `title`, `description`, `icons[]`, `websiteUrl`.
 - `message.instructions`: Optional string with server-provided instructions for the LLM.
 
-In all cases, `message` corresponds to the `params` (for requests/notifications) or `result` (for responses) field of the JSON-RPC message, not the full JSON-RPC envelope. The `jsonrpc`, `id`, and `method` fields of the envelope are not included in the CEL context.
+In all cases, `message` corresponds to the `params` (for requests and notifications) or `result` (for responses) field of the JSON-RPC message, not the full JSON-RPC envelope. The `jsonrpc`, `id`, and `method` fields of the envelope are not included in the CEL context. The notification method is identified by the event name, not by a CEL field.
 
 ## 7.1.4 Execution State (MCP)
 
@@ -339,6 +364,9 @@ state:
       listChanged: boolean?
     prompts:
       listChanged: boolean?
+    completions: object?                 # Present to declare completion support
+    logging: object?                     # Present to declare logging support
+    experimental: object?                # Experimental capabilities
     elicitation: object?                 # Present to declare elicitation support
     tasks:                               # Present to declare task support
       list: object?                      # Declare task listing support
@@ -368,7 +396,7 @@ state:
 
 **LLM synthesis.** When `synthesize` is present, the adversarial tool MUST generate the response content at runtime using an LLM. The `prompt` field is a free-text instruction to the LLM, supporting `{{template}}` interpolation from extractors and request fields. The runtime is responsible for model selection, structured output enforcement, caching, and retry. Conforming tools MUST validate synthesized output against the protocol binding's message structure (MCP tool call result for tools, prompt get result for prompts) before injection into the protocol stream. When the tool declares an `outputSchema`, the synthesized output MUST also include a valid `structuredContent` object conforming to that schema. Generation failures MUST NOT be sent to the target agent. This specification does not define model configuration (model name, temperature, seed); these are runtime concerns defined by the consuming tool's configuration. See [§7.4](/specification/protocol-bindings/llm-synthesis/) for cross-protocol synthesis details.
 
-The `capabilities` object declares which protocol features the adversarial tool supports. Capabilities within the first phase's `state` are sent during the `initialize` handshake before phase execution begins; subsequent phases can modify declared capabilities to simulate capability changes (e.g., rug pull attacks). Declaring `elicitation` enables server-initiated user input requests. The `tasks` capability is structured: `tasks.requests.tools.call` declares that `tools/call` requests can be deferred into asynchronous tasks (the only request type supported for server-side task augmentation in MCP 2025-11-25). For backward compatibility, `tasks: {}` (empty object) is equivalent to declaring task support with no specific request type restrictions. The `list` and `cancel` sub-objects declare whether the server supports listing and cancelling tasks.
+The `capabilities` object declares which protocol features the adversarial tool supports. Capabilities within the first phase's `state` are sent during the `initialize` handshake before phase execution begins; subsequent phases can modify declared capabilities to simulate capability changes (e.g., rug pull attacks). Declaring `elicitation` enables server-initiated user input requests. Declaring `completions` enables argument completion. Declaring `logging` enables the server to send `notifications/message` log events. The `tasks` capability is structured: `tasks.requests.tools.call` declares that `tools/call` requests can be deferred into asynchronous tasks. For backward compatibility, `tasks: {}` (empty object) is equivalent to declaring task support with no specific request type restrictions. The `list` and `cancel` sub-objects declare whether the server supports listing and cancelling tasks. MCP 2025-11-25 tasks are bidirectional: both `mcp_server` and `mcp_client` actors can declare task capabilities. Client-side `tasks.requests.sampling.createMessage` and `tasks.requests.elicitation.create` enable the client to defer server-initiated requests into async tasks.
 
 **Tool execution hints.** The `execution` object on a tool provides metadata about how the tool should be executed. The `taskSupport` field declares whether the tool supports task-augmented (async) execution: `"forbidden"` (default) means the tool does not support async execution, `"optional"` means it may be called either synchronously or asynchronously, and `"required"` means it must be called with task augmentation. Attack documents testing temporal manipulation or race conditions SHOULD set `taskSupport: "required"` to force the client into async polling mode, where the server can manipulate timing via `pollInterval` and deferred results.
 
@@ -378,6 +406,36 @@ When the phase mode is `mcp_client`, the phase state defines the client's behavi
 
 ```yaml
 state:
+  client_info:                           # Client identity in initialize request
+    name: string                         # Client name
+    title: string?                       # Human-readable display name
+    version: string?                     # Client version
+    description: string?                 # Client description
+    icons:                               # Display icons
+      - src: string
+        mimeType: string?
+        sizes: string[]?
+        theme: enum(light, dark)?
+    websiteUrl: string?                  # Client website URL
+
+  capabilities:                          # Client capabilities declared during initialize
+    roots:
+      listChanged: boolean?              # Whether client sends notifications/roots/list_changed
+    sampling:
+      tools: object?                     # Declare support for tool use in sampling
+      context: object?                   # Declare support for includeContext parameter
+    elicitation:
+      form: object?                      # Declare support for form-mode elicitation
+      url: object?                       # Declare support for URL-mode elicitation
+    tasks:                               # Client-side task capabilities
+      list: object?                      # Declare task listing support
+      cancel: object?                    # Declare task cancellation support
+      requests:                          # Which request types can become async tasks
+        sampling:
+          createMessage: object?         # Task-augmented sampling/createMessage
+        elicitation:
+          create: object?                # Task-augmented elicitation/create
+
   actions:                             # Ordered MCP requests to send during this phase
     - list_tools: {}                   # Send tools/list request
     - call_tool:                       # Send tools/call request
@@ -411,11 +469,21 @@ state:
       content:                         # Static response (mutually exclusive with synthesize)
         role: enum(user, assistant)
         model: string?
-        content:
-          type: enum(text, image, audio)
-          text: string?
-          data: string?
-          mimeType: string?
+        content:                       # Single block or array of blocks
+          - type: enum(text, image, audio, tool_use, tool_result)
+            # Type-specific fields:
+            text: string?              # type: text
+            data: string?              # Base64-encoded (type: image, audio)
+            mimeType: string?          # type: image, audio
+            id: string?               # type: tool_use (tool use ID)
+            name: string?             # type: tool_use (tool name)
+            input: object?            # type: tool_use (tool arguments)
+            toolUseId: string?        # type: tool_result (references tool_use.id)
+            isError: boolean?         # type: tool_result
+            annotations:               # Content metadata
+              audience: string[]?
+              priority: number?
+              lastModified: string?
       synthesize:                      # LLM generation (mutually exclusive with content)
         prompt: string
 
@@ -433,9 +501,13 @@ state:
 
 **Action semantics.** The `actions` list is the client-mode equivalent of server tools/resources: it defines what the client does during each phase. Actions are executed sequentially in list order; each action is one MCP JSON-RPC request. Each action object MUST contain exactly one action key (same constraint as [`on_enter` actions](/sdk/core-types/#27a-action), V-043).
 
+**Client identity.** The `client_info` object controls the `clientInfo` field in the `initialize` request. When omitted, tools SHOULD default to `{name: "oatf-client", version: "1.0.0"}`. Attack documents testing client impersonation SHOULD set this field explicitly.
+
+**Client capabilities.** The `capabilities` object is sent during `initialize`. It declares which server-initiated features the client supports: `sampling` (LLM completion requests, with optional `tools` and `context` sub-capabilities), `elicitation` (user input requests, with `form` and `url` mode support), `roots` (filesystem roots with optional `listChanged` notifications), and `tasks` (client-side task support including `list`, `cancel`, and request-type-specific augmentation). When omitted, tools SHOULD default to `{roots: {listChanged: true}}`.
+
 **Excluded methods.** `initialize` and `ping` are not actions. `initialize` is performed automatically by the runtime before phase execution begins (part of connection setup), and `ping` is a transport-level keepalive. The `actions` list covers application-level requests only.
 
-**Server-initiated request handling.** `sampling_responses` and `elicitation_responses` follow the same ordered-match semantics as server `responses` ([§7.1.4](/specification/protocol-bindings/mcp/#714-execution-state-mcp)): entries are evaluated in order, first match wins, and entries without `when` are catch-alls. Static content and `synthesize` are mutually exclusive on the same entry.
+**Server-initiated request handling.** `sampling_responses` and `elicitation_responses` follow the same ordered-match semantics as server `responses` ([§7.1.4](/specification/protocol-bindings/mcp/#714-execution-state-mcp)): entries are evaluated in order, first match wins, and entries without `when` are catch-alls. Static content and `synthesize` are mutually exclusive on the same entry. Sampling response content is an array of content blocks supporting `text`, `image`, `audio`, `tool_use`, and `tool_result` types. The `tool_use` and `tool_result` types enable multi-turn tool-use loops within sampling, where the client proposes tool calls and returns tool results to the server's LLM.
 
 **Filesystem roots.** The `roots` list is returned verbatim on `roots/list` requests. When absent, the client does not advertise filesystem roots.
 

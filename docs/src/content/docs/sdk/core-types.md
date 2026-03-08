@@ -395,11 +395,11 @@ SDKs MUST maintain a registry mapping each `Surface` value to its protocol and d
 | `server_capability` | `mcp` | `capabilities` |
 | `server_info` | `mcp` | `serverInfo` |
 | `server_instructions` | `mcp` | `instructions` |
-| `sampling_request` | `mcp` | `params` |
-| `elicitation_request` | `mcp` | `params` |
-| `elicitation_response` | `mcp` | `result` |
+| `sampling_request` | `mcp` | `""` (root) |
+| `elicitation_request` | `mcp` | `""` (root) |
+| `elicitation_response` | `mcp` | `""` (root) |
 | `mcp_task_status` | `mcp` | `task` |
-| `mcp_task_result` | `mcp` | `result` |
+| `mcp_task_result` | `mcp` | `""` (root) |
 | `roots_response` | `mcp` | `roots[*]` |
 | `agent_card` | `a2a` | `""` (root) |
 | `card_name` | `a2a` | `name` |
@@ -438,21 +438,27 @@ This table is reproduced from [format specification §7](/specification/protocol
 | `resources/unsubscribe` | ✓ | | | | |
 | `prompts/list` | ✓ | ✓ | | | |
 | `prompts/get` | ✓ | ✓ | | | |
-| `completion/complete` | ✓ | | | | |
+| `resources/templates/list` | ✓ | ✓ | | | |
+| `completion/complete` | ✓ | ✓ | | | |
 | `sampling/createMessage` | ✓ | ✓ | | | |
 | `elicitation/create` | ✓ | ✓ | | | |
 | `tasks/get` | ✓ | ✓ | ✓ | ✓ | |
 | `tasks/result` | ✓ | ✓ | | | |
-| `tasks/list` | ✓ | | | | |
-| `tasks/cancel` | ✓ | | ✓ | ✓ | |
+| `tasks/list` | ✓ | ✓ | | | |
+| `tasks/cancel` | ✓ | ✓ | ✓ | ✓ | |
 | `roots/list` | ✓ | ✓ | | | |
 | `ping` | ✓ | ✓ | | | |
+| `notifications/initialized` | ✓ | | | | |
+| `notifications/roots/list_changed` | ✓ | | | | |
+| `notifications/cancelled` | ✓ | ✓ | | | |
 | `notifications/tools/list_changed` | | ✓ | | | |
 | `notifications/resources/list_changed` | | ✓ | | | |
 | `notifications/resources/updated` | | ✓ | | | |
 | `notifications/prompts/list_changed` | | ✓ | | | |
 | `notifications/tasks/status` | | ✓ | | | |
 | `notifications/elicitation/complete` | | ✓ | | | |
+| `notifications/message` | | ✓ | | | |
+| `notifications/progress` | | ✓ | | | |
 | `message/send` | | | ✓ | ✓ | |
 | `message/stream` | | | ✓ | ✓ | |
 | `tasks/resubscribe` | | | ✓ | ✓ | |

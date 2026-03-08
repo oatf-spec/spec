@@ -524,7 +524,6 @@ MCP_EVENT_CONFIG = {
     "server_only": {
         # These MCP methods are only valid as server-mode events
         "resources/subscribe", "resources/unsubscribe",
-        "tasks/list", "tasks/cancel",
         # Client-to-server notifications (override auto-classification
         # which assumes all notifications are client_only)
         "notifications/initialized",
