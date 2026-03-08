@@ -269,6 +269,7 @@ state:
     operation: enum(set, get, list, delete)   # default: set
     id: string                         # Task ID
     pushNotificationConfigId: string?  # Config ID (required for delete, optional for get)
+    metadata: map?                     # Request-level metadata
     config:                            # Required for set; ignored for get/list/delete
       url: string
       id: string?                      # Config identifier
