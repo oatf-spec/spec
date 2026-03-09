@@ -391,7 +391,7 @@ SDKs MUST maintain a registry mapping each `Surface` value to its protocol and d
 | `prompt_title` | `mcp` | `prompts[*].title` |
 | `prompt_description` | `mcp` | `prompts[*].description` |
 | `prompt_icons` | `mcp` | `prompts[*].icons` |
-| `server_notification` | `mcp` | `params` |
+| `server_notification` | `mcp` | `""` (root) |
 | `server_capability` | `mcp` | `capabilities` |
 | `server_info` | `mcp` | `serverInfo` |
 | `server_instructions` | `mcp` | `instructions` |

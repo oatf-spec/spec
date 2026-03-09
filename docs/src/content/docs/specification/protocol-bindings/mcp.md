@@ -31,7 +31,7 @@ The following surface values are defined for MCP indicators. The **Default Targe
 | `prompt_title` | The human-readable display name of a prompt | `prompts[*].title` | `prompts/list` response |
 | `prompt_description` | The description of a prompt | `prompts[*].description` | `prompts/list` response |
 | `prompt_icons` | The display icons of a prompt | `prompts[*].icons` | `prompts/list` response |
-| `server_notification` | A server-to-client notification | `params` | Any notification message |
+| `server_notification` | A server-to-client notification | `""` (root) | Any notification message |
 | `server_capability` | The server's declared capabilities | `capabilities` | `initialize` response |
 | `server_info` | The server's identity (name, title, version, description, icons, websiteUrl) | `serverInfo` | `initialize` response |
 | `server_instructions` | Server-provided instructions injected into the LLM's context | `instructions` | `initialize` response |
@@ -128,7 +128,7 @@ When a CEL expression is evaluated against an MCP message, the root context obje
 | Group | Fields |
 |-------|--------|
 | {{Icon}} | `src` (string, req), `mimeType` (string), `sizes` (string[]), `theme` (string) |
-| {{Annotations}} | `audience` (string[]), `priority` (number), `lastModified` (string) |
+| {{ContentAnnotations}} | `audience` (string[]), `priority` (number), `lastModified` (string) |
 
 #### `tools/list` response
 
@@ -178,7 +178,7 @@ See [MCP Tools](https://modelcontextprotocol.io/specification/2025-11-25/server/
 | `message.content[].description` | string; when type="resource_link" | — | ResourceLink |
 | `message.content[].size` | number; when type="resource_link" | — | ResourceLink |
 | `message.content[].icons[]` | {{Icon}}; when type="resource_link" | — | ResourceLink |
-| `message.content[].annotations` | {{Annotations}} | — | TextContent, ImageContent, AudioContent, EmbeddedResource, ResourceLink |
+| `message.content[].annotations` | {{ContentAnnotations}} | — | TextContent, ImageContent, AudioContent, EmbeddedResource, ResourceLink |
 | `message.structuredContent` | object | — | CallToolResult |
 | `message.isError` | boolean | — | CallToolResult |
 
@@ -196,7 +196,7 @@ See [MCP Resources](https://modelcontextprotocol.io/specification/2025-11-25/ser
 | `message.resources[].mimeType` | string | — | Resource |
 | `message.resources[].size` | number | — | Resource |
 | `message.resources[].icons[]` | {{Icon}} | — | Resource |
-| `message.resources[].annotations` | {{Annotations}} | — | Resource |
+| `message.resources[].annotations` | {{ContentAnnotations}} | — | Resource |
 | `message.nextCursor` | string | — | PaginatedResult |
 
 #### `resources/templates/list` response
@@ -212,7 +212,7 @@ See [MCP Resources](https://modelcontextprotocol.io/specification/2025-11-25/ser
 | `message.resourceTemplates[].description` | string | — | ResourceTemplate |
 | `message.resourceTemplates[].mimeType` | string | — | ResourceTemplate |
 | `message.resourceTemplates[].icons[]` | {{Icon}} | — | ResourceTemplate |
-| `message.resourceTemplates[].annotations` | {{Annotations}} | — | ResourceTemplate |
+| `message.resourceTemplates[].annotations` | {{ContentAnnotations}} | — | ResourceTemplate |
 | `message.nextCursor` | string | — | PaginatedResult |
 
 #### `resources/read` response

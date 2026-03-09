@@ -558,7 +558,7 @@ PROTOCOLS = {
         "event_config": MCP_EVENT_CONFIG,
         "shared_groups": {
             "Icon": ["src", "mimeType", "sizes", "theme"],
-            "Annotations": ["audience", "priority", "lastModified"],
+            "ContentAnnotations": ["audience", "priority", "lastModified"],
         },
     },
 }
@@ -769,7 +769,7 @@ def _parse_cel_table_rows(cel_text, shared_groups=None):
         path = _normalize_path(m.group(1).rstrip("`.,: "))
         fields.add(path)
 
-        # Check for shared-group reference in Type column: {{Icon}}, {{Annotations}}
+        # Check for shared-group reference in Type column: {{Icon}}, {{ContentAnnotations}}
         type_cell = m.group(2).strip()
         group_match = re.match(r"\{\{(\w+)\}\}", type_cell)
         if group_match:
@@ -788,7 +788,7 @@ def parse_binding_cel_fields(text, shared_groups=None):
         {"message.name", "message.description", "message.skills.id", ...}
 
     Parses table rows (| `message.` ...) and expands shared-group
-    references ({{Icon}}, {{Annotations}}) when shared_groups dict
+    references ({{Icon}}, {{ContentAnnotations}}) when shared_groups dict
     is provided.
     """
     # Extract CEL section text

@@ -11,7 +11,7 @@ Indicator evaluation operates on protocol messages represented as `Value`, a dyn
 
 The `Value` passed to indicator evaluation corresponds to the `result` (for responses) or `params` (for requests/notifications) field of the JSON-RPC message, not the full JSON-RPC envelope. This is the convention defined in the [format specification §7.1.3](/specification/protocol-bindings/mcp/#713-indicator-evaluation-context). For non-JSON-RPC bindings (e.g., AG-UI, or future protocols that do not use JSON-RPC framing), tools SHOULD pass the protocol-specific message payload, the semantic equivalent of "the content the agent produced or received." Indicators evaluate whatever structure is present; the dot-path and CEL machinery is format-agnostic.
 
-SDKs MUST NOT require messages to conform to any particular protocol schema. Indicators evaluate against whatever structure is present. Missing fields produce `not_matched` verdicts, not errors.
+SDKs MUST NOT require messages to conform to any particular protocol schema. Indicators evaluate against whatever structure is present. For pattern and semantic indicators, missing target fields produce `not_matched` verdicts, not errors. For expression indicators, missing field access follows CEL runtime semantics — accessing a nonexistent field is a CEL evaluation error, which the SDK surfaces as an `EvaluationError`.
 
 ## 4.2 evaluate_pattern
 
