@@ -342,9 +342,6 @@ MCP_TYPE_MAP = {
     "CreateMessageRequestParams": {
         "cel": ["message"],  # sampling/createMessage request
         "state": [],
-        # Non-attack-relevant params
-        "ignored": {"task", "includeContext", "stopSequences", "temperature",
-                    "metadata"},
     },
     "CreateMessageResult": {
         "cel": [],
@@ -369,6 +366,12 @@ MCP_TYPE_MAP = {
         "state": [],
     },
 
+    # --- Logging types ---
+    "SetLevelRequestParams": {
+        "cel": ["message"],  # logging/setLevel request
+        "state": [],
+    },
+
     # --- Elicitation types ---
     "ElicitRequestFormParams": {
         "cel": ["message"],  # elicitation/create request (form mode)
@@ -387,7 +390,7 @@ MCP_TYPE_MAP = {
 
     # --- Task types (MCP) ---
     "Task": {
-        "cel": ["message.task"],
+        "cel": ["message"],  # tasks/get response + notifications/tasks/status (both flat)
         "state": [],
     },
     "TaskStatus": {
@@ -442,7 +445,6 @@ MCP_UNMAPPED = {
     "SubscribeRequestParams", "UnsubscribeRequestParams",
     "GetPromptRequestParams",
     "CompleteRequestParams",
-    "SetLevelRequestParams",
     "PaginatedRequestParams",
     "CancelledNotificationParams",
     "TaskAugmentedRequestParams",
@@ -510,22 +512,20 @@ MCP_UNMAPPED = {
 # methods are auto-classified as client_only by extract_methods_from_schema().
 MCP_EVENT_CONFIG = {
     "server_only": {
-        # These MCP methods are only valid as server-mode events
-        "resources/subscribe", "resources/unsubscribe",
         # Client-to-server notifications (override auto-classification
         # which assumes all notifications are client_only)
         "notifications/initialized",
         "notifications/roots/list_changed",
     },
     "both_modes": {
-        # Bidirectional notification (either party can cancel)
+        # Bidirectional notifications (either party can send)
         "notifications/cancelled",
+        "notifications/progress",
+        "notifications/tasks/status",
     },
     # Schema methods excluded from event expectations entirely.
     # These are upstream methods the binding intentionally omits.
-    "excluded": {
-        "logging/setLevel",          # Logging config, not attack surface
-    },
+    "excluded": set(),
 }
 
 # ---------------------------------------------------------------------------

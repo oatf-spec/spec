@@ -107,7 +107,7 @@ See [A2A Agent Card schema](https://github.com/a2aproject/A2A/blob/v0.3.0/specif
 | `message.defaultInputModes[]` | string[] | yes | AgentCard |
 | `message.defaultOutputModes[]` | string[] | yes | AgentCard |
 | `message.provider` | object | — | AgentCard |
-| `message.provider.organization` | string | — | AgentProvider |
+| `message.provider.organization` | string | yes | AgentProvider |
 | `message.provider.url` | string | yes | AgentProvider |
 | `message.documentationUrl` | string | — | AgentCard |
 | `message.iconUrl` | string | — | AgentCard |
@@ -134,8 +134,8 @@ See [A2A Message schema](https://github.com/a2aproject/A2A/blob/v0.3.0/specifica
 | `message.parts[]` | array | yes | Message |
 | `message.parts[].kind` | `"text" ∣ "file" ∣ "data"` | yes | — |
 | `message.parts[].text` | string; when kind="text" | yes | TextPart |
-| `message.parts[].file` | object; when kind="file" | — | FilePart |
-| `message.parts[].data` | any; when kind="data" | — | DataPart |
+| `message.parts[].file` | object; when kind="file" | yes | FilePart |
+| `message.parts[].data` | object; when kind="data" | yes | DataPart |
 | `message.parts[].metadata` | map | — | TextPart, FilePart, DataPart |
 | `message.messageId` | string | yes | Message |
 | `message.contextId` | string | — | Message |

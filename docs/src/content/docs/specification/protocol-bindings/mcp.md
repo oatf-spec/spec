@@ -38,7 +38,7 @@ The following surface values are defined for MCP indicators. The **Default Targe
 | `sampling_request` | A server-initiated request for LLM completion (may include tool definitions) | `""` (root) | `sampling/createMessage` request |
 | `elicitation_request` | A server-initiated request for user input | `""` (root) | `elicitation/create` request |
 | `elicitation_response` | The user's response to an elicitation request | `""` (root) | `elicitation/create` response |
-| `mcp_task_status` | The status of an MCP task | `task` | `tasks/get` response, `notifications/tasks/status` |
+| `mcp_task_status` | The status of an MCP task | `""` (root) | `tasks/get` response, `notifications/tasks/status` |
 | `mcp_task_result` | The deferred result of a completed task | `""` (root) | `tasks/result` response |
 | `roots_response` | The client's filesystem roots | `roots[*]` | `roots/list` response |
 
@@ -61,6 +61,7 @@ MCP events are per-actor scoped. An actor's mode determines which events it obse
 | `prompts/list` | `prompts/list` | Agent discovers prompts | — |
 | `prompts/get` | `prompts/get` | Agent gets a prompt | `:prompt_name` |
 | `completion/complete` | `completion/complete` | Agent requests completion | — |
+| `logging/setLevel` | `logging/setLevel` | Agent sets log level | — |
 | `sampling/createMessage` | `sampling/createMessage` | Server requests LLM sampling from agent | — |
 | `elicitation/create` | `elicitation/create` | Server requests user input via agent | — |
 | `tasks/get` | `tasks/get` | Agent polls task status | — |
@@ -72,6 +73,8 @@ MCP events are per-actor scoped. An actor's mode determines which events it obse
 | `notifications/initialized` | `notifications/initialized` | Client signals initialization complete | — |
 | `notifications/roots/list_changed` | `notifications/roots/list_changed` | Client signals roots changed | — |
 | `notifications/cancelled` | `notifications/cancelled` | Client cancels an outstanding request | — |
+| `notifications/progress` | `notifications/progress` | Client sends progress update | — |
+| `notifications/tasks/status` | `notifications/tasks/status` | Client signals task status change | — |
 
 Resource events (`resources/read`, `resources/subscribe`, `resources/unsubscribe`) do not support qualifiers because resource URIs commonly contain colons that conflict with qualifier syntax. Use `trigger.match` for URI-based filtering.
 
@@ -88,6 +91,8 @@ Notification events (`notifications/*`) are true wire-level events with their ow
 | `tools/call` | `tools/call` | Server returns tool result | `:tool_name` |
 | `resources/list` | `resources/list` | Server returns resource list | — |
 | `resources/read` | `resources/read` | Server returns resource content | — |
+| `resources/subscribe` | `resources/subscribe` | Server confirms resource subscription | — |
+| `resources/unsubscribe` | `resources/unsubscribe` | Server confirms resource unsubscription | — |
 | `resources/templates/list` | `resources/templates/list` | Server returns resource template list | — |
 | `prompts/list` | `prompts/list` | Server returns prompt list | — |
 | `prompts/get` | `prompts/get` | Server returns prompt content | `:prompt_name` |
@@ -101,6 +106,7 @@ Notification events (`notifications/*`) are true wire-level events with their ow
 | `notifications/message` | `notifications/message` | Server sends log message | — |
 | `notifications/progress` | `notifications/progress` | Server sends progress update | — |
 | `completion/complete` | `completion/complete` | Server returns completion suggestions | — |
+| `logging/setLevel` | `logging/setLevel` | Server confirms log level change | — |
 | `sampling/createMessage` | `sampling/createMessage` | Server requests LLM sampling (may include tools) | — |
 | `elicitation/create` | `elicitation/create` | Server requests user input | — |
 | `tasks/get` | `tasks/get` | Server returns task status | — |
@@ -110,7 +116,7 @@ Notification events (`notifications/*`) are true wire-level events with their ow
 | `roots/list` | `roots/list` | Server requests filesystem roots | — |
 | `ping` | `ping` | Keepalive | — |
 
-Most `notifications/*` events are directional: server-to-client notifications (`notifications/tools/list_changed`, `notifications/resources/*`, `notifications/prompts/list_changed`, `notifications/tasks/status`, `notifications/elicitation/complete`, `notifications/message`, `notifications/progress`) appear on `mcp_client` only. Client-to-server notifications (`notifications/initialized`, `notifications/roots/list_changed`) appear on `mcp_server` only. `notifications/cancelled` is bidirectional (either party can cancel an outstanding request).
+Most `notifications/*` events are directional: server-to-client notifications (`notifications/tools/list_changed`, `notifications/resources/*`, `notifications/prompts/list_changed`, `notifications/elicitation/complete`, `notifications/message`) appear on `mcp_client` only. Client-to-server notifications (`notifications/initialized`, `notifications/roots/list_changed`) appear on `mcp_server` only. `notifications/cancelled`, `notifications/progress`, and `notifications/tasks/status` are bidirectional (either party can send them).
 
 `tasks/get`, `tasks/result`, `tasks/list`, and `tasks/cancel` are valid on both `mcp_server` actors (agent sends requests to this server) and `mcp_client` actors (server returns responses). MCP 2025-11-25 tasks are bidirectional: both client and server can be requestor or receiver.
 
@@ -136,7 +142,7 @@ See [MCP Tools](https://modelcontextprotocol.io/specification/2025-11-25/server/
 
 | Path | Type | Req | Source |
 |------|------|-----|--------|
-| `message.tools[]` | array | — | Tool |
+| `message.tools[]` | array | yes | Tool |
 | `message.tools[].name` | string | yes | Tool |
 | `message.tools[].title` | string | — | Tool |
 | `message.tools[].description` | string | — | Tool |
@@ -170,13 +176,14 @@ See [MCP Tools](https://modelcontextprotocol.io/specification/2025-11-25/server/
 | `message.content[].type` | `"text" ∣ "image" ∣ "audio" ∣ "resource" ∣ "resource_link"` | yes | — |
 | `message.content[].text` | string; when type="text" | yes | TextContent |
 | `message.content[].data` | string; when type="image" or type="audio" | yes | ImageContent, AudioContent |
-| `message.content[].mimeType` | string; when type="image" or type="audio" or type="resource_link" | yes | ImageContent, AudioContent, ResourceLink |
+| `message.content[].mimeType` | string; when type="image" or type="audio" | yes | ImageContent, AudioContent |
+| `message.content[].mimeType` | string; when type="resource_link" | — | ResourceLink |
 | `message.content[].resource` | object; when type="resource" | yes | EmbeddedResource |
 | `message.content[].uri` | string; when type="resource_link" | yes | ResourceLink |
 | `message.content[].name` | string; when type="resource_link" | yes | ResourceLink |
 | `message.content[].title` | string; when type="resource_link" | — | ResourceLink |
 | `message.content[].description` | string; when type="resource_link" | — | ResourceLink |
-| `message.content[].size` | number; when type="resource_link" | — | ResourceLink |
+| `message.content[].size` | integer; when type="resource_link" | — | ResourceLink |
 | `message.content[].icons[]` | {{Icon}}; when type="resource_link" | — | ResourceLink |
 | `message.content[].annotations` | {{ContentAnnotations}} | — | TextContent, ImageContent, AudioContent, EmbeddedResource, ResourceLink |
 | `message.structuredContent` | object | — | CallToolResult |
@@ -188,13 +195,13 @@ See [MCP Resources](https://modelcontextprotocol.io/specification/2025-11-25/ser
 
 | Path | Type | Req | Source |
 |------|------|-----|--------|
-| `message.resources[]` | array | — | Resource |
+| `message.resources[]` | array | yes | Resource |
 | `message.resources[].uri` | string | yes | Resource |
 | `message.resources[].name` | string | yes | Resource |
 | `message.resources[].title` | string | — | Resource |
 | `message.resources[].description` | string | — | Resource |
 | `message.resources[].mimeType` | string | — | Resource |
-| `message.resources[].size` | number | — | Resource |
+| `message.resources[].size` | integer | — | Resource |
 | `message.resources[].icons[]` | {{Icon}} | — | Resource |
 | `message.resources[].annotations` | {{ContentAnnotations}} | — | Resource |
 | `message.nextCursor` | string | — | PaginatedResult |
@@ -205,7 +212,7 @@ See [MCP Resources](https://modelcontextprotocol.io/specification/2025-11-25/ser
 
 | Path | Type | Req | Source |
 |------|------|-----|--------|
-| `message.resourceTemplates[]` | array | — | ResourceTemplate |
+| `message.resourceTemplates[]` | array | yes | ResourceTemplate |
 | `message.resourceTemplates[].uriTemplate` | string | yes | ResourceTemplate |
 | `message.resourceTemplates[].name` | string | yes | ResourceTemplate |
 | `message.resourceTemplates[].title` | string | — | ResourceTemplate |
@@ -221,7 +228,7 @@ See [MCP Resources](https://modelcontextprotocol.io/specification/2025-11-25/ser
 
 | Path | Type | Req | Source |
 |------|------|-----|--------|
-| `message.contents[]` | array | — | TextResourceContents, BlobResourceContents |
+| `message.contents[]` | array | yes | TextResourceContents, BlobResourceContents |
 | `message.contents[].uri` | string | yes | TextResourceContents, BlobResourceContents |
 | `message.contents[].mimeType` | string | — | TextResourceContents, BlobResourceContents |
 | `message.contents[].text` | string; when text resource | yes | TextResourceContents |
@@ -233,7 +240,7 @@ See [MCP Prompts](https://modelcontextprotocol.io/specification/2025-11-25/serve
 
 | Path | Type | Req | Source |
 |------|------|-----|--------|
-| `message.prompts[]` | array | — | Prompt |
+| `message.prompts[]` | array | yes | Prompt |
 | `message.prompts[].name` | string | yes | Prompt |
 | `message.prompts[].title` | string | — | Prompt |
 | `message.prompts[].description` | string | — | Prompt |
@@ -272,8 +279,13 @@ See [MCP Sampling](https://modelcontextprotocol.io/specification/2025-11-25/serv
 | `message.modelPreferences.speedPriority` | number | — | ModelPreferences |
 | `message.modelPreferences.intelligencePriority` | number | — | ModelPreferences |
 | `message.systemPrompt` | string | — | CreateMessageRequestParams |
-| `message.maxTokens` | number | yes | CreateMessageRequestParams |
+| `message.maxTokens` | integer | yes | CreateMessageRequestParams |
 | `message.tools[]` | array | — | CreateMessageRequestParams |
+| `message.includeContext` | string | — | CreateMessageRequestParams |
+| `message.metadata` | map | — | CreateMessageRequestParams |
+| `message.stopSequences[]` | string[] | — | CreateMessageRequestParams |
+| `message.temperature` | number | — | CreateMessageRequestParams |
+| `message.task` | object | — | CreateMessageRequestParams |
 | `message.toolChoice` | object | — | CreateMessageRequestParams |
 | `message.toolChoice.mode` | string | — | ToolChoice |
 
@@ -284,8 +296,8 @@ See [MCP Elicitation](https://modelcontextprotocol.io/specification/2025-11-25/s
 | Path | Type | Req | Source |
 |------|------|-----|--------|
 | `message.message` | string | yes | ElicitRequestFormParams, ElicitRequestURLParams |
-| `message.requestedSchema` | object | yes | ElicitRequestFormParams |
-| `message.mode` | string | — | ElicitRequestFormParams, ElicitRequestURLParams |
+| `message.requestedSchema` | object | yes; when mode="form" | ElicitRequestFormParams |
+| `message.mode` | string | yes; when mode="url" | ElicitRequestFormParams, ElicitRequestURLParams |
 | `message.elicitationId` | string; when mode="url" | yes | ElicitRequestURLParams |
 | `message.url` | string; when mode="url" | yes | ElicitRequestURLParams |
 
@@ -298,19 +310,33 @@ See [MCP Elicitation](https://modelcontextprotocol.io/specification/2025-11-25/s
 | `message.action` | `"accept" ∣ "decline" ∣ "cancel"` | yes | ElicitResult |
 | `message.content` | object | — | ElicitResult |
 
-#### `tasks/get` response and `notifications/tasks/status`
+#### `tasks/get` response
 
 See [MCP Tasks](https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/tasks) for field semantics.
 
 | Path | Type | Req | Source |
 |------|------|-----|--------|
-| `message.task.taskId` | string | yes | Task |
-| `message.task.status` | `"working" ∣ "input_required" ∣ "completed" ∣ "failed" ∣ "cancelled"` | yes | Task |
-| `message.task.statusMessage` | string | — | Task |
-| `message.task.createdAt` | string | yes | Task |
-| `message.task.lastUpdatedAt` | string | yes | Task |
-| `message.task.ttl` | number | yes | Task |
-| `message.task.pollInterval` | number | — | Task |
+| `message.taskId` | string | yes | Task |
+| `message.status` | `"working" ∣ "input_required" ∣ "completed" ∣ "failed" ∣ "cancelled"` | yes | Task |
+| `message.statusMessage` | string | — | Task |
+| `message.createdAt` | string | yes | Task |
+| `message.lastUpdatedAt` | string | yes | Task |
+| `message.ttl` | integer | yes | Task |
+| `message.pollInterval` | integer | — | Task |
+
+#### `notifications/tasks/status`
+
+See [MCP Tasks](https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/tasks) for field semantics. `TaskStatusNotificationParams` uses `allOf` to merge Task fields at the top level (same flat structure as `tasks/get` response).
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.taskId` | string | yes | Task |
+| `message.status` | `"working" ∣ "input_required" ∣ "completed" ∣ "failed" ∣ "cancelled"` | yes | Task |
+| `message.statusMessage` | string | — | Task |
+| `message.createdAt` | string | yes | Task |
+| `message.lastUpdatedAt` | string | yes | Task |
+| `message.ttl` | integer | yes | Task |
+| `message.pollInterval` | integer | — | Task |
 
 #### `tasks/result` response
 
@@ -362,9 +388,17 @@ See [MCP Completion](https://modelcontextprotocol.io/specification/2025-11-25/se
 
 | Path | Type | Req | Source |
 |------|------|-----|--------|
-| `message.completion.values[]` | string[] | — | CompletionResult |
-| `message.completion.total` | number | — | CompletionResult |
+| `message.completion.values[]` | string[] | yes | CompletionResult |
+| `message.completion.total` | integer | — | CompletionResult |
 | `message.completion.hasMore` | boolean | — | CompletionResult |
+
+#### `logging/setLevel` request
+
+See [MCP Logging](https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/logging) for field semantics.
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.level` | string | yes | SetLevelRequestParams |
 
 #### `initialize` response
 
@@ -532,7 +566,6 @@ state:
     completions: object?                 # Present to declare completion support
     logging: object?                     # Present to declare logging support
     experimental: object?                # Experimental capabilities
-    elicitation: object?                 # Present to declare elicitation support
     tasks:                               # Present to declare task support
       list: object?                      # Declare task listing support
       cancel: object?                    # Declare task cancellation support
@@ -561,7 +594,7 @@ state:
 
 **LLM synthesis.** When `synthesize` is present, the adversarial tool MUST generate the response content at runtime using an LLM. The `prompt` field is a free-text instruction to the LLM, supporting `{{template}}` interpolation from extractors and request fields. The runtime is responsible for model selection, structured output enforcement, caching, and retry. Conforming tools MUST validate synthesized output against the protocol binding's message structure (MCP tool call result for tools, prompt get result for prompts) before injection into the protocol stream. When the tool declares an `outputSchema`, the synthesized output MUST also include a valid `structuredContent` object conforming to that schema. Generation failures MUST NOT be sent to the target agent. This specification does not define model configuration (model name, temperature, seed); these are runtime concerns defined by the consuming tool's configuration. See [§7.4](/specification/protocol-bindings/llm-synthesis/) for cross-protocol synthesis details.
 
-The `capabilities` object declares which protocol features the adversarial tool supports. Capabilities within the first phase's `state` are sent during the `initialize` handshake before phase execution begins; subsequent phases can modify declared capabilities to simulate capability changes (e.g., rug pull attacks). Declaring `elicitation` enables server-initiated user input requests. Declaring `completions` enables argument completion. Declaring `logging` enables the server to send `notifications/message` log events. The `tasks` capability is structured: `tasks.requests.tools.call` declares that `tools/call` requests can be deferred into asynchronous tasks. For backward compatibility, `tasks: {}` (empty object) is equivalent to declaring task support with no specific request type restrictions. The `list` and `cancel` sub-objects declare whether the server supports listing and cancelling tasks. MCP 2025-11-25 tasks are bidirectional: both `mcp_server` and `mcp_client` actors can declare task capabilities. Client-side `tasks.requests.sampling.createMessage` and `tasks.requests.elicitation.create` enable the client to defer server-initiated requests into async tasks.
+The `capabilities` object declares which protocol features the adversarial tool supports. Capabilities within the first phase's `state` are sent during the `initialize` handshake before phase execution begins; subsequent phases can modify declared capabilities to simulate capability changes (e.g., rug pull attacks). Declaring `completions` enables argument completion. Declaring `logging` enables the server to send `notifications/message` log events. The `tasks` capability is structured: `tasks.requests.tools.call` declares that `tools/call` requests can be deferred into asynchronous tasks. For backward compatibility, `tasks: {}` (empty object) is equivalent to declaring task support with no specific request type restrictions. The `list` and `cancel` sub-objects declare whether the server supports listing and cancelling tasks. MCP 2025-11-25 tasks are bidirectional: both `mcp_server` and `mcp_client` actors can declare task capabilities. Client-side `tasks.requests.sampling.createMessage` and `tasks.requests.elicitation.create` enable the client to defer server-initiated requests into async tasks.
 
 **Tool execution hints.** The `execution` object on a tool provides metadata about how the tool should be executed. The `taskSupport` field declares whether the tool supports task-augmented (async) execution: `"forbidden"` (default) means the tool does not support async execution, `"optional"` means it may be called either synchronously or asynchronously, and `"required"` means it must be called with task augmentation. Attack documents testing temporal manipulation or race conditions SHOULD set `taskSupport: "required"` to force the client into async polling mode, where the server can manipulate timing via `pollInterval` and deferred results.
 
