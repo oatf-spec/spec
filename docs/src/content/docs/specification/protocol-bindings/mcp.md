@@ -140,7 +140,7 @@ See [MCP Tools](https://modelcontextprotocol.io/specification/2025-11-25/server/
 | `message.tools[].name` | string | yes | Tool |
 | `message.tools[].title` | string | — | Tool |
 | `message.tools[].description` | string | — | Tool |
-| `message.tools[].inputSchema` | object | — | Tool |
+| `message.tools[].inputSchema` | object | yes | Tool |
 | `message.tools[].outputSchema` | object | — | Tool |
 | `message.tools[].icons[]` | {{Icon}} | — | Tool |
 | `message.tools[].annotations.title` | string | — | ToolAnnotations |
@@ -149,6 +149,7 @@ See [MCP Tools](https://modelcontextprotocol.io/specification/2025-11-25/server/
 | `message.tools[].annotations.idempotentHint` | boolean | — | ToolAnnotations |
 | `message.tools[].annotations.openWorldHint` | boolean | — | ToolAnnotations |
 | `message.tools[].execution.taskSupport` | string | — | ToolExecution |
+| `message.nextCursor` | string | — | PaginatedResult |
 
 #### `tools/call` request
 
@@ -196,6 +197,7 @@ See [MCP Resources](https://modelcontextprotocol.io/specification/2025-11-25/ser
 | `message.resources[].size` | number | — | Resource |
 | `message.resources[].icons[]` | {{Icon}} | — | Resource |
 | `message.resources[].annotations` | {{Annotations}} | — | Resource |
+| `message.nextCursor` | string | — | PaginatedResult |
 
 #### `resources/templates/list` response
 
@@ -211,6 +213,7 @@ See [MCP Resources](https://modelcontextprotocol.io/specification/2025-11-25/ser
 | `message.resourceTemplates[].mimeType` | string | — | ResourceTemplate |
 | `message.resourceTemplates[].icons[]` | {{Icon}} | — | ResourceTemplate |
 | `message.resourceTemplates[].annotations` | {{Annotations}} | — | ResourceTemplate |
+| `message.nextCursor` | string | — | PaginatedResult |
 
 #### `resources/read` response
 
@@ -240,6 +243,7 @@ See [MCP Prompts](https://modelcontextprotocol.io/specification/2025-11-25/serve
 | `message.prompts[].arguments[].title` | string | — | PromptArgument |
 | `message.prompts[].arguments[].description` | string | — | PromptArgument |
 | `message.prompts[].arguments[].required` | boolean | — | PromptArgument |
+| `message.nextCursor` | string | — | PaginatedResult |
 
 #### `prompts/get` response
 
@@ -332,7 +336,7 @@ The result structure matches the original request type (e.g., a `CallToolResult`
 
 | Path | Type | Req | Source |
 |------|------|-----|--------|
-| `message.requestId` | string | yes | CancelledNotificationParams |
+| `message.requestId` | string ∣ number | — | CancelledNotificationParams |
 | `message.reason` | string | — | CancelledNotificationParams |
 
 #### `notifications/message`
@@ -347,7 +351,7 @@ The result structure matches the original request type (e.g., a `CallToolResult`
 
 | Path | Type | Req | Source |
 |------|------|-----|--------|
-| `message.progressToken` | string | yes | ProgressNotificationParams |
+| `message.progressToken` | string ∣ number | yes | ProgressNotificationParams |
 | `message.progress` | number | yes | ProgressNotificationParams |
 | `message.total` | number | — | ProgressNotificationParams |
 | `message.message` | string | — | ProgressNotificationParams |
@@ -598,15 +602,19 @@ state:
           create: object?                # Task-augmented elicitation/create
 
   actions:                             # Ordered MCP requests to send during this phase
-    - list_tools: {}                   # Send tools/list request
+    - list_tools:                      # Send tools/list request
+        cursor: string?               # Pagination cursor from previous nextCursor
     - call_tool:                       # Send tools/call request
         name: string                   # Tool name. Supports {{template}} interpolation.
         arguments: object?             # Tool arguments. Supports {{template}} interpolation.
-    - list_resources: {}               # Send resources/list request
+    - list_resources:                  # Send resources/list request
+        cursor: string?               # Pagination cursor from previous nextCursor
     - read_resource:                   # Send resources/read request
         uri: string
-    - list_resource_templates: {}     # Send resources/templates/list request
-    - list_prompts: {}                 # Send prompts/list request
+    - list_resource_templates:        # Send resources/templates/list request
+        cursor: string?               # Pagination cursor from previous nextCursor
+    - list_prompts:                    # Send prompts/list request
+        cursor: string?               # Pagination cursor from previous nextCursor
     - get_prompt:                      # Send prompts/get request
         name: string
         arguments: object?
@@ -618,7 +626,8 @@ state:
         taskId: string
     - cancel_task:                     # Send tasks/cancel request
         taskId: string
-    - list_tasks: {}                   # Send tasks/list request
+    - list_tasks:                      # Send tasks/list request
+        cursor: string?               # Pagination cursor from previous nextCursor
     - complete:                        # Send completion/complete request
         ref: object
         argument: object
@@ -640,6 +649,8 @@ state:
             name: string?             # type: tool_use (tool name)
             input: object?            # type: tool_use (tool arguments)
             toolUseId: string?        # type: tool_result (references tool_use.id)
+            content: array?           # type: tool_result (required — array of content blocks)
+            structuredContent: object? # type: tool_result (optional structured output)
             isError: boolean?         # type: tool_result
             annotations:               # Content metadata
               audience: string[]?
