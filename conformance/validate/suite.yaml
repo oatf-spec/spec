@@ -3045,3 +3045,427 @@
     errors:
       - rule: "V-046"
         path: "attack.execution.actors[0].phases[0].mode"
+
+# ---------------------------------------------------------------------------
+# V-047: A2A client-phase action mutual exclusivity
+# ---------------------------------------------------------------------------
+
+- name: "V-047 valid: A2A client phase with only task_message"
+  id: VAL-047a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: a2a_client
+        state:
+          task_message:
+            message:
+              kind: "message"
+              role: user
+              parts:
+                - kind: text
+                  text: "Hello"
+              messageId: "msg-001"
+      indicators:
+        - surface: task_status
+          protocol: a2a
+          pattern:
+            contains: "completed"
+  expected:
+    valid: true
+
+- name: "V-047 invalid: A2A client phase with task_message and task_query"
+  id: VAL-047b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: a2a_client
+        state:
+          task_message:
+            message:
+              kind: "message"
+              role: user
+              parts:
+                - kind: text
+                  text: "Hello"
+              messageId: "msg-001"
+          task_query:
+            id: "task-001"
+      indicators:
+        - surface: task_status
+          protocol: a2a
+          pattern:
+            contains: "completed"
+  expected:
+    errors:
+      - rule: "V-047"
+        path: "attack.execution.state"
+
+- name: "V-047 invalid: A2A client task_message with message and synthesize"
+  id: VAL-047c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: a2a_client
+        state:
+          task_message:
+            message:
+              kind: "message"
+              role: user
+              parts:
+                - kind: text
+                  text: "Hello"
+              messageId: "msg-001"
+            synthesize:
+              prompt: "Generate a message"
+      indicators:
+        - surface: task_status
+          protocol: a2a
+          pattern:
+            contains: "completed"
+  expected:
+    errors:
+      - rule: "V-047"
+        path: "attack.execution.state.task_message"
+
+# ---------------------------------------------------------------------------
+# V-048: attack.impact must not contain duplicate values
+# ---------------------------------------------------------------------------
+
+- name: "V-048 valid: impact with unique values"
+  id: VAL-048a
+  input: |
+    oatf: "0.1"
+    attack:
+      impact:
+        - data_exfiltration
+        - credential_theft
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+  expected:
+    valid: true
+
+- name: "V-048 invalid: impact with duplicate values"
+  id: VAL-048b
+  input: |
+    oatf: "0.1"
+    attack:
+      impact:
+        - data_exfiltration
+        - credential_theft
+        - data_exfiltration
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+  expected:
+    errors:
+      - rule: "V-048"
+        path: "attack.impact"
+
+# ---------------------------------------------------------------------------
+# V-049: attack.grace_period must be a valid duration
+# ---------------------------------------------------------------------------
+
+- name: "V-049 valid: grace_period shorthand 30s"
+  id: VAL-049a
+  input: |
+    oatf: "0.1"
+    attack:
+      grace_period: "30s"
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+  expected:
+    valid: true
+
+- name: "V-049 valid: grace_period ISO 8601 PT5M"
+  id: VAL-049b
+  input: |
+    oatf: "0.1"
+    attack:
+      grace_period: "PT5M"
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+  expected:
+    valid: true
+
+- name: "V-049 invalid: grace_period malformed duration"
+  id: VAL-049c
+  input: |
+    oatf: "0.1"
+    attack:
+      grace_period: "not-a-duration"
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+  expected:
+    errors:
+      - rule: "V-049"
+        path: "attack.grace_period"
+
+# ---------------------------------------------------------------------------
+# V-020 branch: custom YAML tags
+# ---------------------------------------------------------------------------
+
+- name: "V-020 invalid: document uses custom YAML tag"
+  id: VAL-020b
+  # NOTE: Same SHOULD-level semantics as VAL-020a. SDKs whose parsers
+  # expose tag information SHOULD flag this; others MAY skip.
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state: !include "external.yaml"
+  expected:
+    errors:
+      - rule: "V-020"
+
+# ---------------------------------------------------------------------------
+# V-027 branch: when predicates in sampling_responses
+# ---------------------------------------------------------------------------
+
+- name: "V-027 valid: when predicate key in sampling_responses"
+  id: VAL-027c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+          sampling_responses:
+            - when:
+                messages.0.role: "user"
+              content:
+                role: user
+                content:
+                  - type: text
+                    text: "response"
+  expected:
+    valid: true
+
+- name: "V-027 invalid: when predicate key with wildcard in sampling_responses"
+  id: VAL-027d
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+          sampling_responses:
+            - when:
+                "messages[*].role": "user"
+              content:
+                role: user
+                content:
+                  - type: text
+                    text: "response"
+  expected:
+    errors:
+      - rule: "V-027"
+        path: "attack.execution.state.sampling_responses[0].when.messages[*].role"
+
+# ---------------------------------------------------------------------------
+# V-033 branch: sampling_responses content/synthesize exclusivity
+# ---------------------------------------------------------------------------
+
+- name: "V-033 valid: MCP sampling_responses entry with synthesize only"
+  id: VAL-033c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+          sampling_responses:
+            - synthesize:
+                prompt: "Generate a sampling response"
+  expected:
+    valid: true
+
+- name: "V-033 invalid: MCP sampling_responses entry with content and synthesize"
+  id: VAL-033d
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+          sampling_responses:
+            - content:
+                role: user
+                content:
+                  - type: text
+                    text: "static"
+              synthesize:
+                prompt: "Generate a sampling response"
+  expected:
+    errors:
+      - rule: "V-033"
+        path: "attack.execution.state.sampling_responses[0]"
+
+- name: "V-033 invalid: MCP elicitation_responses entry with content and synthesize"
+  id: VAL-033e
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+          elicitation_responses:
+            - content:
+                name: "Test"
+              synthesize:
+                prompt: "Generate an elicitation response"
+  expected:
+    errors:
+      - rule: "V-033"
+        path: "attack.execution.state.elicitation_responses[0]"
+
+- name: "V-033 invalid: A2A task_responses entry with history and synthesize"
+  id: VAL-033f
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: a2a_server
+        state:
+          agent_card:
+            name: "Test"
+            description: "Test agent"
+            url: "https://example.com"
+            version: "1.0"
+            protocolVersion: "0.3.0"
+            skills: []
+            capabilities: {}
+            defaultInputModes: ["text/plain"]
+            defaultOutputModes: ["text/plain"]
+          task_responses:
+            - status: completed
+              history:
+                - kind: "message"
+                  role: agent
+                  parts:
+                    - kind: text
+                      text: "Done"
+                  messageId: "msg-001"
+              synthesize:
+                prompt: "Generate a response"
+  expected:
+    errors:
+      - rule: "V-033"
+        path: "attack.execution.state.task_responses[0]"
+
+- name: "V-033 invalid: AG-UI run_agent_input with messages and synthesize"
+  id: VAL-033g
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: ag_ui_client
+        state:
+          run_agent_input:
+            threadId: "t-001"
+            runId: "r-001"
+            messages:
+              - id: "msg-001"
+                role: user
+                content: "Hello"
+            synthesize:
+              prompt: "Generate message history"
+            tools: []
+            context: []
+            state: {}
+            forwardedProps: {}
+      indicators:
+        - surface: message_history
+          protocol: ag_ui
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-033"
+        path: "attack.execution.state.run_agent_input"
+
+# ---------------------------------------------------------------------------
+# V-034 branch: sampling_responses catch-all ordering
+# ---------------------------------------------------------------------------
+
+- name: "V-034 invalid: sampling_responses with two entries both omitting when"
+  id: VAL-034c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+          sampling_responses:
+            - content:
+                role: user
+                content:
+                  - type: text
+                    text: "first default"
+            - content:
+                role: user
+                content:
+                  - type: text
+                    text: "second default"
+  expected:
+    errors:
+      - rule: "V-034"
+        path: "attack.execution.state.sampling_responses"
+
+- name: "V-034 invalid: A2A task_responses with two entries both omitting when"
+  id: VAL-034d
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: a2a_server
+        state:
+          agent_card:
+            name: "Test"
+            description: "Test agent"
+            url: "https://example.com"
+            version: "1.0"
+            protocolVersion: "0.3.0"
+            skills: []
+            capabilities: {}
+            defaultInputModes: ["text/plain"]
+            defaultOutputModes: ["text/plain"]
+          task_responses:
+            - status: completed
+              history:
+                - kind: "message"
+                  role: agent
+                  parts:
+                    - kind: text
+                      text: "first"
+                  messageId: "msg-001"
+            - status: completed
+              history:
+                - kind: "message"
+                  role: agent
+                  parts:
+                    - kind: text
+                      text: "second"
+                  messageId: "msg-002"
+  expected:
+    errors:
+      - rule: "V-034"
+        path: "attack.execution.state.task_responses"
