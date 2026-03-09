@@ -73,66 +73,132 @@ For `a2a_client`, `message/send` fires when the server returns a response, which
 
 ## 7.2.3 CEL Context (A2A)
 
-When a CEL expression is evaluated against an A2A message, the root context object `message` is constructed as follows:
+When a CEL expression is evaluated against an A2A message, the root context object `message` is constructed as follows.
 
-For Agent Card responses (`agent_card/get`), `message` contains:
-- `message.name`: The agent name.
-- `message.description`: The agent description.
-- `message.url`: The agent URL.
-- `message.version`: The agent card version.
-- `message.protocolVersion`: The A2A protocol version (e.g., `"0.3.0"`).
-- `message.skills[]`: Array of skills, each with `id`, `name`, `description`, `tags[]`, `examples[]`, `inputModes[]`, `outputModes[]`, `security[]`.
-- `message.capabilities`: Object with `streaming`, `pushNotifications`, `stateTransitionHistory`, `extensions[]`.
-- `message.defaultInputModes[]`: Array of default input MIME types.
-- `message.defaultOutputModes[]`: Array of default output MIME types.
-- `message.provider`: Object with `organization`, `url`.
-- `message.documentationUrl`: Documentation URL.
-- `message.iconUrl`: Icon URL.
-- `message.preferredTransport`: Preferred transport (e.g., `"JSONRPC"`).
-- `message.supportsAuthenticatedExtendedCard`: Whether the agent supports authenticated extended cards.
-- `message.securitySchemes`: Map of named security scheme definitions.
-- `message.security[]`: Array of security requirement objects.
-- `message.additionalInterfaces[]`: Array of additional transport endpoints, each with `url`, `transport`.
-- `message.signatures[]`: Array of JWS signatures, each with `protected`, `signature`, and optional `header`.
+#### `agent_card/get` response
 
-For server-mode request events (`message/send`, `message/stream` on `a2a_server`), `message` contains the inbound `params.message` (a Message object):
-- `message.kind`: The literal `"message"`.
-- `message.role`: The sender role (`"user"` or `"agent"`).
-- `message.parts[]`: Array of content parts, each with `kind` and kind-specific fields (e.g., `"text"`, `"file"`, `"data"`). Each part may have `metadata`.
-- `message.messageId`: The message ID.
-- `message.contextId`: The context ID linking related tasks.
-- `message.taskId`: The task ID (when continuing an existing task).
-- `message.referenceTaskIds[]`: Array of referenced task IDs.
-- `message.extensions[]`: Array of extension identifiers.
-- `message.metadata`: Untyped key-value metadata attached to the message.
+See [A2A Agent Card schema](https://github.com/a2aproject/A2A/blob/v0.3.0/specification/json/a2a.json) for field semantics.
 
-For client-mode response events (`message/send`, `message/stream` on `a2a_client`), `message` contains the response payload. When the response is a Task:
-- `message.kind`: The literal `"task"`.
-- `message.id`: The task ID.
-- `message.contextId`: The context ID linking related tasks.
-- `message.status`: Object with `state` (required), `timestamp` (optional, RFC 3339), and `message` (optional Message object).
-- `message.history[]`: Array of messages, each with `kind`, `role`, and `parts[]`.
-- `message.artifacts[]`: Array of artifacts, each with `artifactId`, `name`, `description`, and `parts[]`.
-- `message.metadata`: Untyped key-value metadata attached to the task.
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.name` | string | yes | AgentCard |
+| `message.description` | string | yes | AgentCard |
+| `message.url` | string | yes | AgentCard |
+| `message.version` | string | yes | AgentCard |
+| `message.protocolVersion` | string | yes | AgentCard |
+| `message.skills[]` | array | yes | AgentCard |
+| `message.skills[].id` | string | yes | AgentSkill |
+| `message.skills[].name` | string | yes | AgentSkill |
+| `message.skills[].description` | string | yes | AgentSkill |
+| `message.skills[].tags[]` | string[] | yes | AgentSkill |
+| `message.skills[].examples[]` | string[] | — | AgentSkill |
+| `message.skills[].inputModes[]` | string[] | — | AgentSkill |
+| `message.skills[].outputModes[]` | string[] | — | AgentSkill |
+| `message.skills[].security[]` | object[] | — | AgentSkill |
+| `message.capabilities` | object | yes | AgentCard |
+| `message.capabilities.streaming` | boolean | — | AgentCapabilities |
+| `message.capabilities.pushNotifications` | boolean | — | AgentCapabilities |
+| `message.capabilities.stateTransitionHistory` | boolean | — | AgentCapabilities |
+| `message.capabilities.extensions[]` | array | — | AgentCapabilities |
+| `message.capabilities.extensions[].uri` | string | yes | AgentExtension |
+| `message.capabilities.extensions[].required` | boolean | — | AgentExtension |
+| `message.capabilities.extensions[].description` | string | — | AgentExtension |
+| `message.capabilities.extensions[].params` | map | — | AgentExtension |
+| `message.defaultInputModes[]` | string[] | yes | AgentCard |
+| `message.defaultOutputModes[]` | string[] | yes | AgentCard |
+| `message.provider` | object | — | AgentCard |
+| `message.provider.organization` | string | — | AgentProvider |
+| `message.provider.url` | string | yes | AgentProvider |
+| `message.documentationUrl` | string | — | AgentCard |
+| `message.iconUrl` | string | — | AgentCard |
+| `message.preferredTransport` | string | — | AgentCard |
+| `message.supportsAuthenticatedExtendedCard` | boolean | — | AgentCard |
+| `message.securitySchemes` | map | — | AgentCard |
+| `message.security[]` | object[] | — | AgentCard |
+| `message.additionalInterfaces[]` | array | — | AgentCard |
+| `message.additionalInterfaces[].url` | string | yes | AgentInterface |
+| `message.additionalInterfaces[].transport` | string | yes | AgentInterface |
+| `message.signatures[]` | array | — | AgentCard |
+| `message.signatures[].protected` | string | yes | AgentCardSignature |
+| `message.signatures[].signature` | string | yes | AgentCardSignature |
+| `message.signatures[].header` | map | — | AgentCardSignature |
 
-When the response is a direct Message (no task created), the structure matches the server-mode request shape above.
+#### `message/send` request (server-mode)
 
-For `task/status` SSE events (`TaskStatusUpdateEvent`), `message` contains:
-- `message.kind`: The literal `"status-update"`.
-- `message.taskId`: The task ID.
-- `message.contextId`: The context ID.
-- `message.status`: The TaskStatus object with `state` (required), `timestamp` (optional), and `message` (optional Message object).
-- `message.final`: Whether this is the final event in the stream (required boolean).
-- `message.metadata`: Untyped key-value metadata.
+See [A2A Message schema](https://github.com/a2aproject/A2A/blob/v0.3.0/specification/json/a2a.json) for field semantics.
 
-For `task/artifact` SSE events (`TaskArtifactUpdateEvent`), `message` contains:
-- `message.kind`: The literal `"artifact-update"`.
-- `message.taskId`: The task ID.
-- `message.contextId`: The context ID.
-- `message.artifact`: The Artifact object with `artifactId`, `parts[]`, and optional `name`, `description`, `extensions`, `metadata`.
-- `message.append`: Whether to append to an existing artifact (optional boolean).
-- `message.lastChunk`: Whether this is the final chunk (optional boolean).
-- `message.metadata`: Untyped key-value metadata.
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.kind` | `"message"` | yes | Message |
+| `message.role` | `"user" ∣ "agent"` | yes | Message |
+| `message.parts[]` | array | yes | Message |
+| `message.parts[].kind` | `"text" ∣ "file" ∣ "data"` | yes | — |
+| `message.parts[].text` | string; when kind="text" | yes | TextPart |
+| `message.parts[].file` | object; when kind="file" | — | FilePart |
+| `message.parts[].data` | any; when kind="data" | — | DataPart |
+| `message.parts[].metadata` | map | — | TextPart, FilePart, DataPart |
+| `message.messageId` | string | yes | Message |
+| `message.contextId` | string | — | Message |
+| `message.taskId` | string | — | Message |
+| `message.referenceTaskIds[]` | string[] | — | Message |
+| `message.extensions[]` | string[] | — | Message |
+| `message.metadata` | map | — | Message |
+
+#### `message/send` response (client-mode) — Task shape
+
+See [A2A Task schema](https://github.com/a2aproject/A2A/blob/v0.3.0/specification/json/a2a.json) for field semantics.
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.kind` | `"task"` | yes | Task |
+| `message.id` | string | yes | Task |
+| `message.contextId` | string | yes | Task |
+| `message.status` | object | yes | Task |
+| `message.status.state` | string | yes | TaskStatus |
+| `message.status.timestamp` | string | — | TaskStatus |
+| `message.status.message` | object | — | TaskStatus |
+| `message.history[]` | array | — | Task |
+| `message.artifacts[]` | array | — | Task |
+| `message.artifacts[].artifactId` | string | yes | Artifact |
+| `message.artifacts[].name` | string | — | Artifact |
+| `message.artifacts[].description` | string | — | Artifact |
+| `message.artifacts[].parts[]` | array | yes | Artifact |
+| `message.artifacts[].extensions[]` | string[] | — | Artifact |
+| `message.artifacts[].metadata` | map | — | Artifact |
+| `message.metadata` | map | — | Task |
+
+When the response is a direct Message (no task created), the structure matches the server-mode request shape above. Nested `status.message` and `history[]` entries are Message objects with the same structure as the `message/send` request table. Nested `parts[]` arrays (in artifacts, history messages, and status messages) follow the Part variant schema (kind/text/file/data/metadata) defined there.
+
+#### `task/status` SSE event
+
+See [A2A Task schema](https://github.com/a2aproject/A2A/blob/v0.3.0/specification/json/a2a.json) for field semantics.
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.kind` | `"status-update"` | yes | TaskStatusUpdateEvent |
+| `message.taskId` | string | yes | TaskStatusUpdateEvent |
+| `message.contextId` | string | yes | TaskStatusUpdateEvent |
+| `message.status` | object | yes | TaskStatusUpdateEvent |
+| `message.final` | boolean | yes | TaskStatusUpdateEvent |
+| `message.metadata` | map | — | TaskStatusUpdateEvent |
+
+`message.status` is a TaskStatus object with `state`, `timestamp`, and optional `message` (a Message — see `message/send` request table for nested structure).
+
+#### `task/artifact` SSE event
+
+See [A2A Task schema](https://github.com/a2aproject/A2A/blob/v0.3.0/specification/json/a2a.json) for field semantics.
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.kind` | `"artifact-update"` | yes | TaskArtifactUpdateEvent |
+| `message.taskId` | string | yes | TaskArtifactUpdateEvent |
+| `message.contextId` | string | yes | TaskArtifactUpdateEvent |
+| `message.artifact` | object | yes | TaskArtifactUpdateEvent |
+| `message.append` | boolean | — | TaskArtifactUpdateEvent |
+| `message.lastChunk` | boolean | — | TaskArtifactUpdateEvent |
+| `message.metadata` | map | — | TaskArtifactUpdateEvent |
+
+`message.artifact` is an Artifact object with `artifactId`, `name`, `description`, `parts[]` (Part variants — see `message/send` request table), `extensions[]`, and `metadata`.
 
 ## 7.2.4 Execution State (A2A)
 

@@ -97,20 +97,14 @@ A2A_TYPE_MAP = {
     "TextPart": {
         "cel": ["message.parts[]"],
         "state": ["parts"],
-        # "text" is documented as a kind-specific field, not by name
-        "prose_covered": {"text"},
     },
     "FilePart": {
         "cel": ["message.parts[]"],
         "state": ["parts"],
-        # "file" is documented as a kind-specific field, not by name
-        "prose_covered": {"file"},
     },
     "DataPart": {
         "cel": ["message.parts[]"],
         "state": ["parts"],
-        # "data" is documented as a kind-specific field, not by name
-        "prose_covered": {"data"},
     },
     "MessageSendParams": {
         "cel": [],
@@ -247,23 +241,21 @@ MCP_TYPE_MAP = {
     "ServerCapabilities": {
         "cel": ["message.capabilities"],
         "state": ["capabilities"],
-        # completions, logging, experimental are not attack surfaces;
-        # the binding documents tools, resources, prompts, elicitation, tasks
-        "prose_covered": {"completions", "logging", "experimental"},
+        # completions, logging, experimental are not attack surfaces
+        "ignored": {"completions", "logging", "experimental"},
     },
 
     # --- Tool types ---
     "Tool": {
-        "cel": ["message.tools"],
+        "cel": ["message.tools[]"],
         "state": ["tools"],
     },
     "ToolAnnotations": {
-        # Inline sub-fields from CEL get flattened under message.tools
-        "cel": ["message.tools", "message.tools.annotations"],
+        "cel": ["message.tools[].annotations"],
         "state": ["tools.annotations"],
     },
     "ToolExecution": {
-        "cel": ["message.tools", "message.tools.execution"],
+        "cel": ["message.tools[].execution"],
         "state": ["tools.execution"],
     },
     "CallToolRequestParams": {
@@ -279,70 +271,66 @@ MCP_TYPE_MAP = {
 
     # --- Content types ---
     "TextContent": {
-        "cel": ["message.content"],
+        "cel": ["message.content[]"],
         "state": ["tools.responses.content", "prompts.responses.messages.content"],
-        # "type" is documented as enum discriminator, not by field name
-        "prose_covered": {"type"},
     },
     "ImageContent": {
-        "cel": ["message.content"],
+        "cel": ["message.content[]"],
         "state": ["tools.responses.content"],
-        "prose_covered": {"type"},
     },
     "AudioContent": {
-        "cel": ["message.content"],
+        "cel": ["message.content[]"],
         "state": ["tools.responses.content"],
-        "prose_covered": {"type"},
     },
     "EmbeddedResource": {
-        "cel": ["message.content"],
+        "cel": ["message.content[]"],
         "state": [],  # not separately in state
-        "prose_covered": {"type"},
     },
     "ResourceLink": {
-        "cel": ["message.content"],
+        "cel": ["message.content[]"],
         "state": ["tools.responses.content"],
-        "prose_covered": {"type"},
     },
     "Annotations": {
-        "cel": ["message.content.annotations", "message.resources.annotations"],
+        "cel": ["message.content[].annotations", "message.resources[].annotations"],
         "state": ["tools.responses.content.annotations", "resources.annotations"],
     },
     "Icon": {
-        "cel": ["message.tools"],  # inline sub-fields under tools
+        "cel": ["message.tools[].icons[]", "message.resources[].icons[]",
+                "message.resourceTemplates[].icons[]", "message.prompts[].icons[]",
+                "message.serverInfo.icons[]", "message.content[].icons[]"],
         "state": ["server_info.icons", "tools.icons", "resources.icons",
                   "prompts.icons"],
     },
 
     # --- Resource types ---
     "Resource": {
-        "cel": ["message.resources"],
+        "cel": ["message.resources[]"],
         "state": ["resources"],
     },
     "TextResourceContents": {
-        "cel": ["message.contents"],
+        "cel": ["message.contents[]"],
         "state": ["resources.content"],
     },
     "BlobResourceContents": {
-        "cel": ["message.contents"],
+        "cel": ["message.contents[]"],
         "state": ["resources.content"],
     },
     "ResourceTemplate": {
-        "cel": ["message.resourceTemplates"],
+        "cel": ["message.resourceTemplates[]"],
         "state": ["resource_templates"],
     },
 
     # --- Prompt types ---
     "Prompt": {
-        "cel": ["message.prompts"],
+        "cel": ["message.prompts[]"],
         "state": ["prompts"],
     },
     "PromptArgument": {
-        "cel": ["message.prompts.arguments"],
+        "cel": ["message.prompts[].arguments[]"],
         "state": ["prompts.arguments"],
     },
     "PromptMessage": {
-        "cel": ["message.messages"],
+        "cel": ["message.messages[]"],
         "state": ["prompts.responses.messages"],
     },
     "GetPromptResult": {
@@ -362,10 +350,10 @@ MCP_TYPE_MAP = {
         "cel": [],
         "state": ["sampling_responses.content"],
         # stopReason is a response field, not modeled in state
-        "prose_covered": {"stopReason"},
+        "ignored": {"stopReason"},
     },
     "SamplingMessage": {
-        "cel": ["message.messages"],
+        "cel": ["message.messages[]"],
         "state": [],
     },
     "ModelPreferences": {
@@ -373,11 +361,11 @@ MCP_TYPE_MAP = {
         "state": [],
     },
     "ModelHint": {
-        "cel": ["message.modelPreferences"],  # hints[] inline
+        "cel": ["message.modelPreferences.hints[]"],
         "state": [],
     },
     "ToolChoice": {
-        "cel": ["message.toolChoice", "message"],
+        "cel": ["message.toolChoice"],
         "state": [],
     },
 
@@ -410,7 +398,7 @@ MCP_TYPE_MAP = {
 
     # --- Root types ---
     "Root": {
-        "cel": ["message.roots"],
+        "cel": ["message.roots[]"],
         "state": ["roots"],
     },
 
@@ -553,6 +541,7 @@ PROTOCOLS = {
         "type_map": A2A_TYPE_MAP,
         "unmapped_types": A2A_UNMAPPED,
         "event_config": A2A_EVENT_CONFIG,
+        "shared_groups": {},  # A2A has no shared field groups
     },
     "mcp": {
         # NOTE: This URL points at the main branch, not a tag. The directory
@@ -567,6 +556,10 @@ PROTOCOLS = {
         "unmapped_types": MCP_UNMAPPED,
         "ignored_fields": MCP_IGNORED_FIELDS,
         "event_config": MCP_EVENT_CONFIG,
+        "shared_groups": {
+            "Icon": ["src", "mimeType", "sizes", "theme"],
+            "Annotations": ["audience", "priority", "lastModified"],
+        },
     },
 }
 
@@ -758,51 +751,62 @@ def _normalize_path(path):
     return re.sub(r"\[\]", "", path)
 
 
-def parse_binding_cel_fields(text):
-    """Extract field paths documented in CEL context sections.
+def _parse_cel_table_rows(cel_text, shared_groups=None):
+    """Parse table-format CEL fields from CEL section text.
+
+    Matches rows like: | `message.tools[].name` | string | yes | Tool |
+    Expands shared-group references like {{Icon}} to leaf paths.
+    """
+    fields = set()
+    if shared_groups is None:
+        shared_groups = {}
+
+    for line in cel_text.split("\n"):
+        # Match table rows: | `message.something` | type | ... |
+        m = re.match(r"^\|\s*`(message\.\S+?)`\s*\|([^|]*)\|", line)
+        if not m:
+            continue
+        path = _normalize_path(m.group(1).rstrip("`.,: "))
+        fields.add(path)
+
+        # Check for shared-group reference in Type column: {{Icon}}, {{Annotations}}
+        type_cell = m.group(2).strip()
+        group_match = re.match(r"\{\{(\w+)\}\}", type_cell)
+        if group_match:
+            group_name = group_match.group(1)
+            if group_name in shared_groups:
+                for leaf in shared_groups[group_name]:
+                    fields.add(f"{path}.{leaf}")
+
+    return fields
+
+
+def parse_binding_cel_fields(text, shared_groups=None):
+    """Extract field paths documented in CEL context tables.
 
     Returns a set of normalized dotted field paths (no [] suffixes) like:
         {"message.name", "message.description", "message.skills.id", ...}
+
+    Parses table rows (| `message.` ...) and expands shared-group
+    references ({{Icon}}, {{Annotations}}) when shared_groups dict
+    is provided.
     """
-    fields = set()
+    # Extract CEL section text
     in_cel = False
+    cel_lines = []
 
     for line in text.split("\n"):
-        # Detect CEL context section headers
         if re.search(r"CEL Context", line, re.IGNORECASE):
             in_cel = True
             continue
-        # Stop at next major section
         if in_cel and re.match(r"^##\s", line) and "CEL" not in line:
             in_cel = False
             continue
+        if in_cel:
+            cel_lines.append(line)
 
-        if not in_cel:
-            continue
-
-        # Match lines like: - `message.name`: description
-        # or: - `message.skills[]`: Array of ...
-        m = re.match(r"^-\s+`?(message\.\S+?)`?[:\s]", line)
-        if m:
-            path = _normalize_path(m.group(1).rstrip("`.,: "))
-            fields.add(path)
-
-            # Check for inline sub-field lists:
-            # "each with `id`, `name`, `description`, `tags[]`, ..."
-            inline = re.findall(r"each with (.+)", line)
-            if inline:
-                sub_fields = re.findall(r"`(\w+)(?:\[\])?`", inline[0])
-                for sf in sub_fields:
-                    fields.add(f"{path}.{sf}")
-
-            # "Object with `field1`, `field2`" pattern
-            obj_match = re.findall(r"[Oo]bject with (.+)", line)
-            if obj_match:
-                sub_fields = re.findall(r"`(\w+)(?:\[\])?`", obj_match[0])
-                for sf in sub_fields:
-                    fields.add(f"{path}.{sf}")
-
-    return fields
+    cel_text = "\n".join(cel_lines)
+    return _parse_cel_table_rows(cel_text, shared_groups)
 
 
 def parse_binding_state_fields(text):
@@ -1017,7 +1021,8 @@ def analyze_type_coverage(protocol_key, schema, binding_text):
     type_map = cfg["type_map"]
     schema_types = get_schema_types(schema)
 
-    cel_fields = parse_binding_cel_fields(binding_text)
+    shared_groups = cfg.get("shared_groups", {})
+    cel_fields = parse_binding_cel_fields(binding_text, shared_groups)
     state_fields = parse_binding_state_fields(binding_text)
 
     results = []
@@ -1311,6 +1316,105 @@ def build_json_report(protocol_key, type_results, event_results, schema):
     return report
 
 
+def generate_cel_tables(protocol_key, schema):
+    """Generate draft CEL context tables from upstream schema.
+
+    Outputs markdown tables as a starting point for manual editing.
+    Does NOT handle discriminated unions, conditional fields, or merged
+    variant rows — those require human review.
+    """
+    cfg = PROTOCOLS[protocol_key]
+    type_map = cfg["type_map"]
+    schema_types = get_schema_types(schema)
+    shared_groups = cfg.get("shared_groups", {})
+    global_ignored = cfg.get("ignored_fields", set())
+
+    # Invert shared_groups: type_name -> group_name
+    # Map MCP type names to shared group names
+    shared_type_to_group = {}
+    for group_name, fields in shared_groups.items():
+        # Convention: group name matches MCP type name
+        shared_type_to_group[group_name] = group_name
+
+    # Group types by their CEL paths for table generation
+    # A CEL path like "message.tools" maps to an event/message type
+    cel_groups = {}  # cel_path -> [(type_name, mapping)]
+    for type_name, mapping in sorted(type_map.items()):
+        cel_paths = mapping.get("cel", [])
+        if not cel_paths:
+            continue
+        for cp in cel_paths:
+            cel_groups.setdefault(cp, []).append((type_name, mapping))
+
+    output = []
+
+    for cel_path, types in sorted(cel_groups.items()):
+        output.append(f"\n<!-- CEL group: {cel_path} -->")
+        output.append(f"| Path | Type | Req | Source |")
+        output.append(f"|------|------|-----|--------|")
+
+        for type_name, mapping in types:
+            # Check if this type IS a shared group
+            if type_name in shared_type_to_group:
+                # Don't expand — it will be referenced as {{Name}} in
+                # the parent type's table
+                continue
+
+            type_def = schema_types.get(type_name)
+            if not type_def:
+                continue
+
+            if mapping.get("enum"):
+                continue
+
+            upstream_fields = get_type_fields(type_def, schema_types)
+            required = get_required_fields(type_def, schema_types)
+            type_ignored = mapping.get("ignored", set())
+            all_ignored = global_ignored | type_ignored
+            upstream_fields = upstream_fields - all_ignored
+
+            base = _normalize_path(cel_path)
+
+            for field_name in sorted(upstream_fields):
+                # Check if this field is a reference to a shared group type
+                field_def = type_def.get("properties", {}).get(field_name, {})
+                # Resolve allOf on the type_def first
+                resolved = _resolve_allof(type_def, schema_types)
+                field_def = resolved.get("properties", {}).get(field_name, {})
+
+                # Determine type string
+                field_type = field_def.get("type", "")
+                if "$ref" in field_def:
+                    ref_name = field_def["$ref"].rsplit("/", 1)[-1]
+                    if ref_name in shared_type_to_group:
+                        field_type = "{{" + ref_name + "}}"
+                    else:
+                        field_type = ref_name.lower()
+                elif field_type == "array":
+                    items = field_def.get("items", {})
+                    if "$ref" in items:
+                        ref_name = items["$ref"].rsplit("/", 1)[-1]
+                        if ref_name in shared_type_to_group:
+                            field_type = "{{" + ref_name + "}}"
+                        else:
+                            field_type = f"{ref_name.lower()}[]"
+                    else:
+                        item_type = items.get("type", "any")
+                        field_type = f"{item_type}[]"
+                elif not field_type:
+                    field_type = "object"
+
+                req = "yes" if field_name in required else "—"
+                suffix = "[]" if field_def.get("type") == "array" else ""
+                path_str = f"`{base}.{field_name}{suffix}`"
+
+                output.append(
+                    f"| {path_str} | {field_type} | {req} | {type_name} |"
+                )
+
+    print("\n".join(output))
+
+
 def print_discover(protocol_key, schema):
     """Print types not in either mapping or allowlist."""
     unknown = discover_unmapped_types(protocol_key, schema)
@@ -1352,6 +1456,11 @@ def run_protocol(protocol_key, args):
     if args.discover:
         return print_discover(protocol_key, schema), None
 
+    # Generate tables mode
+    if args.generate_tables:
+        generate_cel_tables(protocol_key, schema)
+        return True, None
+
     # Load binding
     binding_path = REPO_ROOT / cfg["binding_path"]
     if not binding_path.exists():
@@ -1385,6 +1494,8 @@ def main():
                         help="Exit 1 on any gap")
     parser.add_argument("--discover", action="store_true",
                         help="Show types not in mapping or allowlist")
+    parser.add_argument("--generate-tables", action="store_true",
+                        help="Generate draft CEL context tables from upstream schema")
     args = parser.parse_args()
 
     protocols = ["a2a", "mcp"] if args.protocol == "all" else [args.protocol]
@@ -1554,6 +1665,73 @@ def self_test():
     )
     check("clean check: no events issues is clean",
           not has_event_gaps_clean)
+
+    # --- Table-format CEL parser ---
+    table_md = """
+## 7.x.x CEL Context (Test)
+
+#### `tools/list` response
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.tools[]` | array | — | Tool |
+| `message.tools[].name` | string | yes | Tool |
+| `message.tools[].title` | string | — | Tool |
+| `message.tools[].icons[]` | {{Icon}} | — | Tool |
+"""
+    test_shared = {"Icon": ["src", "mimeType", "sizes", "theme"]}
+    table_fields = parse_binding_cel_fields(table_md, test_shared)
+    check("table parser: extracts message.tools",
+          "message.tools" in table_fields)
+    check("table parser: extracts message.tools.name",
+          "message.tools.name" in table_fields)
+    check("table parser: extracts message.tools.title",
+          "message.tools.title" in table_fields)
+    check("table parser: expands {{Icon}} to message.tools.icons.src",
+          "message.tools.icons.src" in table_fields)
+    check("table parser: expands {{Icon}} to message.tools.icons.mimeType",
+          "message.tools.icons.mimeType" in table_fields)
+    check("table parser: expands {{Icon}} to message.tools.icons.theme",
+          "message.tools.icons.theme" in table_fields)
+    check("table parser: expands {{Icon}} to message.tools.icons.sizes",
+          "message.tools.icons.sizes" in table_fields)
+
+    # --- Table parser: conditional fields still extract path ---
+    cond_md = """
+## 7.x.x CEL Context (Test)
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.parts[].kind` | `"text" ∣ "file" ∣ "data"` | yes | — |
+| `message.parts[].text` | string; when kind="text" | — | TextPart |
+| `message.parts[].metadata` | map | — | PartBase |
+"""
+    cond_fields = parse_binding_cel_fields(cond_md)
+    check("table parser: conditional field extracts path",
+          "message.parts.text" in cond_fields)
+    check("table parser: discriminator field extracts path",
+          "message.parts.kind" in cond_fields)
+    check("table parser: regular field extracts path",
+          "message.parts.metadata" in cond_fields)
+
+    # --- Golden test: MCP Tool type paths (coupled-failure safeguard) ---
+    golden_table_md = """
+## 7.x.x CEL Context (Test)
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.tools[]` | array | — | Tool |
+| `message.tools[].name` | string | yes | Tool |
+| `message.tools[].annotations.readOnlyHint` | boolean | — | ToolAnnotations |
+| `message.tools[].icons[]` | {{Icon}} | — | Tool |
+"""
+    golden_fields = parse_binding_cel_fields(golden_table_md, test_shared)
+    check("golden MCP: message.tools.name present",
+          "message.tools.name" in golden_fields)
+    check("golden MCP: message.tools.annotations.readOnlyHint present",
+          "message.tools.annotations.readOnlyHint" in golden_fields)
+    check("golden MCP: message.tools.icons.src present (via {{Icon}})",
+          "message.tools.icons.src" in golden_fields)
 
     print(f"\n{len(failures)} failure(s) out of {len(failures) + sum(1 for _ in [] if True)}"
           if failures else f"\nAll tests passed.")

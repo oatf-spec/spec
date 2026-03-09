@@ -45,7 +45,7 @@ indicators:
     surface: tool_definition
     description: "AG-UI RunAgentInput exposes the attacker-specified tool to the agent"
     pattern:
-      target: "tools[*].function.name"
+      target: "tools[*].name"
       condition:
         contains: "secure-transfer"
 
