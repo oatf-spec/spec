@@ -56,9 +56,11 @@ Event names use `snake_case` derived from AG-UI's `EventType` enum. The mapping 
 **Qualifier resolution** for AG-UI events:
 
 - `tool_call_start:X` → matches when `toolCallName == "X"`
-- `tool_call_args:X` → matches when `toolCallName == "X"`
-- `tool_call_end:X` → matches when `toolCallName == "X"`
+- `tool_call_args:X` → matches when `toolCallName == "X"` (enriched; see below)
+- `tool_call_end:X` → matches when `toolCallName == "X"` (enriched; see below)
 - `custom:X` → matches when `name == "X"`
+
+**Correlated tool call events.** Only `ToolCallStartEvent` carries `toolCallName` in its raw payload. `ToolCallArgsEvent` and `ToolCallEndEvent` carry only `toolCallId`. SDKs MUST enrich these events by correlating `toolCallId` back to the `toolCallName` from the corresponding `tool_call_start` event in the same SSE stream. The enriched `toolCallName` field is added to the event's content before qualifier resolution and CEL evaluation. This parallels MCP's correlated response event enrichment (see [§2.23](/sdk/core-types/#223-qualifier-resolution-registry)).
 
 For filtering by `toolCallId` or other structured fields, use `trigger.match`.
 
@@ -74,37 +76,56 @@ See [AG-UI Types](https://docs.ag-ui.com/sdk/js/core/types) for field semantics.
 
 | Path | Type | Req | Source |
 |------|------|-----|--------|
-| `message.messages[]` | array | — | RunAgentInput |
-| `message.tools[]` | array | — | RunAgentInput |
-| `message.tools[].name` | string | — | Tool |
-| `message.tools[].description` | string | — | Tool |
-| `message.tools[].parameters` | object | — | Tool |
-| `message.context[]` | array | — | RunAgentInput |
-| `message.context[].description` | string | — | Context |
-| `message.context[].value` | string | — | Context |
-| `message.state` | object | — | RunAgentInput |
-| `message.forwardedProps` | object | — | RunAgentInput |
-| `message.threadId` | string | — | RunAgentInput |
-| `message.runId` | string | — | RunAgentInput |
+| `message.threadId` | string | yes | RunAgentInput |
+| `message.runId` | string | yes | RunAgentInput |
 | `message.parentRunId` | string | — | RunAgentInput |
+| `message.messages[]` | array | yes | RunAgentInput |
+| `message.tools[]` | array | yes | RunAgentInput |
+| `message.tools[].name` | string | yes | Tool |
+| `message.tools[].description` | string | yes | Tool |
+| `message.tools[].parameters` | object | yes | Tool |
+| `message.context[]` | array | yes | RunAgentInput |
+| `message.context[].description` | string | yes | Context |
+| `message.context[].value` | string | yes | Context |
+| `message.state` | object | yes | RunAgentInput |
+| `message.forwardedProps` | object | yes | RunAgentInput |
 
 #### Agent response events (SSE)
 
-AG-UI events are flat: all fields live alongside `type` at the root, not nested under a `data` wrapper. The exact fields vary by event type; common fields are shown below.
+AG-UI events are flat: all fields live alongside `type` at the root, not nested under a `data` wrapper. The exact fields vary by event type. Fields are grouped by event below; every event inherits the BaseEvent fields.
 
 | Path | Type | Req | Source |
 |------|------|-----|--------|
 | `message.type` | string | yes | BaseEvent |
 | `message.timestamp` | number | — | BaseEvent |
 | `message.rawEvent` | object | — | BaseEvent |
-| `message.messageId` | string | — | TextMessageStartEvent, TextMessageEndEvent |
-| `message.role` | string | — | TextMessageStartEvent |
-| `message.delta` | string | — | TextMessageContentEvent |
-| `message.toolCallId` | string | — | ToolCallStartEvent, ToolCallArgsEvent, ToolCallEndEvent |
+| `message.threadId` | string | — | RunStartedEvent, RunFinishedEvent |
+| `message.runId` | string | — | RunStartedEvent, RunFinishedEvent |
+| `message.parentRunId` | string | — | RunStartedEvent |
+| `message.input` | object | — | RunStartedEvent |
+| `message.result` | any | — | RunFinishedEvent |
+| `message.message` | string | — | RunErrorEvent |
+| `message.code` | string | — | RunErrorEvent |
+| `message.stepName` | string | — | StepStartedEvent, StepFinishedEvent |
+| `message.messageId` | string | — | TextMessageStartEvent, TextMessageContentEvent, TextMessageEndEvent, ReasoningStartEvent, ReasoningMessageStartEvent, ReasoningMessageContentEvent, ReasoningMessageEndEvent, ReasoningEndEvent, ActivitySnapshotEvent, ActivityDeltaEvent |
+| `message.role` | string | — | TextMessageStartEvent, ReasoningMessageStartEvent |
+| `message.delta` | string ∣ array | — | TextMessageContentEvent, ToolCallArgsEvent, ReasoningMessageContentEvent (string); StateDeltaEvent (array — JSON Patch) |
+| `message.toolCallId` | string | — | ToolCallStartEvent, ToolCallArgsEvent, ToolCallEndEvent, ToolCallResultEvent |
 | `message.toolCallName` | string | — | ToolCallStartEvent |
-| `message.delta` | string | — | ToolCallArgsEvent |
-| `message.result` | string | — | ToolCallEndEvent |
-| `message.snapshot` | object | — | StateSnapshotEvent, MessagesSnapshotEvent, ActivitySnapshotEvent |
+| `message.parentMessageId` | string | — | ToolCallStartEvent |
+| `message.content` | string ∣ object | — | ToolCallResultEvent (string); ActivitySnapshotEvent (object) |
+| `message.snapshot` | any | — | StateSnapshotEvent |
+| `message.messages[]` | array | — | MessagesSnapshotEvent |
+| `message.activityType` | string | — | ActivitySnapshotEvent, ActivityDeltaEvent |
+| `message.replace` | boolean | — | ActivitySnapshotEvent |
+| `message.patch` | array | — | ActivityDeltaEvent |
+| `message.name` | string | — | CustomEvent |
+| `message.value` | any | — | CustomEvent |
+| `message.event` | any | — | RawEvent |
+| `message.source` | string | — | RawEvent |
+| `message.subtype` | string | — | ReasoningEncryptedValueEvent |
+| `message.entityId` | string | — | ReasoningEncryptedValueEvent |
+| `message.encryptedValue` | string | — | ReasoningEncryptedValueEvent |
 
 ## 7.3.4 Execution State (AG-UI)
 
@@ -113,12 +134,23 @@ When the phase mode is `ag_ui_client`, the phase state defines the AG-UI client'
 ```yaml
 state:
   run_agent_input:
-    messages:                        # Static content (mutually exclusive with synthesize)
+    threadId: string                 # required
+    runId: string                    # required
+    parentRunId: string?             # Parent run ID for nested agent invocations
+    messages:                        # required; static content (mutually exclusive with synthesize)
       - id: string
         role: enum(developer, system, user, assistant, tool, activity, reasoning)
-        content: string?             # String for most roles; structured for activity
+        # content type depends on role:
+        #   developer, system, reasoning: string (required)
+        #   assistant: string? (optional — may have only toolCalls)
+        #   user: string | InputContent[] (required, multimodal)
+        #   tool: string (required — tool result)
+        #   activity: Record<string, any> (required — structured content)
+        content: <role-dependent>
+        activityType: string?        # Required for activity role
         name: string?                # Optional sender name
         toolCallId: string?          # Required for tool role
+        error: string?               # Optional error message for tool role
         toolCalls:                   # For assistant messages proposing tool use
           - id: string
             type: "function"
@@ -127,21 +159,20 @@ state:
               arguments: string      # JSON string
     synthesize:                      # LLM generation (mutually exclusive with messages)
       prompt: string                 # Supports {{template}} interpolation
-    tools:
+    tools:                           # required (may be empty)
       - name: string
         description: string
         parameters: object           # JSON Schema
-    context:                         # Context items provided to the agent
+    context:                         # required (may be empty)
       - description: string
         value: string
-    state: object?
-    forwardedProps: object?
-    threadId: string?
-    runId: string?
-    parentRunId: string?             # Parent run ID for nested agent invocations
+    state: object                    # required (application state, opaque)
+    forwardedProps: object           # required (opaque props passed through to agent)
 ```
 
-**Input synthesis semantics.** Within `run_agent_input`, `messages` and `synthesize` are mutually exclusive. When `synthesize` is present, the adversarial tool MUST generate the `messages` array at runtime using an LLM. The `prompt` field describes the conversation history to fabricate: the LLM produces the messages, not the entire `RunAgentInput`. The structural fields (`tools`, `context`, `state`, `forwardedProps`, `threadId`, `runId`) remain static because the attacker typically knows exactly what tool definitions, context, and state to inject; it is the conversation history that benefits from adaptive generation.
+**Multimodal user messages.** `UserMessage.content` may be a plain string or an `InputContent[]` array. Each `InputContent` item is discriminated on `type`: `"text"` carries a `text` string; `"binary"` carries `mimeType` and one of `id`, `url`, or `data` (base64), plus optional `filename`. OATF documents accept both forms; adversarial tools MUST serialize accordingly.
+
+**Input synthesis semantics.** Within `run_agent_input`, `messages` and `synthesize` are mutually exclusive. When `synthesize` is present, the adversarial tool MUST generate the `messages` array at runtime using an LLM. The `prompt` field describes the conversation history to fabricate: the LLM produces the messages, not the entire `RunAgentInput`. The structural fields (`threadId`, `runId`, `tools`, `context`, `state`, `forwardedProps`) are always static and required because the attacker typically knows exactly what tool definitions, context, and state to inject; it is the conversation history that benefits from adaptive generation.
 
 This follows the same principle as server-mode `synthesize` ([§7.4](/specification/protocol-bindings/llm-synthesis/)): the LLM generates the *content*, while the document author controls the *structure*. For MCP/A2A the content is the response payload; for AG-UI the content is the fabricated message history. See [§7.4](/specification/protocol-bindings/llm-synthesis/) for cross-protocol synthesis details. Template interpolation ([§5.6](/specification/execution-profile/#56-response-templates)) applies to string fields in `messages`, `tools`, and `synthesize.prompt`.
 
