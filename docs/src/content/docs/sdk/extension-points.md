@@ -31,6 +31,10 @@ SDKs SHOULD ship a default `CelEvaluator` implementation when a production-quali
 
 ## 6.2 SemanticEvaluator
 
+:::caution[Experimental]
+Semantic evaluation is model-dependent. Thresholds are tool-relative and cross-tool reproducibility relies on the `examples` field. Future OATF versions will explore calibration and caching strategies.
+:::
+
 ```
 interface SemanticEvaluator {
     evaluate(
@@ -59,6 +63,10 @@ SDKs MUST NOT ship a default `SemanticEvaluator`. Semantic evaluation is inheren
 > *Note:* Semantic evaluation involves I/O (LLM inference, embedding API calls). The trait interface is synchronous; implementations manage I/O internally. Language SDKs MAY provide async convenience wrappers. See [§8.7](/sdk/implementation-guidance/#87-async-evaluation).
 
 ## 6.3 GenerationProvider
+
+:::caution[Experimental]
+LLM synthesis is non-deterministic. Reproducibility requires caching (record/replay). Future OATF versions will explore structured output constraints and caching standards.
+:::
 
 ```
 interface GenerationProvider {

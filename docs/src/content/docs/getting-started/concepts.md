@@ -118,6 +118,10 @@ indicators:
 
 ### Semantic Analysis
 
+:::caution[Experimental]
+Semantic indicators and LLM synthesis (`synthesize` blocks) are model-dependent and non-deterministic. They are fully specified but experimental — future versions will improve reproducibility and reduce cost. Pattern and CEL expression indicators are deterministic and recommended for regression suites.
+:::
+
 Intent matching using an inference engine (LLM, embedding model, or classifier). Requires a semantic evaluator at runtime.
 
 ```yaml

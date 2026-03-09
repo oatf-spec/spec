@@ -144,6 +144,10 @@ Named variables available to the CEL expression beyond the message context. Defi
 
 ## 6.4 Semantic Analysis
 
+:::caution[Experimental]
+Semantic evaluation is model-dependent and non-deterministic. Thresholds are tool-relative, SDKs must not ship a default evaluator, and cross-tool reproducibility depends on the `examples` field rather than the score. Future OATF versions will explore caching, calibration, and cost-reduction strategies to improve determinism and practicality.
+:::
+
 The `semantic` field specifies intent-based detection that requires an inference engine.
 
 ```yaml
