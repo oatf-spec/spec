@@ -94,8 +94,8 @@ The following rules are checked. Each rule references the normative requirement 
 | V-034 | §11.1.15 | In any `responses`, `sampling_responses`, `elicitation_responses`, or `task_responses` list, at most one entry MAY omit `when`. An entry without `when` following another entry without `when` is invalid. |
 | V-035 | §11.1.16 | `synthesize.prompt` MUST be a non-empty string when `synthesize` is present. |
 | V-036 | [§5.1](/sdk/execution-primitives/#51-path-resolution) | All mode values (`execution.mode`, `actor.mode`, `phase.mode`) MUST match the pattern `[a-z][a-z0-9_]*_(server\|client)`. All `indicator.protocol` values MUST match `[a-z][a-z0-9_]*`. |
-| V-037 | [§4.2](/sdk/evaluation/#42-evaluate_pattern) | `attack.version`, when present, MUST be a positive integer (≥ 1). |
-| V-038 | [§5.3](/sdk/execution-primitives/#53-evaluate_condition) | `trigger.after`, when present, MUST be a valid duration (shorthand or ISO 8601). |
+| V-037 | [§4.2](/specification/document-structure/#42-attack-object) | `attack.version`, when present, MUST be a positive integer (≥ 1). |
+| V-038 | [§5.2](/sdk/execution-primitives/#52-parse_duration) | `trigger.after`, when present, MUST be a valid duration (shorthand or ISO 8601). |
 | V-039 | [§5.5](/sdk/execution-primitives/#55-interpolate_template) | Extractor names MUST match the pattern `[a-z][a-z0-9_]*`. |
 | V-040 | §11.1.8 | `phase.extractors`, when present, MUST contain at least one entry. |
 | V-041 | §11.1.17 | All `expression.variables` keys MUST be valid CEL identifiers, matching `^[_a-zA-Z][_a-zA-Z0-9]*$`. Names containing hyphens, dots, or other non-identifier characters are rejected because CEL would parse them as operators rather than variable references. |
@@ -107,6 +107,7 @@ The following rules are checked. Each rule references the normative requirement 
 | V-047 | [§7.2.4a](/specification/protocol-bindings/a2a/#724a-execution-state-a2a-client) | In A2A client state: `task_message`, `task_query`, `task_cancel`, `task_resubscribe`, `push_notification_config`, and `get_authenticated_extended_card` are mutually exclusive per phase. Within `task_message`, `message` and `synthesize` are mutually exclusive. |
 | V-048 | [§4.2](/specification/document-structure/#42-attack-object) | `attack.impact`, when present, MUST NOT contain duplicate values. |
 | V-049 | [§4.2](/specification/document-structure/#42-attack-object) | `attack.grace_period`, when present, MUST be a valid duration (shorthand or ISO 8601). |
+| V-050 | [§2.3a](/sdk/core-types/#23a-correlation) | `correlation`, when present, MUST only appear when `indicators` is also present. Correlation governs how indicator verdicts combine and is meaningless without indicators. |
 
 **Unrecognized binding diagnostics:** SDKs SHOULD expose a `known_modes()` function returning the set of modes defined by included protocol bindings (v0.1: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`) and a `known_protocols()` function returning the corresponding protocols (v0.1: `mcp`, `a2a`, `ag_ui`). When a mode or protocol passes V-036 pattern validation but is not in the known set, `validate` SHOULD emit a warning (not an error) indicating the value is unrecognized. This catches typos like `mpc_server` while allowing intentional use of custom bindings. Tools MAY provide a mechanism to suppress these warnings.
 

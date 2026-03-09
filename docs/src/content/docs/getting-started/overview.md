@@ -22,7 +22,7 @@ Every OATF document describes a single attack through three layers:
 2. **Execution profile**: the protocol-specific state required to simulate the attack (tool definitions, server responses, agent cards, or UI events)
 3. **Indicators** (optional): observable patterns that determine whether the attack succeeded (regex matches on tool arguments, CEL expressions over protocol messages, or semantic analysis of agent responses)
 
-Documents with indicators enable **closed-loop testing**: a conforming tool can reproduce the attack and evaluate its outcome from the document alone, without external configuration.
+Documents with indicators enable **closed-loop testing**: a conforming tool can reproduce the attack and evaluate its outcome from the document alone, without external configuration. The completeness of closed-loop support depends on the protocol binding's maturity; see [Protocol Support](#protocol-support) for current status.
 
 ## Protocol Support
 

@@ -20,7 +20,7 @@ The AG-UI binding covers the Agent-User Interface protocol as defined in the [AG
 
 ## 7.3.2 Event Types
 
-AG-UI events are defined for `ag_ui_client` mode only. AG-UI uses a unidirectional streaming model where the client sends a `RunAgentInput` and the agent streams back SSE events, so all events are from the agent's response stream.
+AG-UI events are defined for `ag_ui_client` mode only. AG-UI uses a streaming model where the client sends a `RunAgentInput` and the agent streams back SSE events. Most events originate from the agent; `tool_call_result` is client-originated (the client executes the tool and injects the result into the stream). All events are observed on the same SSE connection.
 
 | Event | AG-UI EventType | Description | Qualifier |
 |-------|-----------------|-------------|-----------|
@@ -35,7 +35,7 @@ AG-UI events are defined for `ag_ui_client` mode only. AG-UI uses a unidirection
 | `tool_call_start` | `TOOL_CALL_START` | Agent initiates tool call | `:tool_name` |
 | `tool_call_args` | `TOOL_CALL_ARGS` | Agent streams tool call arguments | `:tool_name` |
 | `tool_call_end` | `TOOL_CALL_END` | Agent completes tool call | `:tool_name` |
-| `tool_call_result` | `TOOL_CALL_RESULT` | Client returns tool result to agent | — |
+| `tool_call_result` | `TOOL_CALL_RESULT` | Tool execution result delivered to agent | — |
 | `state_snapshot` | `STATE_SNAPSHOT` | Agent sends full state | — |
 | `state_delta` | `STATE_DELTA` | Agent sends state patch | — |
 | `messages_snapshot` | `MESSAGES_SNAPSHOT` | Agent sends message history | — |

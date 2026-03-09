@@ -3469,3 +3469,46 @@
     errors:
       - rule: "V-034"
         path: "attack.execution.state.task_responses"
+
+# ---------------------------------------------------------------------------
+# V-050: correlation requires indicators
+# ---------------------------------------------------------------------------
+
+- name: "V-050 valid: correlation with indicators"
+  id: VAL-050a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test
+              description: "test"
+      indicators:
+        - surface: tool_description
+          pattern:
+            condition:
+              contains: "malicious"
+      correlation:
+        logic: all
+  expected:
+    errors: []
+
+- name: "V-050 invalid: correlation without indicators"
+  id: VAL-050b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test
+              description: "test"
+      correlation:
+        logic: any
+  expected:
+    errors:
+      - rule: "V-050"
+        path: "attack.correlation"

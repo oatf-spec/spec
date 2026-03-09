@@ -43,8 +43,8 @@ The attack envelope and all contained structures.
 | `name` | `Optional<String>` | No | `"Untitled"` | Human-readable attack name. |
 | `version` | `Optional<Integer>` | No | `1` | Document version (positive integer, higher is newer). |
 | `status` | `Optional<Status>` | No | `draft` | Lifecycle status. |
-| `created` | `Optional<DateTime>` | No | — | First published date/time. Bare dates accepted (interpreted as midnight UTC). |
-| `modified` | `Optional<DateTime>` | No | — | Last modified date/time. Bare dates accepted. |
+| `created` | `Optional<DateTime ∣ Date>` | No | — | First published date/time. Bare dates (`YYYY-MM-DD`) accepted and interpreted as midnight UTC. |
+| `modified` | `Optional<DateTime ∣ Date>` | No | — | Last modified date/time. Bare dates accepted and interpreted as midnight UTC. |
 | `author` | `Optional<String>` | No | — | Author or organization. |
 | `description` | `Optional<String>` | No | — | Prose description of the attack. |
 | `grace_period` | `Optional<Duration>` | No | — | Post-terminal-phase observation window. When present, tools observe for this duration after all terminal phases complete before computing the verdict. Parsed by `parse_duration` ([§5.2](/sdk/execution-primitives/#52-parse_duration)). |

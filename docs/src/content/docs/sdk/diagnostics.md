@@ -30,8 +30,8 @@ SDKs MUST produce warnings for the following conditions:
 | Code | Condition |
 |---|---|
 | W-001 | `oatf` is not the first key in the document (V-002). |
-| W-002 | A mode passes pattern validation but is not in the known modes registry ([§2.22](/sdk/core-types/#222-event-mode-validity-registry)). Likely typo. |
-| W-003 | A protocol passes pattern validation but is not in the known protocols set. |
+| W-002 | A mode passes pattern validation but is not in the set of modes defined by included protocol bindings (v0.1: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`). Derived from the Event-Mode Validity Registry ([§2.22](/sdk/core-types/#222-event-mode-validity-registry)). Likely typo. |
+| W-003 | A protocol passes pattern validation but is not in the set of protocols defined by included protocol bindings (v0.1: `mcp`, `a2a`, `ag_ui`). Derived from the Surface Registry ([§2.21](/sdk/core-types/#221-surface-registry)). Likely typo. |
 | W-004 | Template interpolation references an undefined extractor or an unresolvable message path. Two sub-cases: (a) "unknown extractor reference", detectable at validate time by cross-referencing template expressions against declared extractor names; (b) "request/response path failed to resolve", detectable only at runtime when the actual message is available. |
 | W-005 | An indicator targets a protocol with no matching actor in the execution profile. |
 
