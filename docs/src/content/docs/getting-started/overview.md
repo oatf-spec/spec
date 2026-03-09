@@ -10,7 +10,7 @@ The **Open Agent Threat Format (OATF)** is a YAML-based specification for descri
 OATF defines a structured format for:
 
 - Sharing attack definitions between tools and teams
-- Reproducing attacks deterministically across environments
+- Reproducing attacks across environments (deterministic for pattern and expression indicators; model-dependent for optional semantic and synthesize extensions)
 - Evaluating agent resilience with consistent success criteria
 - Building regression suites that track fixes over time
 
@@ -30,7 +30,7 @@ OATF v0.1 includes bindings for three protocols:
 
 | Protocol | Binding Status | Interaction Model |
 |---|---|---|
-| **MCP** (Model Context Protocol) | Stable | Agent ↔ Tool |
+| **MCP** (Model Context Protocol) | Provisional | Agent ↔ Tool |
 | **A2A** (Agent-to-Agent) | Provisional | Agent ↔ Agent |
 | **AG-UI** (Agent-to-UI) | Provisional | Agent ↔ User Interface |
 
