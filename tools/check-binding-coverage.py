@@ -537,7 +537,7 @@ PROTOCOLS = {
         "schema_url": "https://raw.githubusercontent.com/a2aproject/A2A/v0.3.0/specification/json/a2a.json",
         "cache_file": "a2a-v0.3.0.json",
         "pinned": True,  # URL points at a git tag — stable
-        "binding_path": "docs/src/content/docs/specification/protocol-bindings/a2a.md",
+        "binding_path": "docs/specification/protocol-bindings/a2a.md",
         "type_map": A2A_TYPE_MAP,
         "unmapped_types": A2A_UNMAPPED,
         "event_config": A2A_EVENT_CONFIG,
@@ -551,7 +551,7 @@ PROTOCOLS = {
         "schema_url": "https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/schema/2025-11-25/schema.json",
         "cache_file": "mcp-2025-11-25.json",
         "pinned": False,  # main branch — use --fetch to refresh
-        "binding_path": "docs/src/content/docs/specification/protocol-bindings/mcp.md",
+        "binding_path": "docs/specification/protocol-bindings/mcp.md",
         "type_map": MCP_TYPE_MAP,
         "unmapped_types": MCP_UNMAPPED,
         "ignored_fields": MCP_IGNORED_FIELDS,
