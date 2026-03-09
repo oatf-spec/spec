@@ -3,6 +3,10 @@ title: "LLM Synthesis"
 description: "LLM-powered adaptive payload generation across protocol bindings."
 ---
 
+:::caution[Experimental]
+LLM synthesis is non-deterministic by design. Reproducibility requires caching (record/replay), and generation adds latency and cost to attack execution. Future OATF versions will explore structured output constraints, caching standards, and cost-reduction strategies to make synthesis more practical for regression suites.
+:::
+
 The `synthesize` block enables LLM-powered adaptive generation across all protocol bindings. For server-mode actors (MCP, A2A), it appears within response entries (`responses`, `task_responses`) as a mutually exclusive alternative to static content. For client-mode actors (AG-UI), it appears within `run_agent_input` as a mutually exclusive alternative to static `messages`.
 
 ## Structure

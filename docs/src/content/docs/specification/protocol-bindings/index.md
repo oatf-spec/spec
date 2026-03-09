@@ -54,14 +54,14 @@ Each binding carries a maturity level:
 |--------|-----------|-----------|-------------|
 | Maturity | Provisional | Provisional | Provisional |
 | Interaction model | Agent-to-Tool | Agent-to-Agent | User-to-Agent |
-| Transport | JSON-RPC 2.0 over stdio/Streamable HTTP | JSON-RPC 2.0 over HTTP(S), SSE for streaming | HTTP POST + SSE |
-| Primary attack surface | Tool/resource/prompt descriptions, tool responses | Agent Card, skill descriptions, task messages | Message history, tool results, agent state |
+| Transport | JSON-RPC 2.0 over stdio/Streamable HTTP | JSON-RPC 2.0 over HTTP(S), SSE for streaming | Transport-agnostic (typically HTTP POST + SSE) |
+| Primary attack surface | Tool/resource/prompt descriptions, tool responses | Agent Card, skill descriptions, task messages | Message history, tool results, context, agent state |
 | Default mode | `mcp_server` | `a2a_server` | `ag_ui_client` |
-| Surfaces defined | 30 | 8 | 7 |
-| Event types defined | 30 | 13 | 15 |
+| Surfaces defined | 30 | 8 | 8 |
+| Event types defined | 30 | 13 | 26 |
 | Execution state | Full (tools, resources, prompts, elicitations, capabilities, behavior) | Partial (agent card, task responses) | Partial (RunAgentInput) |
 | Behavioral modifiers | Defined (delivery, side effects) | Not yet defined | Not yet defined |
-| Payload generation | Defined | Not yet defined | Not yet defined |
+| Payload generation | Defined | Not yet defined | Not yet defined (deterministic `generate` blocks; `synthesize` is defined in [§7.4](/specification/protocol-bindings/llm-synthesis/)) |
 
 ### Naming Conventions in Protocol Bindings
 
@@ -125,10 +125,21 @@ The following matrix defines the event types recognized by the v0.1 protocol bin
 | `text_message_content` | | | | | ✓ |
 | `text_message_end` | | | | | ✓ |
 | `tool_call_start` | | | | | ✓ |
+| `tool_call_args` | | | | | ✓ |
 | `tool_call_end` | | | | | ✓ |
+| `tool_call_result` | | | | | ✓ |
 | `state_snapshot` | | | | | ✓ |
 | `state_delta` | | | | | ✓ |
 | `messages_snapshot` | | | | | ✓ |
-| `interrupt` | | | | | ✓ |
+| `activity_snapshot` | | | | | ✓ |
+| `activity_delta` | | | | | ✓ |
+| `reasoning_start` | | | | | ✓ |
+| `reasoning_message_start` | | | | | ✓ |
+| `reasoning_message_content` | | | | | ✓ |
+| `reasoning_message_end` | | | | | ✓ |
+| `reasoning_message_chunk` | | | | | ✓ |
+| `reasoning_end` | | | | | ✓ |
+| `reasoning_encrypted_value` | | | | | ✓ |
+| `raw` | | | | | ✓ |
 | `custom` | | | | | ✓ |
 

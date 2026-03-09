@@ -413,9 +413,10 @@ SDKs MUST maintain a registry mapping each `Surface` value to its protocol and d
 | `tool_definition` | `ag_ui` | `tools[*]` |
 | `tool_result` | `ag_ui` | `messages[*]` |
 | `agent_state` | `ag_ui` | `state` |
+| `agent_context` | `ag_ui` | `context[*]` |
 | `forwarded_props` | `ag_ui` | `forwardedProps` |
-| `agent_event` | `ag_ui` | `data` |
-| `agent_tool_call` | `ag_ui` | `data` |
+| `agent_event` | `ag_ui` | `""` (root) |
+| `agent_tool_call` | `ag_ui` | `""` (root) |
 
 ## 2.22 Event-Mode Validity Registry
 
@@ -479,11 +480,22 @@ This table is reproduced from [format specification §7](/specification/protocol
 | `text_message_content` | | | | | ✓ |
 | `text_message_end` | | | | | ✓ |
 | `tool_call_start` | | | | | ✓ |
+| `tool_call_args` | | | | | ✓ |
 | `tool_call_end` | | | | | ✓ |
+| `tool_call_result` | | | | | ✓ |
 | `state_snapshot` | | | | | ✓ |
 | `state_delta` | | | | | ✓ |
 | `messages_snapshot` | | | | | ✓ |
-| `interrupt` | | | | | ✓ |
+| `activity_snapshot` | | | | | ✓ |
+| `activity_delta` | | | | | ✓ |
+| `reasoning_start` | | | | | ✓ |
+| `reasoning_message_start` | | | | | ✓ |
+| `reasoning_message_content` | | | | | ✓ |
+| `reasoning_message_end` | | | | | ✓ |
+| `reasoning_message_chunk` | | | | | ✓ |
+| `reasoning_end` | | | | | ✓ |
+| `reasoning_encrypted_value` | | | | | ✓ |
+| `raw` | | | | | ✓ |
 | `custom` | | | | | ✓ |
 
 ## 2.23 SynthesizeBlock
@@ -517,6 +529,7 @@ SDKs MUST maintain a compile-time registry mapping `(protocol, base_event)` pair
 | `mcp` | `prompts/get` | `params.name` |
 | `a2a` | `task/status` | `status.state` |
 | `ag_ui` | `tool_call_start` | `toolCallName` |
+| `ag_ui` | `tool_call_args` | `toolCallName` |
 | `ag_ui` | `tool_call_end` | `toolCallName` |
 | `ag_ui` | `custom` | `name` |
 

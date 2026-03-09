@@ -289,10 +289,11 @@ attack:
                     role: user
                     content: "What is 2+2?"
                 tools: []
+                context: []
                 state: {}
-                forwarded_props: {}
-                thread_id: "thread-1"
-                run_id: "run-1"
+                forwardedProps: {}
+                threadId: "thread-1"
+                runId: "run-1"
             trigger:
               after: 10s
 

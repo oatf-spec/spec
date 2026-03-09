@@ -167,7 +167,7 @@ See [A2A Task schema](https://github.com/a2aproject/A2A/blob/v0.3.0/specificatio
 | `message.artifacts[].metadata` | map | — | Artifact |
 | `message.metadata` | map | — | Task |
 
-When the response is a direct Message (no task created), the structure matches the server-mode request shape above.
+When the response is a direct Message (no task created), the structure matches the server-mode request shape above. Nested `status.message` and `history[]` entries are Message objects with the same structure as the `message/send` request table. Nested `parts[]` arrays (in artifacts, history messages, and status messages) follow the Part variant schema (kind/text/file/data/metadata) defined there.
 
 #### `task/status` SSE event
 
@@ -182,6 +182,8 @@ See [A2A Task schema](https://github.com/a2aproject/A2A/blob/v0.3.0/specificatio
 | `message.final` | boolean | yes | TaskStatusUpdateEvent |
 | `message.metadata` | map | — | TaskStatusUpdateEvent |
 
+`message.status` is a TaskStatus object with `state`, `timestamp`, and optional `message` (a Message — see `message/send` request table for nested structure).
+
 #### `task/artifact` SSE event
 
 See [A2A Task schema](https://github.com/a2aproject/A2A/blob/v0.3.0/specification/json/a2a.json) for field semantics.
@@ -195,6 +197,8 @@ See [A2A Task schema](https://github.com/a2aproject/A2A/blob/v0.3.0/specificatio
 | `message.append` | boolean | — | TaskArtifactUpdateEvent |
 | `message.lastChunk` | boolean | — | TaskArtifactUpdateEvent |
 | `message.metadata` | map | — | TaskArtifactUpdateEvent |
+
+`message.artifact` is an Artifact object with `artifactId`, `name`, `description`, `parts[]` (Part variants — see `message/send` request table), `extensions[]`, and `metadata`.
 
 ## 7.2.4 Execution State (A2A)
 
