@@ -33,7 +33,7 @@ The [SDK specification](/sdk/) ([SDK specification, §3.2](/sdk/entry-points/)) 
 
 **Response entries and synthesis**
 
-14. In MCP tool `responses`, prompt `responses`, `sampling_responses`, and `elicitation_responses` entries: `content` (or `messages` for prompts) and `synthesize` are mutually exclusive. Each entry MUST specify at most one. In A2A `task_responses` entries: `messages`/`artifacts` and `synthesize` are mutually exclusive. In AG-UI `run_agent_input`: `messages` and `synthesize` are mutually exclusive.
+14. In MCP tool `responses`, prompt `responses`, `sampling_responses`, and `elicitation_responses` entries: `content` (or `messages` for prompts) and `synthesize` are mutually exclusive. Each entry MUST specify at most one. In A2A `task_responses` entries: `history`/`artifacts` and `synthesize` are mutually exclusive. In AG-UI `run_agent_input`: `messages` and `synthesize` are mutually exclusive.
 15. In any `responses`, `sampling_responses`, `elicitation_responses`, or `task_responses` list, at most one entry MAY omit `when`. When present, it SHOULD be the last entry in the list. An entry without `when` after another entry without `when` is a validation error.
 16. `synthesize.prompt` MUST be a non-empty string when `synthesize` is present.
 17. All `expression.variables` keys MUST be valid CEL identifiers, matching `[_a-zA-Z][_a-zA-Z0-9]*`. Names containing hyphens, dots, or other non-identifier characters are rejected because CEL would parse them as operators rather than variable references.

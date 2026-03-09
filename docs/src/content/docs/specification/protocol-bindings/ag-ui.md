@@ -60,7 +60,7 @@ Event names use `snake_case` derived from AG-UI's `EventType` enum. The mapping 
 - `tool_call_end:X` → matches when `toolCallName == "X"` (enriched; see below)
 - `custom:X` → matches when `name == "X"`
 
-**Correlated tool call events.** Only `ToolCallStartEvent` carries `toolCallName` in its raw payload. `ToolCallArgsEvent` and `ToolCallEndEvent` carry only `toolCallId`. SDKs MUST enrich these events by correlating `toolCallId` back to the `toolCallName` from the corresponding `tool_call_start` event in the same SSE stream. The enriched `toolCallName` field is added to the event's content before qualifier resolution and CEL evaluation. This parallels MCP's correlated response event enrichment (see [§2.23](/sdk/core-types/#223-qualifier-resolution-registry)).
+**Correlated tool call events.** Only `ToolCallStartEvent` carries `toolCallName` in its raw payload. `ToolCallArgsEvent` and `ToolCallEndEvent` carry only `toolCallId`. SDKs MUST enrich these events by correlating `toolCallId` back to the `toolCallName` from the corresponding `tool_call_start` event in the same SSE stream. The enriched `toolCallName` field is added to the event's content before qualifier resolution and CEL evaluation. This parallels MCP's correlated response event enrichment (see [§2.25](/sdk/core-types/#225-qualifier-resolution-registry)).
 
 For filtering by `toolCallId` or other structured fields, use `trigger.match`.
 

@@ -54,7 +54,7 @@ A document is conforming when `errors` is empty, regardless of warnings. SDKs MU
 
 **Behavior:**
 
-The following rules are checked. Each rule references the normative requirement in the format specification. SDKs MUST check all rules and MUST return all violations found (not just the first).
+The following rules are checked. Each rule references the normative requirement in the format or SDK specification. SDKs MUST check all rules and MUST return all violations found (not just the first).
 
 | Rule | Spec Ref | Check |
 |---|---|---|
@@ -80,7 +80,7 @@ The following rules are checked. Each rule references the normative requirement 
 | V-020 | §11.1.1 | Document does not contain YAML anchors, aliases, merge keys, or custom YAML tags (e.g., `!include`, `!!python/object`). SDKs that parse via a YAML library exposing anchor/alias/tag information SHOULD check this; SDKs whose parsers silently resolve aliases MAY skip this check. |
 | V-021 | [§6.2](/specification/indicators/#62-pattern-matching), [§6.4](/specification/indicators/#64-semantic-analysis) | All explicit `target` fields on `PatternMatch` and `SemanticMatch` are syntactically valid wildcard dot-path expressions per the grammar in SDK spec [§5.1.2](/sdk/execution-primitives/#512-wildcard-dot-path). Valid paths consist of identifiers (alphanumeric, underscores, hyphens) separated by `.`, with optional `[*]` (wildcard) suffix on any segment. The empty string `""` is valid (targets root). Numeric indices (`[0]`, `[1]`) are not valid in target paths. Invalid examples: `tools[*.description` (unclosed bracket), `tools..name` (empty segment), `tools[0]` (numeric index). |
 | V-022 | §6.4 | `semantic.threshold`, when explicitly present, is in range [0.0, 1.0] inclusive. The default threshold (0.7, applied at evaluation time per SDK spec [§4.4](/sdk/evaluation/#44-evaluate_indicator)) is not subject to this check. |
-| V-023 | [§4.2](/specification/document-structure/#42-attack-object) | `attack.id`, when present, matches the pattern `^[A-Z][A-Z0-9-]*-[0-9]{3,}$`. |
+| V-023 | [§4.2](/specification/document-structure/#42-attack-envelope) | `attack.id`, when present, matches the pattern `^[A-Z][A-Z0-9-]*-[0-9]{3,}$`. |
 | V-024 | [§6.1](/specification/indicators/#61-structure) | Each explicitly specified `indicator.id`, when `attack.id` is present, matches the pattern `^[A-Z][A-Z0-9-]*-[0-9]{3,}-[0-9]{2,}$` AND its prefix (the portion before the final `-NN` segment) equals `attack.id`. For example, indicator `ACME-003-02` is valid in attack `ACME-003` but invalid in attack `ACME-007`. When `attack.id` is absent, explicitly specified indicator IDs are accepted without pattern constraints but MUST still be unique (V-010). |
 | V-025 | [§6.1](/specification/indicators/#61-structure) | `indicator.confidence`, when explicitly present, is in range 0–100 inclusive. |
 | V-026 | [§6.3](/specification/indicators/#63-expression-evaluation) | All `expression.variables` values are syntactically valid simple dot-path expressions per the grammar in [§5.1.1](/sdk/execution-primitives/#511-simple-dot-path). No wildcards or indices. These values are resolved via `resolve_simple_path` at evaluation time ([§4.3](/sdk/evaluation/#43-evaluate_expression)) and malformed paths should be caught early. |
@@ -90,11 +90,11 @@ The following rules are checked. Each rule references the normative requirement 
 | V-030 | [§5.1](/sdk/execution-primitives/#51-path-resolution) | Exactly one of `execution.state`, `execution.phases`, or `execution.actors` MUST be present. A document with more than one is invalid. When `execution.state` is present, `execution.mode` MUST also be present. |
 | V-031 | [§5.1](/sdk/execution-primitives/#51-path-resolution) | In multi-actor form: all `actor.name` values MUST be unique. Each name MUST match `[a-z][a-z0-9_]*`. Each actor MUST declare `mode`. Each actor MUST have at least one phase. Phase names MUST be unique within each actor. |
 | V-032 | [§5.5](/sdk/execution-primitives/#55-interpolate_template) | Cross-actor extractor references (`{{actor_name.extractor_name}}`) MUST reference an `actor.name` that exists in the document. |
-| V-033 | §11.1.14 | In MCP `responses`, `sampling_responses`, and `elicitation_responses` entries: `content` (or `messages` for prompts) and `synthesize` are mutually exclusive, and each entry MUST specify at most one. In A2A `task_responses` entries: `messages`/`artifacts` and `synthesize` are mutually exclusive. In AG-UI `run_agent_input`: `messages` and `synthesize` are mutually exclusive. |
+| V-033 | §11.1.14 | In MCP `responses`, `sampling_responses`, and `elicitation_responses` entries: `content` (or `messages` for prompts) and `synthesize` are mutually exclusive, and each entry MUST specify at most one. In A2A `task_responses` entries: `history`/`artifacts` and `synthesize` are mutually exclusive. In AG-UI `run_agent_input`: `messages` and `synthesize` are mutually exclusive. |
 | V-034 | §11.1.15 | In any `responses`, `sampling_responses`, `elicitation_responses`, or `task_responses` list, at most one entry MAY omit `when`. An entry without `when` following another entry without `when` is invalid. |
 | V-035 | §11.1.16 | `synthesize.prompt` MUST be a non-empty string when `synthesize` is present. |
 | V-036 | [§5.1](/sdk/execution-primitives/#51-path-resolution) | All mode values (`execution.mode`, `actor.mode`, `phase.mode`) MUST match the pattern `[a-z][a-z0-9_]*_(server\|client)`. All `indicator.protocol` values MUST match `[a-z][a-z0-9_]*`. |
-| V-037 | [§4.2](/specification/document-structure/#42-attack-object) | `attack.version`, when present, MUST be a positive integer (≥ 1). |
+| V-037 | [§4.2](/specification/document-structure/#42-attack-envelope) | `attack.version`, when present, MUST be a positive integer (≥ 1). |
 | V-038 | [§5.2](/sdk/execution-primitives/#52-parse_duration) | `trigger.after`, when present, MUST be a valid duration (shorthand or ISO 8601). |
 | V-039 | [§5.5](/sdk/execution-primitives/#55-interpolate_template) | Extractor names MUST match the pattern `[a-z][a-z0-9_]*`. |
 | V-040 | §11.1.8 | `phase.extractors`, when present, MUST contain at least one entry. |
@@ -105,8 +105,8 @@ The following rules are checked. Each rule references the normative requirement 
 | V-045 | [§5.2](/specification/execution-profile/#52-phases) | `phase.on_enter`, when present, MUST contain at least one entry. |
 | V-046 | [§5.2](/specification/execution-profile/#52-phases) | In multi-actor form, `phase.mode` when specified MUST match `actor.mode`. Cross-protocol attacks use separate actors. |
 | V-047 | [§7.2.4a](/specification/protocol-bindings/a2a/#724a-execution-state-a2a-client) | In A2A client state: `task_message`, `task_query`, `task_cancel`, `task_resubscribe`, `push_notification_config`, and `get_authenticated_extended_card` are mutually exclusive per phase. Within `task_message`, `message` and `synthesize` are mutually exclusive. |
-| V-048 | [§4.2](/specification/document-structure/#42-attack-object) | `attack.impact`, when present, MUST NOT contain duplicate values. |
-| V-049 | [§4.2](/specification/document-structure/#42-attack-object) | `attack.grace_period`, when present, MUST be a valid duration (shorthand or ISO 8601). |
+| V-048 | [§4.2](/specification/document-structure/#42-attack-envelope) | `attack.impact`, when present, MUST NOT contain duplicate values. |
+| V-049 | [§4.2](/specification/document-structure/#42-attack-envelope) | `attack.grace_period`, when present, MUST be a valid duration (shorthand or ISO 8601). |
 | V-050 | [§2.3a](/sdk/core-types/#23a-correlation) | `correlation`, when present, MUST only appear when `indicators` is also present. Correlation governs how indicator verdicts combine and is meaningless without indicators. |
 
 **Unrecognized binding diagnostics:** SDKs SHOULD expose a `known_modes()` function returning the set of modes defined by included protocol bindings (v0.1: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`) and a `known_protocols()` function returning the corresponding protocols (v0.1: `mcp`, `a2a`, `ag_ui`). When a mode or protocol passes V-036 pattern validation but is not in the known set, `validate` SHOULD emit a warning (not an error) indicating the value is unrecognized. This catches typos like `mpc_server` while allowing intentional use of custom bindings. Tools MAY provide a mechanism to suppress these warnings.

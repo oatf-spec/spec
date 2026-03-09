@@ -87,7 +87,7 @@ Each SDK specification version declares which OATF format specification version(
 
 This version (SDK Spec 0.1) supports **OATF Format Spec 0.1**.
 
-When the format specification adds a new protocol binding (for example, a hypothetical OATF 0.2 adding a new protocol), the SDK specification will be updated to include the new surfaces and event types. During the 0.x series, minor versions may introduce breaking changes (per [format specification §10.1](/specification/versioning/#101-version-evolution)), so SDKs are not required to handle unknown format versions gracefully. Post-1.0, SDKs implementing a prior SDK specification version MUST still correctly parse documents using new minor-version bindings, ignoring unknown surfaces.
+When the format specification adds a new protocol binding (for example, a hypothetical OATF 0.2 adding a new protocol), the SDK specification will be updated to include the new surfaces and event types. During the 0.x series, minor versions may introduce breaking changes (per [format specification §10.1](/specification/versioning/#101-specification-versioning)), so SDKs are not required to handle unknown format versions gracefully. Post-1.0, SDKs implementing a prior SDK specification version MUST still correctly parse documents using new minor-version bindings, ignoring unknown surfaces.
 
 ## 9.3 Language SDK Versioning
 

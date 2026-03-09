@@ -47,7 +47,7 @@ Several MUST-level constraints defined in this specification are not enforced by
 
 - **Uniqueness of names and identifiers.** Indicator IDs (V-010), phase names (V-011), and actor names (V-031) MUST be unique within their respective scopes.
 - **Terminal phase ordering.** A terminal phase (one without a trigger) MUST be the last phase in its actor's phase list (V-008).
-- **YAML source constraints.** Documents MUST NOT use YAML anchors, aliases, or merge keys (V-020). The `oatf` key SHOULD appear first in the source mapping (V-002); tools that serialize MUST emit it first.
+- **YAML source constraints.** Documents MUST NOT use YAML anchors, aliases, merge keys, or custom YAML tags (V-020). The `oatf` key SHOULD appear first in the source mapping (V-002); tools that serialize MUST emit it first.
 - **Event-mode and surface-protocol validity.** Trigger events MUST be valid for the actor's mode (V-029). Indicator surfaces MUST be valid for the indicator's protocol (V-018).
 - **Conditional requiredness.** `phase.mode` is required when `execution.mode` is absent (V-028). `indicator.protocol` is required when `execution.mode` is absent (V-028).
 - **Action key cardinality.** Binding-specific action objects MUST contain exactly one non-`x-` key (V-043).
