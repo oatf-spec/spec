@@ -121,102 +121,263 @@ Most `notifications/*` events are directional: server-to-client notifications (`
 
 ## 7.1.3 CEL Context (MCP)
 
-When a CEL expression is evaluated against an MCP message, the root context object `message` is constructed as follows depending on the message type:
+When a CEL expression is evaluated against an MCP message, the root context object `message` is constructed as follows depending on the message type.
 
-For `tools/list` responses, `message` contains:
-- `message.tools[]`: Array of tool definitions, each with `name`, `title`, `description`, `inputSchema`, `icons[]` (each with `src`, `mimeType`, `sizes[]`, `theme`), and optionally `outputSchema`, `annotations` (with `title`, `readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`), `execution` (with `taskSupport`).
+**Shared field groups** referenced by `{{Name}}` in tables below:
 
-For `tools/call` requests, `message` contains:
-- `message.name`: The tool name being called.
-- `message.arguments`: The arguments object passed to the tool.
+| Group | Fields |
+|-------|--------|
+| {{Icon}} | `src` (string, req), `mimeType` (string), `sizes` (string[]), `theme` (string) |
+| {{Annotations}} | `audience` (string[]), `priority` (number), `lastModified` (string) |
 
-For `tools/call` responses, `message` contains:
-- `message.content[]`: Array of unstructured content blocks, each with `type` (`text`, `image`, `audio`, `resource`, `resource_link`), type-specific fields, and optional `annotations` (with `audience[]`, `priority`, `lastModified`).
-- `message.structuredContent`: The structured content object (present when the tool declares an `outputSchema`).
-- `message.isError`: Boolean indicating error response.
+#### `tools/list` response
 
-For `resources/list` responses, `message` contains:
-- `message.resources[]`: Array of resource definitions, each with `uri`, `name`, `title`, `description`, `mimeType`, `icons[]`, `size`, and optional `annotations` (with `audience[]`, `priority`, `lastModified`).
+See [MCP Tools](https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/tools) for field semantics.
 
-For `resources/templates/list` responses, `message` contains:
-- `message.resourceTemplates[]`: Array of resource template definitions, each with `uriTemplate`, `name`, `title`, `description`, `mimeType`, `icons[]`, and optional `annotations` (with `audience[]`, `priority`, `lastModified`).
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.tools[]` | array | — | Tool |
+| `message.tools[].name` | string | yes | Tool |
+| `message.tools[].title` | string | — | Tool |
+| `message.tools[].description` | string | — | Tool |
+| `message.tools[].inputSchema` | object | — | Tool |
+| `message.tools[].outputSchema` | object | — | Tool |
+| `message.tools[].icons[]` | {{Icon}} | — | Tool |
+| `message.tools[].annotations.title` | string | — | ToolAnnotations |
+| `message.tools[].annotations.readOnlyHint` | boolean | — | ToolAnnotations |
+| `message.tools[].annotations.destructiveHint` | boolean | — | ToolAnnotations |
+| `message.tools[].annotations.idempotentHint` | boolean | — | ToolAnnotations |
+| `message.tools[].annotations.openWorldHint` | boolean | — | ToolAnnotations |
+| `message.tools[].execution.taskSupport` | string | — | ToolExecution |
 
-For `resources/read` responses, `message` contains:
-- `message.contents[]`: Array of resource contents, each with `uri`, `mimeType`, `text` or `blob`.
+#### `tools/call` request
 
-For `prompts/list` responses, `message` contains:
-- `message.prompts[]`: Array of prompt definitions, each with `name`, `title`, `description`, `icons[]`, `arguments[]`.
+See [MCP Tools](https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/tools) for field semantics.
 
-For `prompts/get` responses, `message` contains:
-- `message.description`: Optional description of what the prompt provides.
-- `message.messages[]`: Array of prompt messages, each with `role` and `content` (with `type`, type-specific fields, and optional `annotations`).
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.name` | string | yes | CallToolRequestParams |
+| `message.arguments` | object | — | CallToolRequestParams |
 
-For `sampling/createMessage` requests, `message` contains:
-- `message.messages[]`: Array of sampling messages.
-- `message.modelPreferences`: Object with `hints[]` (each with `name`), `costPriority`, `speedPriority`, `intelligencePriority`.
-- `message.systemPrompt`: Optional system prompt.
-- `message.maxTokens`: Maximum tokens to generate.
-- `message.tools[]`: Optional array of tool definitions available during sampling (added in MCP 2025-11-25).
-- `message.toolChoice`: Optional tool choice configuration with `mode` (`auto`, `required`, `none`).
+#### `tools/call` response
 
-For `elicitation/create` requests, `message` contains:
-- `message.message`: The human-readable prompt displayed to the user.
-- `message.requestedSchema`: JSON Schema defining the expected input structure (form mode).
-- `message.mode`: The elicitation mode (`form` or `url`).
-- `message.elicitationId`: The unique elicitation ID (present when `mode` is `url`).
-- `message.url`: The URL to open (present when `mode` is `url`).
+See [MCP Tools](https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/tools) for field semantics.
 
-For `elicitation/create` responses, `message` contains:
-- `message.action`: The user's response (`accept`, `decline`, or `cancel`).
-- `message.content`: The structured data provided by the user (present when `action` is `accept` in form mode).
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.content[]` | array | yes | CallToolResult |
+| `message.content[].type` | `"text" ∣ "image" ∣ "audio" ∣ "resource" ∣ "resource_link"` | yes | — |
+| `message.content[].text` | string; when type="text" | yes | TextContent |
+| `message.content[].data` | string; when type="image" or type="audio" | yes | ImageContent, AudioContent |
+| `message.content[].mimeType` | string; when type="image" or type="audio" or type="resource_link" | yes | ImageContent, AudioContent, ResourceLink |
+| `message.content[].resource` | object; when type="resource" | yes | EmbeddedResource |
+| `message.content[].uri` | string; when type="resource_link" | yes | ResourceLink |
+| `message.content[].name` | string; when type="resource_link" | yes | ResourceLink |
+| `message.content[].title` | string; when type="resource_link" | — | ResourceLink |
+| `message.content[].description` | string; when type="resource_link" | — | ResourceLink |
+| `message.content[].size` | number; when type="resource_link" | — | ResourceLink |
+| `message.content[].icons[]` | {{Icon}}; when type="resource_link" | — | ResourceLink |
+| `message.content[].annotations` | {{Annotations}} | — | TextContent, ImageContent, AudioContent, EmbeddedResource, ResourceLink |
+| `message.structuredContent` | object | — | CallToolResult |
+| `message.isError` | boolean | — | CallToolResult |
 
-For `tasks/get` responses and `notifications/tasks/status`, `message` contains:
-- `message.task.taskId`: The unique task identifier.
-- `message.task.status`: The task status (`working`, `input_required`, `completed`, `failed`, `cancelled`).
-- `message.task.statusMessage`: Optional human-readable status message.
-- `message.task.createdAt`: ISO 8601 timestamp when the task was created.
-- `message.task.lastUpdatedAt`: ISO 8601 timestamp of the last task update.
-- `message.task.ttl`: Time-to-live in seconds for the task.
-- `message.task.pollInterval`: Optional suggested polling interval in seconds.
+#### `resources/list` response
 
-For `tasks/result` responses, `message` contains:
-- The result structure matching the original request type (e.g., a `CallToolResult` for a task wrapping `tools/call`).
+See [MCP Resources](https://modelcontextprotocol.io/specification/2025-11-25/server/resources) for field semantics.
 
-For `notifications/tools/list_changed`, `notifications/resources/list_changed`, `notifications/prompts/list_changed`, and `notifications/initialized`, `message` is an empty object (these notifications carry no parameters).
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.resources[]` | array | — | Resource |
+| `message.resources[].uri` | string | yes | Resource |
+| `message.resources[].name` | string | yes | Resource |
+| `message.resources[].title` | string | — | Resource |
+| `message.resources[].description` | string | — | Resource |
+| `message.resources[].mimeType` | string | — | Resource |
+| `message.resources[].size` | number | — | Resource |
+| `message.resources[].icons[]` | {{Icon}} | — | Resource |
+| `message.resources[].annotations` | {{Annotations}} | — | Resource |
 
-For `notifications/resources/updated`, `message` contains:
-- `message.uri`: The URI of the resource that was updated.
+#### `resources/templates/list` response
 
-For `notifications/tasks/status`, see `tasks/get` responses above (same `message.task` structure).
+See [MCP Resources](https://modelcontextprotocol.io/specification/2025-11-25/server/resources) for field semantics.
 
-For `notifications/elicitation/complete`, `message` contains:
-- `message.elicitationId`: The ID of the elicitation that completed.
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.resourceTemplates[]` | array | — | ResourceTemplate |
+| `message.resourceTemplates[].uriTemplate` | string | yes | ResourceTemplate |
+| `message.resourceTemplates[].name` | string | yes | ResourceTemplate |
+| `message.resourceTemplates[].title` | string | — | ResourceTemplate |
+| `message.resourceTemplates[].description` | string | — | ResourceTemplate |
+| `message.resourceTemplates[].mimeType` | string | — | ResourceTemplate |
+| `message.resourceTemplates[].icons[]` | {{Icon}} | — | ResourceTemplate |
+| `message.resourceTemplates[].annotations` | {{Annotations}} | — | ResourceTemplate |
 
-For `notifications/cancelled`, `message` contains:
-- `message.requestId`: The ID of the request being cancelled.
-- `message.reason`: Optional human-readable cancellation reason.
+#### `resources/read` response
 
-For `notifications/message` (logging), `message` contains:
-- `message.level`: The log level (`debug`, `info`, `notice`, `warning`, `error`, `critical`, `alert`, `emergency`).
-- `message.logger`: Optional logger name.
-- `message.data`: The log message data (any type).
+See [MCP Resources](https://modelcontextprotocol.io/specification/2025-11-25/server/resources) for field semantics.
 
-For `notifications/progress`, `message` contains:
-- `message.progressToken`: The progress token from the original request.
-- `message.progress`: Numeric progress value.
-- `message.total`: Optional total value for percentage calculation.
-- `message.message`: Optional human-readable progress description.
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.contents[]` | array | — | TextResourceContents, BlobResourceContents |
+| `message.contents[].uri` | string | yes | TextResourceContents, BlobResourceContents |
+| `message.contents[].mimeType` | string | — | TextResourceContents, BlobResourceContents |
+| `message.contents[].text` | string; when text resource | yes | TextResourceContents |
+| `message.contents[].blob` | string; when blob resource | yes | BlobResourceContents |
 
-For `completion/complete` responses, `message` contains:
-- `message.completion.values[]`: Array of completion value strings.
-- `message.completion.total`: Optional total number of completions available.
-- `message.completion.hasMore`: Whether additional completions exist.
+#### `prompts/list` response
 
-For `initialize` responses, `message` contains:
-- `message.protocolVersion`: The negotiated MCP protocol version string.
-- `message.capabilities`: The server capabilities object.
-- `message.serverInfo`: Object with `name`, `version`, and optionally `title`, `description`, `icons[]`, `websiteUrl`.
-- `message.instructions`: Optional string with server-provided instructions for the LLM.
+See [MCP Prompts](https://modelcontextprotocol.io/specification/2025-11-25/server/prompts) for field semantics.
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.prompts[]` | array | — | Prompt |
+| `message.prompts[].name` | string | yes | Prompt |
+| `message.prompts[].title` | string | — | Prompt |
+| `message.prompts[].description` | string | — | Prompt |
+| `message.prompts[].icons[]` | {{Icon}} | — | Prompt |
+| `message.prompts[].arguments[]` | array | — | Prompt |
+| `message.prompts[].arguments[].name` | string | yes | PromptArgument |
+| `message.prompts[].arguments[].title` | string | — | PromptArgument |
+| `message.prompts[].arguments[].description` | string | — | PromptArgument |
+| `message.prompts[].arguments[].required` | boolean | — | PromptArgument |
+
+#### `prompts/get` response
+
+See [MCP Prompts](https://modelcontextprotocol.io/specification/2025-11-25/server/prompts) for field semantics.
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.description` | string | — | GetPromptResult |
+| `message.messages[]` | array | yes | GetPromptResult |
+| `message.messages[].role` | string | yes | PromptMessage |
+| `message.messages[].content` | object | yes | PromptMessage |
+
+#### `sampling/createMessage` request
+
+See [MCP Sampling](https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/sampling) for field semantics.
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.messages[]` | array | yes | CreateMessageRequestParams |
+| `message.messages[].role` | string | yes | SamplingMessage |
+| `message.messages[].content` | object | yes | SamplingMessage |
+| `message.modelPreferences` | object | — | CreateMessageRequestParams |
+| `message.modelPreferences.hints[]` | array | — | ModelPreferences |
+| `message.modelPreferences.hints[].name` | string | — | ModelHint |
+| `message.modelPreferences.costPriority` | number | — | ModelPreferences |
+| `message.modelPreferences.speedPriority` | number | — | ModelPreferences |
+| `message.modelPreferences.intelligencePriority` | number | — | ModelPreferences |
+| `message.systemPrompt` | string | — | CreateMessageRequestParams |
+| `message.maxTokens` | number | yes | CreateMessageRequestParams |
+| `message.tools[]` | array | — | CreateMessageRequestParams |
+| `message.toolChoice` | object | — | CreateMessageRequestParams |
+| `message.toolChoice.mode` | string | — | ToolChoice |
+
+#### `elicitation/create` request
+
+See [MCP Elicitation](https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/elicitation) for field semantics.
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.message` | string | yes | ElicitRequestFormParams, ElicitRequestURLParams |
+| `message.requestedSchema` | object | yes | ElicitRequestFormParams |
+| `message.mode` | string | — | ElicitRequestFormParams, ElicitRequestURLParams |
+| `message.elicitationId` | string; when mode="url" | yes | ElicitRequestURLParams |
+| `message.url` | string; when mode="url" | yes | ElicitRequestURLParams |
+
+#### `elicitation/create` response
+
+See [MCP Elicitation](https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/elicitation) for field semantics.
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.action` | `"accept" ∣ "decline" ∣ "cancel"` | yes | ElicitResult |
+| `message.content` | object | — | ElicitResult |
+
+#### `tasks/get` response and `notifications/tasks/status`
+
+See [MCP Tasks](https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/tasks) for field semantics.
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.task.taskId` | string | yes | Task |
+| `message.task.status` | `"working" ∣ "input_required" ∣ "completed" ∣ "failed" ∣ "cancelled"` | yes | Task |
+| `message.task.statusMessage` | string | — | Task |
+| `message.task.createdAt` | string | yes | Task |
+| `message.task.lastUpdatedAt` | string | yes | Task |
+| `message.task.ttl` | number | yes | Task |
+| `message.task.pollInterval` | number | — | Task |
+
+#### `tasks/result` response
+
+The result structure matches the original request type (e.g., a `CallToolResult` for a task wrapping `tools/call`). No fixed table — the shape is polymorphic.
+
+#### Empty notifications
+
+`notifications/tools/list_changed`, `notifications/resources/list_changed`, `notifications/prompts/list_changed`, and `notifications/initialized` carry no parameters — `message` is an empty object.
+
+#### `notifications/resources/updated`
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.uri` | string | yes | ResourceUpdatedNotificationParams |
+
+#### `notifications/elicitation/complete`
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.elicitationId` | string | yes | ElicitationCompleteNotification |
+
+#### `notifications/cancelled`
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.requestId` | string | yes | CancelledNotificationParams |
+| `message.reason` | string | — | CancelledNotificationParams |
+
+#### `notifications/message`
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.level` | `"debug" ∣ "info" ∣ "notice" ∣ "warning" ∣ "error" ∣ "critical" ∣ "alert" ∣ "emergency"` | yes | LoggingMessageNotificationParams |
+| `message.logger` | string | — | LoggingMessageNotificationParams |
+| `message.data` | any | yes | LoggingMessageNotificationParams |
+
+#### `notifications/progress`
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.progressToken` | string | yes | ProgressNotificationParams |
+| `message.progress` | number | yes | ProgressNotificationParams |
+| `message.total` | number | — | ProgressNotificationParams |
+| `message.message` | string | — | ProgressNotificationParams |
+
+#### `completion/complete` response
+
+See [MCP Completion](https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/completion) for field semantics.
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.completion.values[]` | string[] | — | CompletionResult |
+| `message.completion.total` | number | — | CompletionResult |
+| `message.completion.hasMore` | boolean | — | CompletionResult |
+
+#### `initialize` response
+
+See [MCP Lifecycle](https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle) for field semantics.
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.protocolVersion` | string | yes | InitializeResult |
+| `message.capabilities` | object | yes | InitializeResult |
+| `message.serverInfo` | object | yes | InitializeResult |
+| `message.serverInfo.name` | string | yes | Implementation |
+| `message.serverInfo.version` | string | yes | Implementation |
+| `message.serverInfo.title` | string | — | Implementation |
+| `message.serverInfo.description` | string | — | Implementation |
+| `message.serverInfo.icons[]` | {{Icon}} | — | Implementation |
+| `message.serverInfo.websiteUrl` | string | — | Implementation |
+| `message.instructions` | string | — | InitializeResult |
 
 In all cases, `message` corresponds to the `params` (for requests and notifications) or `result` (for responses) field of the JSON-RPC message, not the full JSON-RPC envelope. The `jsonrpc`, `id`, and `method` fields of the envelope are not included in the CEL context. The notification method is identified by the event name, not by a CEL field.
 

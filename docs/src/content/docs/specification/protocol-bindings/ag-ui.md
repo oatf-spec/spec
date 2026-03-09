@@ -53,19 +53,27 @@ All AG-UI events are valid only on `ag_ui_client` actors. Using AG-UI events on 
 
 ## 7.3.3 CEL Context (AG-UI)
 
-When a CEL expression is evaluated against an AG-UI message, the root context object `message` is constructed as follows:
+When a CEL expression is evaluated against an AG-UI message, the root context object `message` is constructed as follows.
 
-For the `RunAgentInput` POST body (the client's request), `message` contains:
-- `message.messages[]`: Array of messages, each with `id`, `role`, `content`, `toolCallId`, `toolCalls[]`.
-- `message.tools[]`: Array of tool definitions, each with `type` and `function` (containing `name`, `description`, `parameters`).
-- `message.state`: The state object (arbitrary JSON).
-- `message.forwardedProps`: The forwarded properties object (arbitrary JSON).
-- `message.threadId`: The thread identifier.
-- `message.runId`: The run identifier.
+#### `RunAgentInput` POST body
 
-For agent response events (SSE), `message` contains:
-- `message.type`: The event type string.
-- `message.data`: The event payload (structure varies by event type).
+See [AG-UI Protocol](https://docs.ag-ui.com/) for field semantics.
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.messages[]` | array | — | RunAgentInput |
+| `message.tools[]` | array | — | RunAgentInput |
+| `message.state` | object | — | RunAgentInput |
+| `message.forwardedProps` | object | — | RunAgentInput |
+| `message.threadId` | string | — | RunAgentInput |
+| `message.runId` | string | — | RunAgentInput |
+
+#### Agent response events (SSE)
+
+| Path | Type | Req | Source |
+|------|------|-----|--------|
+| `message.type` | string | yes | BaseEvent |
+| `message.data` | object | — | BaseEvent |
 
 ## 7.3.4 Execution State (AG-UI)
 
