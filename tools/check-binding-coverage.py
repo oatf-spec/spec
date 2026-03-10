@@ -342,9 +342,6 @@ MCP_TYPE_MAP = {
     "CreateMessageRequestParams": {
         "cel": ["message"],  # sampling/createMessage request
         "state": [],
-        # Non-attack-relevant params
-        "ignored": {"task", "includeContext", "stopSequences", "temperature",
-                    "metadata"},
     },
     "CreateMessageResult": {
         "cel": [],
@@ -369,6 +366,12 @@ MCP_TYPE_MAP = {
         "state": [],
     },
 
+    # --- Logging types ---
+    "SetLevelRequestParams": {
+        "cel": ["message"],  # logging/setLevel request
+        "state": [],
+    },
+
     # --- Elicitation types ---
     "ElicitRequestFormParams": {
         "cel": ["message"],  # elicitation/create request (form mode)
@@ -387,7 +390,7 @@ MCP_TYPE_MAP = {
 
     # --- Task types (MCP) ---
     "Task": {
-        "cel": ["message.task"],
+        "cel": ["message"],  # tasks/get response + notifications/tasks/status (both flat)
         "state": [],
     },
     "TaskStatus": {
@@ -442,7 +445,6 @@ MCP_UNMAPPED = {
     "SubscribeRequestParams", "UnsubscribeRequestParams",
     "GetPromptRequestParams",
     "CompleteRequestParams",
-    "SetLevelRequestParams",
     "PaginatedRequestParams",
     "CancelledNotificationParams",
     "TaskAugmentedRequestParams",
@@ -510,22 +512,20 @@ MCP_UNMAPPED = {
 # methods are auto-classified as client_only by extract_methods_from_schema().
 MCP_EVENT_CONFIG = {
     "server_only": {
-        # These MCP methods are only valid as server-mode events
-        "resources/subscribe", "resources/unsubscribe",
         # Client-to-server notifications (override auto-classification
         # which assumes all notifications are client_only)
         "notifications/initialized",
         "notifications/roots/list_changed",
     },
     "both_modes": {
-        # Bidirectional notification (either party can cancel)
+        # Bidirectional notifications (either party can send)
         "notifications/cancelled",
+        "notifications/progress",
+        "notifications/tasks/status",
     },
     # Schema methods excluded from event expectations entirely.
     # These are upstream methods the binding intentionally omits.
-    "excluded": {
-        "logging/setLevel",          # Logging config, not attack surface
-    },
+    "excluded": set(),
 }
 
 # ---------------------------------------------------------------------------
@@ -537,7 +537,7 @@ PROTOCOLS = {
         "schema_url": "https://raw.githubusercontent.com/a2aproject/A2A/v0.3.0/specification/json/a2a.json",
         "cache_file": "a2a-v0.3.0.json",
         "pinned": True,  # URL points at a git tag — stable
-        "binding_path": "docs/src/content/docs/specification/protocol-bindings/a2a.md",
+        "binding_path": "docs/specification/protocol-bindings/a2a.md",
         "type_map": A2A_TYPE_MAP,
         "unmapped_types": A2A_UNMAPPED,
         "event_config": A2A_EVENT_CONFIG,
@@ -551,14 +551,14 @@ PROTOCOLS = {
         "schema_url": "https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/schema/2025-11-25/schema.json",
         "cache_file": "mcp-2025-11-25.json",
         "pinned": False,  # main branch — use --fetch to refresh
-        "binding_path": "docs/src/content/docs/specification/protocol-bindings/mcp.md",
+        "binding_path": "docs/specification/protocol-bindings/mcp.md",
         "type_map": MCP_TYPE_MAP,
         "unmapped_types": MCP_UNMAPPED,
         "ignored_fields": MCP_IGNORED_FIELDS,
         "event_config": MCP_EVENT_CONFIG,
         "shared_groups": {
             "Icon": ["src", "mimeType", "sizes", "theme"],
-            "Annotations": ["audience", "priority", "lastModified"],
+            "ContentAnnotations": ["audience", "priority", "lastModified"],
         },
     },
 }
@@ -769,7 +769,7 @@ def _parse_cel_table_rows(cel_text, shared_groups=None):
         path = _normalize_path(m.group(1).rstrip("`.,: "))
         fields.add(path)
 
-        # Check for shared-group reference in Type column: {{Icon}}, {{Annotations}}
+        # Check for shared-group reference in Type column: {{Icon}}, {{ContentAnnotations}}
         type_cell = m.group(2).strip()
         group_match = re.match(r"\{\{(\w+)\}\}", type_cell)
         if group_match:
@@ -788,7 +788,7 @@ def parse_binding_cel_fields(text, shared_groups=None):
         {"message.name", "message.description", "message.skills.id", ...}
 
     Parses table rows (| `message.` ...) and expands shared-group
-    references ({{Icon}}, {{Annotations}}) when shared_groups dict
+    references ({{Icon}}, {{ContentAnnotations}}) when shared_groups dict
     is provided.
     """
     # Extract CEL section text

@@ -15,7 +15,7 @@ attack:
   id: string?                    # Optional; required for publication
   name: string?                  # Defaults to "Untitled"
   version: integer?             # Defaults to 1
-  status: enum(...)?           # Defaults to "draft"
+  status: enum(draft, experimental, stable, deprecated)?  # Defaults to "draft"
   created: datetime?
   modified: datetime?
   author: string?
@@ -23,7 +23,7 @@ attack:
   grace_period: duration?            # Post-terminal observation window
 
   severity: (<Severity> | string)?  # Optional; no default
-  impact: enum(...)[]?
+  impact: enum(behavior_manipulation, data_exfiltration, data_tampering, unauthorized_actions, information_disclosure, credential_theft, service_disruption, privilege_escalation)[]?
   classification: <Classification>?
   references: <Reference>[]?
   
@@ -173,7 +173,7 @@ The `classification` object maps the attack to external security frameworks and 
 
 ```yaml
 classification:
-  category: enum(...)?
+  category: enum(capability_poisoning, response_fabrication, context_manipulation, oversight_bypass, temporal_manipulation, availability_disruption, cross_protocol_chain)?
   mappings: <FrameworkMapping>[]?
   tags: string[]?
 ```

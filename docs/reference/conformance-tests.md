@@ -13,7 +13,7 @@ Fixtures are organized by [SDK entry point](/sdk/entry-points/):
 |---|---|---|
 | `parse/valid/` | `parse()` | Valid documents that must parse without error |
 | `parse/invalid/` | `parse()` | Malformed documents that must produce `ParseError` |
-| `validate/` | `validate()` | Conformance rule checking (V-001 through V-046) |
+| `validate/` | `validate()` | Conformance rule checking (V-001 through V-050) |
 | `normalize/` | `normalize()` | Default materialization and shorthand expansion |
 | `evaluate/` | `evaluate_indicator()` | Indicator evaluation (pattern, expression, semantic) |
 | `verdict/` | `compute_verdict()` | Attack-level verdict computation |

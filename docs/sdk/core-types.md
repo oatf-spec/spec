@@ -43,8 +43,8 @@ The attack envelope and all contained structures.
 | `name` | `Optional<String>` | No | `"Untitled"` | Human-readable attack name. |
 | `version` | `Optional<Integer>` | No | `1` | Document version (positive integer, higher is newer). |
 | `status` | `Optional<Status>` | No | `draft` | Lifecycle status. |
-| `created` | `Optional<DateTime>` | No | — | First published date/time. Bare dates accepted (interpreted as midnight UTC). |
-| `modified` | `Optional<DateTime>` | No | — | Last modified date/time. Bare dates accepted. |
+| `created` | `Optional<DateTime ∣ Date>` | No | — | First published date/time. Bare dates (`YYYY-MM-DD`) accepted and interpreted as midnight UTC. |
+| `modified` | `Optional<DateTime ∣ Date>` | No | — | Last modified date/time. Bare dates accepted and interpreted as midnight UTC. |
 | `author` | `Optional<String>` | No | — | Author or organization. |
 | `description` | `Optional<String>` | No | — | Prose description of the attack. |
 | `grace_period` | `Optional<Duration>` | No | — | Post-terminal-phase observation window. When present, tools observe for this duration after all terminal phases complete before computing the verdict. Parsed by `parse_duration` ([§5.2](/sdk/execution-primitives/#52-parse_duration)). |
@@ -391,7 +391,7 @@ SDKs MUST maintain a registry mapping each `Surface` value to its protocol and d
 | `prompt_title` | `mcp` | `prompts[*].title` |
 | `prompt_description` | `mcp` | `prompts[*].description` |
 | `prompt_icons` | `mcp` | `prompts[*].icons` |
-| `server_notification` | `mcp` | `params` |
+| `server_notification` | `mcp` | `""` (root) |
 | `server_capability` | `mcp` | `capabilities` |
 | `server_info` | `mcp` | `serverInfo` |
 | `server_instructions` | `mcp` | `instructions` |
@@ -535,7 +535,7 @@ SDKs MUST maintain a compile-time registry mapping `(protocol, base_event)` pair
 
 The content field path is resolved against the event's `content` field using `resolve_simple_path` ([§5.1.1](/sdk/execution-primitives/#511-simple-dot-path)). A qualifier matches when the resolved value, converted to its string representation, equals the qualifier token. Events whose `(protocol, base_event)` pair is not in the registry do not support qualifier resolution, and `resolve_event_qualifier` returns `None` for such events.
 
-**Correlated response events.** For protocols that use request/response correlation rather than embedding all necessary fields in the response payload (notably MCP JSON-RPC for `mcp_client` actors), SDKs MUST construct `ProtocolEvent.content` for correlated response events so that the qualifier paths in this registry are resolvable. Specifically, for MCP `tools/call` and `prompts/get` events observed in client mode, `content` MUST be an enriched object that includes the originating request's `params` (in addition to any response payload fields), since JSON-RPC responses do not themselves carry `params`. When the registry specifies `params.name` for these MCP entries, it resolves against this enriched `content` derived from the correlated original request. See [format specification §7.1.2](/specification/protocol-bindings/mcp/#712-events) for the full correlation semantics.
+**Correlated response events.** For protocols that use request/response correlation rather than embedding all necessary fields in the response payload (notably MCP JSON-RPC for `mcp_client` actors), SDKs MUST construct `ProtocolEvent.content` for correlated response events so that the qualifier paths in this registry are resolvable. Specifically, for MCP `tools/call` and `prompts/get` events observed in client mode, `content` MUST be an enriched object that includes the originating request's `params` (in addition to any response payload fields), since JSON-RPC responses do not themselves carry `params`. When the registry specifies `params.name` for these MCP entries, it resolves against this enriched `content` derived from the correlated original request. See [format specification §7.1.2](/specification/protocol-bindings/mcp/#712-event-types) for the full correlation semantics.
 
 SDKs SHOULD define this as a compile-time constant data structure, paralleling the Event-Mode Validity Registry ([§2.22](/sdk/core-types/#222-event-mode-validity-registry)) and Surface Registry ([§2.21](/sdk/core-types/#221-surface-registry)).
 

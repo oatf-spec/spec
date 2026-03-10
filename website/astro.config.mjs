@@ -4,6 +4,13 @@ import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   site: 'https://oatf.io',
+  vite: {
+    resolve: {
+      // Content lives in ../docs via symlink; tell Vite to resolve
+      // bare imports (e.g. @astrojs/starlight/components) from website/
+      preserveSymlinks: true,
+    },
+  },
   integrations: [
     starlight({
       title: 'OATF',
@@ -34,6 +41,17 @@ export default defineConfig({
             property: 'og:description',
             content: 'A specification for describing, simulating, and evaluating security threats against AI agents communicating over MCP, A2A, and AG-UI.',
           },
+        },
+        {
+          tag: 'script',
+          attrs: {
+            src: 'https://www.googletagmanager.com/gtag/js?id=G-L2KCK6M13F',
+            async: true,
+          },
+        },
+        {
+          tag: 'script',
+          content: "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-L2KCK6M13F');",
         },
       ],
       sidebar: [

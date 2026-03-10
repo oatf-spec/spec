@@ -20,7 +20,7 @@ The AG-UI binding covers the Agent-User Interface protocol as defined in the [AG
 
 ## 7.3.2 Event Types
 
-AG-UI events are defined for `ag_ui_client` mode only. AG-UI uses a unidirectional streaming model where the client sends a `RunAgentInput` and the agent streams back SSE events, so all events are from the agent's response stream.
+AG-UI events are defined for `ag_ui_client` mode only. AG-UI uses a streaming model where the client sends a `RunAgentInput` and the agent streams back SSE events. Most events originate from the agent; `tool_call_result` is client-originated (the client executes the tool and injects the result into the stream). All events are observed on the same SSE connection.
 
 | Event | AG-UI EventType | Description | Qualifier |
 |-------|-----------------|-------------|-----------|
@@ -32,10 +32,12 @@ AG-UI events are defined for `ag_ui_client` mode only. AG-UI uses a unidirection
 | `text_message_start` | `TEXT_MESSAGE_START` | Agent begins text message | — |
 | `text_message_content` | `TEXT_MESSAGE_CONTENT` | Agent streams text chunk | — |
 | `text_message_end` | `TEXT_MESSAGE_END` | Agent completes text message | — |
+| `text_message_chunk` | `TEXT_MESSAGE_CHUNK` | Agent streams text chunk (compact) | — |
 | `tool_call_start` | `TOOL_CALL_START` | Agent initiates tool call | `:tool_name` |
 | `tool_call_args` | `TOOL_CALL_ARGS` | Agent streams tool call arguments | `:tool_name` |
 | `tool_call_end` | `TOOL_CALL_END` | Agent completes tool call | `:tool_name` |
-| `tool_call_result` | `TOOL_CALL_RESULT` | Client returns tool result to agent | — |
+| `tool_call_chunk` | `TOOL_CALL_CHUNK` | Agent streams tool call chunk (compact) | `:tool_name` |
+| `tool_call_result` | `TOOL_CALL_RESULT` | Tool execution result delivered to agent | — |
 | `state_snapshot` | `STATE_SNAPSHOT` | Agent sends full state | — |
 | `state_delta` | `STATE_DELTA` | Agent sends state patch | — |
 | `messages_snapshot` | `MESSAGES_SNAPSHOT` | Agent sends message history | — |
@@ -58,9 +60,10 @@ Event names use `snake_case` derived from AG-UI's `EventType` enum. The mapping 
 - `tool_call_start:X` → matches when `toolCallName == "X"`
 - `tool_call_args:X` → matches when `toolCallName == "X"` (enriched; see below)
 - `tool_call_end:X` → matches when `toolCallName == "X"` (enriched; see below)
+- `tool_call_chunk:X` → matches when `toolCallName == "X"` (enriched; see below)
 - `custom:X` → matches when `name == "X"`
 
-**Correlated tool call events.** Only `ToolCallStartEvent` carries `toolCallName` in its raw payload. `ToolCallArgsEvent` and `ToolCallEndEvent` carry only `toolCallId`. SDKs MUST enrich these events by correlating `toolCallId` back to the `toolCallName` from the corresponding `tool_call_start` event in the same SSE stream. The enriched `toolCallName` field is added to the event's content before qualifier resolution and CEL evaluation. This parallels MCP's correlated response event enrichment (see [§2.23](/sdk/core-types/#223-qualifier-resolution-registry)).
+**Correlated tool call events.** `ToolCallStartEvent` and `ToolCallChunkEvent` carry `toolCallName` in their raw payload. `ToolCallArgsEvent` and `ToolCallEndEvent` carry only `toolCallId`. SDKs MUST enrich these events by correlating `toolCallId` back to the `toolCallName` from the corresponding `tool_call_start` event in the same SSE stream. The enriched `toolCallName` field is added to the event's content before qualifier resolution and CEL evaluation. This parallels MCP's correlated response event enrichment (see [§2.25](/sdk/core-types/#225-qualifier-resolution-registry)).
 
 For filtering by `toolCallId` or other structured fields, use `trigger.match`.
 
@@ -107,19 +110,19 @@ AG-UI events are flat: all fields live alongside `type` at the root, not nested 
 | `message.message` | string | — | RunErrorEvent |
 | `message.code` | string | — | RunErrorEvent |
 | `message.stepName` | string | — | StepStartedEvent, StepFinishedEvent |
-| `message.messageId` | string | — | TextMessageStartEvent, TextMessageContentEvent, TextMessageEndEvent, ReasoningStartEvent, ReasoningMessageStartEvent, ReasoningMessageContentEvent, ReasoningMessageEndEvent, ReasoningEndEvent, ActivitySnapshotEvent, ActivityDeltaEvent |
-| `message.role` | string | — | TextMessageStartEvent, ReasoningMessageStartEvent |
-| `message.delta` | string ∣ array | — | TextMessageContentEvent, ToolCallArgsEvent, ReasoningMessageContentEvent (string); StateDeltaEvent (array — JSON Patch) |
-| `message.toolCallId` | string | — | ToolCallStartEvent, ToolCallArgsEvent, ToolCallEndEvent, ToolCallResultEvent |
-| `message.toolCallName` | string | — | ToolCallStartEvent |
-| `message.parentMessageId` | string | — | ToolCallStartEvent |
+| `message.messageId` | string | — | TextMessageStartEvent, TextMessageContentEvent, TextMessageEndEvent, TextMessageChunkEvent, ToolCallResultEvent, ReasoningStartEvent, ReasoningMessageStartEvent, ReasoningMessageContentEvent, ReasoningMessageEndEvent, ReasoningMessageChunkEvent, ReasoningEndEvent, ActivitySnapshotEvent, ActivityDeltaEvent |
+| `message.role` | string | — | TextMessageStartEvent, TextMessageChunkEvent, ToolCallResultEvent, ReasoningMessageStartEvent |
+| `message.delta` | string ∣ array | — | TextMessageContentEvent, TextMessageChunkEvent, ToolCallArgsEvent, ToolCallChunkEvent, ReasoningMessageContentEvent, ReasoningMessageChunkEvent (string); StateDeltaEvent (array — JSON Patch) |
+| `message.toolCallId` | string | — | ToolCallStartEvent, ToolCallArgsEvent, ToolCallEndEvent, ToolCallChunkEvent, ToolCallResultEvent |
+| `message.toolCallName` | string | — | ToolCallStartEvent, ToolCallChunkEvent |
+| `message.parentMessageId` | string | — | ToolCallStartEvent, ToolCallChunkEvent |
 | `message.content` | string ∣ object | — | ToolCallResultEvent (string); ActivitySnapshotEvent (object) |
 | `message.snapshot` | any | — | StateSnapshotEvent |
 | `message.messages[]` | array | — | MessagesSnapshotEvent |
 | `message.activityType` | string | — | ActivitySnapshotEvent, ActivityDeltaEvent |
 | `message.replace` | boolean | — | ActivitySnapshotEvent |
 | `message.patch` | array | — | ActivityDeltaEvent |
-| `message.name` | string | — | CustomEvent |
+| `message.name` | string | — | TextMessageStartEvent, TextMessageChunkEvent, CustomEvent |
 | `message.value` | any | — | CustomEvent |
 | `message.event` | any | — | RawEvent |
 | `message.source` | string | — | RawEvent |
