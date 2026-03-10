@@ -12,6 +12,10 @@
   --sl-color-black: #14171b;
 }
 
+.hero h1 {
+  font-size: clamp(2rem, 5vw, 2.75rem);
+}
+
 :root[data-theme='light'] {
   --sl-color-accent-low: #f5e6b8;
   --sl-color-accent: #a07800;
