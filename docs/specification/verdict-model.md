@@ -50,7 +50,7 @@ Both indicator and attack verdicts carry metadata when produced by a conforming 
 verdict:
   result: enum(exploited, not_exploited, partial, error)
   indicator_verdicts:
-    - id: string
+    - indicator_id: string
       result: enum(matched, not_matched, error, skipped)
       evidence: string?
   evaluation_summary:
