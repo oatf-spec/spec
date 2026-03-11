@@ -54,7 +54,7 @@ The attacker posture: which protocol the adversarial tool targets and which side
 
 Additional modes are defined by protocol bindings ([§7](/specification/protocol-bindings/)). Tools that encounter an unrecognized mode MUST parse the document without error but MAY skip execution for bindings they do not implement.
 
-In single-phase and multi-phase forms, `mode` is REQUIRED when `execution.state` is present, and OPTIONAL when `execution.phases` is present. When present with `phases`, all phases inherit it as their default and all indicators inherit its protocol component (the substring before the last `_server` or `_client`). When omitted, every phase MUST specify its own `phase.mode` and every indicator MUST specify its own `indicator.protocol`. In multi-actor form, `execution.mode` is structurally absent, so indicators MUST always specify `indicator.protocol` explicitly.
+In single-phase and multi-phase forms, `mode` is REQUIRED when `execution.state` is present, and OPTIONAL when `execution.phases` is present. When present with `phases`, all phases inherit it as their default and all indicators inherit its protocol component (the substring before the last `_server` or `_client`). When omitted, every phase MUST specify its own `phase.mode`, and all phase modes MUST share the same protocol component (cross-protocol attacks require the multi-actor form). Every indicator MUST specify its own `indicator.protocol`. In multi-actor form, `execution.mode` is structurally absent, so indicators MUST always specify `indicator.protocol` explicitly.
 
 ### `execution.state` (OPTIONAL, single-phase form only)
 
@@ -111,7 +111,7 @@ Prose describing the purpose of this phase.
 
 ### `phase.mode` (CONDITIONAL)
 
-The attacker posture for this phase. In single-phase and multi-phase forms: when `execution.mode` is present, this defaults to `execution.mode` and is optional; when `execution.mode` is absent, this field is REQUIRED on every phase. In multi-actor form: phases inherit their actor's `mode` and MAY be omitted. When specified, `phase.mode` MUST match the actor's mode (V-046). Cross-protocol attacks are modeled using separate actors, each with its own mode.
+The attacker posture for this phase. In single-phase and multi-phase forms: when `execution.mode` is present, this defaults to `execution.mode` and is optional; when `execution.mode` is absent, this field is REQUIRED on every phase, and all phase modes MUST share the same protocol component (V-028). In multi-actor form: phases inherit their actor's `mode` and MAY be omitted. When specified, `phase.mode` MUST match the actor's mode (V-044). Cross-protocol attacks are modeled using separate actors, each with its own mode.
 
 ### `phase.state` (CONDITIONAL)
 
@@ -153,9 +153,9 @@ trigger:
 
 The protocol event type to match. Event names use the protocol's native naming convention: MCP and A2A use slash-separated JSON-RPC method names; AG-UI uses `snake_case` derived from its EventType enum. Non-RPC HTTP endpoints use an `entity/verb` pattern (e.g., `agent_card/get`). The full event vocabulary is defined per-mode in the protocol binding sections ([§7](/specification/protocol-bindings/)).
 
-Event types MAY include a colon-separated **qualifier** for filtering: `tools/call:calculator` matches only `tools/call` events where the tool name is `calculator`. Qualifiers are restricted to simple identifier tokens (names, states). The event type is split at the first colon: everything before is the event name, everything after is the qualifier token. Values containing colons, slashes, or other structural characters (such as URIs) MUST use `trigger.match` instead. Qualifier resolution rules are defined per-protocol in §7.
+To match specific instances (e.g., a particular tool name), use `trigger.match`.
 
-A trigger's event type MUST be valid for the actor's resolved mode. An event type not listed in the validity matrix for the actor's mode is a validation error (see [§7](/specification/protocol-bindings/) Event-Mode Validity Matrix).
+A trigger's event type SHOULD be valid for the actor's resolved mode. An event type not listed in the binding's event tables for the actor's mode SHOULD produce a warning (see [§7](/specification/protocol-bindings/)).
 
 ### `trigger.count` (OPTIONAL)
 

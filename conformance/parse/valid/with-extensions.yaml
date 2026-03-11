@@ -37,7 +37,8 @@ attack:
   indicators:
     - id: OATF-910-01
       protocol: mcp
-      surface: tool_description
+      surface: tools/list
+      target: "tools[*].description"
       description: "Indicator with extension field."
       x-indicator-source: "automated-scan"
       pattern:

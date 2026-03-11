@@ -1,7 +1,6 @@
 # =============================================================================
 # OATF Conformance: evaluate_trigger Primitive Tests
-# Tests SDK evaluate_trigger(trigger, event, elapsed, state, protocol) per SDK
-# spec §5.8.
+# Tests SDK evaluate_trigger(trigger, event, elapsed, state) per SDK spec §5.8.
 # =============================================================================
 
 - name: "Timeout triggers advancement"
@@ -13,7 +12,6 @@
     elapsed: "31s"
     state:
       event_count: 0
-    protocol: "mcp"
   expected:
     result: "advanced"
     reason: "timeout"
@@ -29,7 +27,6 @@
     elapsed: "10s"
     state:
       event_count: 0
-    protocol: "mcp"
   expected:
     result: "not_advanced"
     state:
@@ -44,12 +41,10 @@
     event:
       event_type: "tools/call"
       content:
-        params:
-          name: "calculator"
+        name: "calculator"
     elapsed: "0s"
     state:
       event_count: 0
-    protocol: "mcp"
   expected:
     result: "advanced"
     reason: "event_matched"
@@ -69,7 +64,6 @@
     elapsed: "0s"
     state:
       event_count: 0
-    protocol: "mcp"
   expected:
     result: "not_advanced"
     state:
@@ -84,12 +78,10 @@
     event:
       event_type: "tools/call"
       content:
-        params:
-          name: "calc"
+        name: "calc"
     elapsed: "0s"
     state:
       event_count: 2
-    protocol: "mcp"
   expected:
     result: "advanced"
     reason: "event_matched"
@@ -105,76 +97,72 @@
     event:
       event_type: "tools/call"
       content:
-        params:
-          name: "calc"
+        name: "calc"
     elapsed: "0s"
     state:
       event_count: 1
-    protocol: "mcp"
   expected:
     result: "not_advanced"
     state:
       event_count: 2
 
-- name: "Qualifier match advances"
+- name: "Match predicate on tool name advances"
   id: TRIG-007
   input:
     trigger:
-      event: "tools/call:calculator"
+      event: "tools/call"
       count: 1
+      match:
+        name: "calculator"
     event:
       event_type: "tools/call"
       content:
-        params:
-          name: "calculator"
+        name: "calculator"
     elapsed: "0s"
     state:
       event_count: 0
-    protocol: "mcp"
   expected:
     result: "advanced"
     reason: "event_matched"
     state:
       event_count: 1
 
-- name: "Qualifier mismatch does not advance or increment"
+- name: "Match predicate mismatch does not advance or increment"
   id: TRIG-008
   input:
     trigger:
-      event: "tools/call:calculator"
+      event: "tools/call"
       count: 1
+      match:
+        name: "calculator"
     event:
       event_type: "tools/call"
       content:
-        params:
-          name: "search"
+        name: "search"
     elapsed: "0s"
     state:
       event_count: 0
-    protocol: "mcp"
   expected:
     result: "not_advanced"
     state:
       event_count: 0
 
-- name: "Predicate match advances"
+- name: "Predicate match with contains advances"
   id: TRIG-009
   input:
     trigger:
       event: "tools/call"
       count: 1
       match:
-        params.name:
+        name:
           contains: "calc"
     event:
       event_type: "tools/call"
       content:
-        params:
-          name: "calculator"
+        name: "calculator"
     elapsed: "0s"
     state:
       event_count: 0
-    protocol: "mcp"
   expected:
     result: "advanced"
     reason: "event_matched"
@@ -188,16 +176,14 @@
       event: "tools/call"
       count: 1
       match:
-        params.name: "calculator"
+        name: "calculator"
     event:
       event_type: "tools/call"
       content:
-        params:
-          name: "search"
+        name: "search"
     elapsed: "0s"
     state:
       event_count: 0
-    protocol: "mcp"
   expected:
     result: "not_advanced"
     state:
@@ -213,7 +199,6 @@
     elapsed: "0s"
     state:
       event_count: 0
-    protocol: "mcp"
   expected:
     result: "not_advanced"
     state:
@@ -234,19 +219,20 @@
     elapsed: "15s"
     state:
       event_count: 0
-    protocol: "mcp"
   expected:
     result: "advanced"
     reason: "timeout"
     state:
       event_count: 0
 
-- name: "AG-UI qualifier resolution for tool_call_start"
+- name: "Match predicate on AG-UI tool call name advances"
   id: TRIG-013
   input:
     trigger:
-      event: "tool_call_start:search"
+      event: "tool_call_start"
       count: 1
+      match:
+        toolCallName: "search"
     event:
       event_type: "tool_call_start"
       content:
@@ -255,19 +241,20 @@
     elapsed: "0s"
     state:
       event_count: 0
-    protocol: "ag_ui"
   expected:
     result: "advanced"
     reason: "event_matched"
     state:
       event_count: 1
 
-- name: "A2A qualifier resolution for task/status"
+- name: "Match predicate on A2A task status advances"
   id: TRIG-014
   input:
     trigger:
-      event: "task/status:completed"
+      event: "task/status"
       count: 1
+      match:
+        status.state: "completed"
     event:
       event_type: "task/status"
       content:
@@ -276,28 +263,8 @@
     elapsed: "0s"
     state:
       event_count: 0
-    protocol: "a2a"
   expected:
     result: "advanced"
     reason: "event_matched"
     state:
       event_count: 1
-
-- name: "Qualifier on event with no registry entry does not advance"
-  id: TRIG-015
-  input:
-    trigger:
-      event: "resources/read:file"
-      count: 1
-    event:
-      event_type: "resources/read"
-      content:
-        uri: "file:///etc/passwd"
-    elapsed: "0s"
-    state:
-      event_count: 0
-    protocol: "mcp"
-  expected:
-    result: "not_advanced"
-    state:
-      event_count: 0

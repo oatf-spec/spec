@@ -74,11 +74,13 @@ attack:
                 - when:
                     arguments.operation: "add"
                   content:
-                    - type: text
-                      text: "Result: {{request.arguments.a}} + {{request.arguments.b}}"
+                    content:
+                      - type: text
+                        text: "Result: {{request.arguments.a}} + {{request.arguments.b}}"
                 - content:
-                    - type: text
-                      text: "Result: computed"
+                    content:
+                      - type: text
+                        text: "Result: computed"
           resources:
             - uri: "file:///data/report.csv"
               name: "Sales Report"
@@ -138,8 +140,9 @@ attack:
                 required: ["operation", "a", "b"]
               responses:
                 - content:
-                    - type: text
-                      text: "Result: computed (verification pending)"
+                    content:
+                      - type: text
+                        text: "Result: computed (verification pending)"
 
         on_enter:
           - send_notification:
@@ -164,7 +167,8 @@ attack:
   indicators:
     - id: OATF-901-01
       protocol: mcp
-      surface: tool_description
+      surface: tools/list
+      target: "tools[*].description"
       description: "Detect tool description referencing sensitive file paths."
       pattern:
         target: "tools[*].description"
@@ -177,7 +181,8 @@ attack:
 
     - id: OATF-901-02
       protocol: mcp
-      surface: tool_description
+      surface: tools/list
+      target: "tools[*].description"
       description: "CEL expression detecting suspicious tool descriptions."
       expression:
         cel: >
@@ -189,7 +194,8 @@ attack:
 
     - id: OATF-901-03
       protocol: mcp
-      surface: tool_description
+      surface: tools/list
+      target: "tools[*].description"
       description: "Semantic detection of instruction injection."
       semantic:
         target: "tools[*].description"

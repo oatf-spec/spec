@@ -86,7 +86,7 @@ The `errors` list contains one entry per expected violation. `rule` is the valid
             - name: test
               description: "A test tool"
       indicators:
-        - surface: tool_description
+        - target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -121,7 +121,7 @@ Test runners parse both the expected output and the actual `normalize()` result,
             - name: test
               description: "A test tool"
       indicators:
-        - surface: tool_description
+        - target: "tools[*].description"
           pattern:
             contains: "test"
   expected: |
@@ -147,7 +147,7 @@ Test runners parse both the expected output and the actual `normalize()` result,
       indicators:
         - id: OATF-001-01
           protocol: mcp
-          surface: tool_description
+          target: "tools[*].description"
           pattern:
             target: "tools[*].description"
             condition:
@@ -180,7 +180,7 @@ message: <Value — the protocol message to evaluate against>
     indicator:
       id: OATF-001-01
       protocol: mcp
-      surface: tool_description
+      target: "tools[*].description"
       pattern:
         target: "tools[*].description"
         condition:
@@ -225,11 +225,11 @@ The `evaluation_summary` contains counts of each verdict result across all indic
     correlation_logic: all
     indicators:
       - id: IND-01
-        surface: tool_description
+        target: "tools[*].description"
         pattern:
           contains: "test"
       - id: IND-02
-        surface: tool_response
+        target: "content[*]"
         pattern:
           contains: "exfil"
     verdicts:
@@ -388,22 +388,9 @@ response: <optional Value>
 
 **Expected:** The interpolated `Value` tree. Strings containing `{{` are interpolated via `interpolate_template`; objects and arrays are recursed; other scalars are unchanged.
 
-### `resolve-event-qualifier.yaml`
-
-Tests `resolve_event_qualifier(protocol, base_event, content)`.
-
-**Input:**
-```yaml
-protocol: "mcp"
-base_event: "tools/call"
-content: <Value — the event payload>
-```
-
-**Expected:** The resolved qualifier string, or `null` when the event type has no qualifier support or the content field path does not resolve.
-
 ### `evaluate-trigger.yaml`
 
-Tests `evaluate_trigger(trigger, event, elapsed, state, protocol)`.
+Tests `evaluate_trigger(trigger, event, elapsed, state)`.
 
 **Input:**
 ```yaml
@@ -412,7 +399,6 @@ event: <optional ProtocolEvent object>
 elapsed: <duration string>
 state:
   event_count: <integer>
-protocol: <string>
 ```
 
 **Expected:**

@@ -11,7 +11,8 @@
   id: EVAL-SEM-01
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: "tools[*].description"
       semantic:
         target: "tools[*].description"
         intent: "Inject instructions to override agent behavior"
@@ -30,7 +31,8 @@
   id: EVAL-SEM-02
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: "tools[*].description"
       semantic:
         target: "tools[*].description"
         intent: "Inject instructions to override agent behavior"
@@ -49,7 +51,8 @@
   id: EVAL-SEM-03
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: "tools[*].description"
       semantic:
         target: "tools[*].description"
         intent: "Inject instructions to override agent behavior"
@@ -68,7 +71,8 @@
   id: EVAL-SEM-04
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: "tools[*].description"
       semantic:
         target: "tools[*].description"
         intent: "Inject instructions to override agent behavior"
@@ -86,7 +90,8 @@
   id: EVAL-SEM-05
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: "tools[*].description"
       semantic:
         target: "tools[*].description"
         intent: "Inject instructions to override agent behavior"
@@ -104,7 +109,8 @@
   id: EVAL-SEM-06
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: "tools[*].description"
       semantic:
         target: "nonexistent.path"
         intent: "Inject instructions to override agent behavior"
@@ -122,7 +128,8 @@
   id: EVAL-SEM-08
   input:
     indicator:
-      surface: "server_instructions"
+      surface: "initialize"
+      target: "instructions"
       semantic:
         target: "instructions"
         intent: "Override agent safety constraints via injected server instructions"
@@ -140,7 +147,8 @@
   id: EVAL-SEM-09
   input:
     indicator:
-      surface: "tool_title"
+      surface: "tools/list"
+      target: "tools[*].title"
       semantic:
         target: "tools[*].title"
         intent: "Mislead user via deceptive tool display name"
@@ -160,7 +168,8 @@
   id: EVAL-SEM-07
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: "tools[*].description"
       semantic:
         target: "tools[*].description"
         intent: "Inject instructions to override agent behavior"

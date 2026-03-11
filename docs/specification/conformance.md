@@ -7,7 +7,7 @@ description: "Document conformance rules, tool conformance requirements, and par
 
 A conforming OATF document:
 
-The [SDK specification](/sdk/) ([SDK specification, §3.2](/sdk/entry-points/)) assigns stable rule identifiers (V-001 through V-050) to conformance requirements across this specification. Conformance test suites reference these identifiers. The numbered rules below define the structural requirements; additional V-rules cover field-level validation constraints defined in their respective sections ([§4](/specification/document-structure/) through [§7](/specification/protocol-bindings/)).
+The [SDK specification](/sdk/) ([SDK specification, §3.2](/sdk/entry-points/)) assigns stable rule identifiers (V-001 through V-047) to conformance requirements across this specification. Conformance test suites reference these identifiers. The numbered rules below define the structural requirements; additional V-rules cover field-level validation constraints defined in their respective sections ([§4](/specification/document-structure/) through [§7](/specification/protocol-bindings/)).
 
 **Core structure**
 
@@ -15,7 +15,7 @@ The [SDK specification](/sdk/) ([SDK specification, §3.2](/sdk/entry-points/)) 
 2. MUST declare `oatf: "0.1"`. Documents SHOULD place it as the first key (see [§4.1](/specification/document-structure/#41-top-level-schema)).
 3. MUST contain exactly one `attack` object.
 4. MUST include `attack.execution`.
-5. MUST use only valid values for closed enumerations defined in this specification: `severity.level`, `attack.status`, `impact`, `classification.category`, `correlation.logic`, `extractor.source`, `extractor.type`, and `mapping.relationship`. Mode values (`execution.mode`, `actor.mode`, `phase.mode`) are open: they MUST match the pattern `[a-z][a-z0-9_]*_(server|client)` but are not restricted to modes defined in this version. Protocol values (`indicator.protocol`) MUST match the pattern `[a-z][a-z0-9_]*`. Surface and event values for recognized protocol bindings MUST be valid according to the binding's tables ([§7](/specification/protocol-bindings/)); for unrecognized bindings, tools MUST skip surface and event validation.
+5. MUST use only valid values for closed enumerations defined in this specification: `severity.level`, `attack.status`, `impact`, `classification.category`, `correlation.logic`, `extractor.source`, `extractor.type`, and `mapping.relationship`. Mode values (`execution.mode`, `actor.mode`, `phase.mode`) are open: they MUST match the pattern `[a-z][a-z0-9_]*_(server|client)` but are not restricted to modes defined in this version. Protocol values (`indicator.protocol`) MUST match the pattern `[a-z][a-z0-9_]*`. Surface and event values for recognized protocol bindings SHOULD produce warnings for unrecognized values; for unrecognized bindings, tools MUST skip surface and event validation.
 
 **Execution forms, phases, and actors**
 
@@ -28,15 +28,13 @@ The [SDK specification](/sdk/) ([SDK specification, §3.2](/sdk/entry-points/)) 
 
 10. MUST use unique `indicator.id` values within the document when IDs are specified explicitly.
 11. Each indicator MUST contain exactly one detection key (`pattern`, `expression`, or `semantic`).
-12. When `execution.mode` is absent and `execution.actors` is absent (the mode-less multi-phase form), every phase MUST specify `phase.mode`. When `execution.mode` is absent, regardless of whether `execution.actors` is present, every indicator (when present) MUST specify `indicator.protocol`. In multi-actor form, `actor.mode` provides phase-level mode inheritance (so `phase.mode` is typically omitted), but indicators are document-level and not scoped to any actor, so `indicator.protocol` remains required.
-13. For modes defined by bindings included in this specification, trigger event types listed in the Event-Mode Validity Matrix ([§7](/specification/protocol-bindings/)) MUST be valid for the actor's mode. Event types not listed in the matrix on a recognized mode SHOULD produce a warning but MUST NOT be rejected; upstream protocols may define events beyond the subset covered by this OATF version. For unrecognized modes, tools MUST skip event type validation.
+12. When `execution.mode` is absent and `execution.actors` is absent (the mode-less multi-phase form), every phase MUST specify `phase.mode`, and all phase modes MUST share the same protocol component (the substring before `_server` or `_client`). Cross-protocol attacks require the multi-actor form. When `execution.mode` is absent, regardless of whether `execution.actors` is present, every indicator (when present) MUST specify `indicator.protocol`. In multi-actor form, `actor.mode` provides phase-level mode inheritance (so `phase.mode` is typically omitted), but indicators are document-level and not scoped to any actor, so `indicator.protocol` remains required.
+13. For modes defined by bindings included in this specification, trigger event types SHOULD produce a warning when not valid for the actor's mode. Event types not listed in the binding's event tables on a recognized mode SHOULD produce a warning but MUST NOT be rejected.
 
-**Response entries and synthesis**
+**Response entries and validation**
 
-14. In MCP tool `responses`, prompt `responses`, `sampling_responses`, and `elicitation_responses` entries: `content` (or `messages` for prompts) and `synthesize` are mutually exclusive. Each entry MUST specify at most one. In A2A `task_responses` entries: `history`/`artifacts` and `synthesize` are mutually exclusive. In AG-UI `run_agent_input`: `messages` and `synthesize` are mutually exclusive.
-15. In any `responses`, `sampling_responses`, `elicitation_responses`, or `task_responses` list, at most one entry MAY omit `when`. When present, it SHOULD be the last entry in the list. An entry without `when` after another entry without `when` is a validation error.
-16. `synthesize.prompt` MUST be a non-empty string when `synthesize` is present.
-17. All `expression.variables` keys MUST be valid CEL identifiers, matching `[_a-zA-Z][_a-zA-Z0-9]*`. Names containing hyphens, dots, or other non-identifier characters are rejected because CEL would parse them as operators rather than variable references.
+14. In any `responses`, `sampling_responses`, `elicitation_responses`, `task_responses`, or `tool_responses` list, at most one entry MAY omit `when`. When present, it SHOULD be the last entry in the list. An entry without `when` after another entry without `when` is a validation error.
+15. All `expression.variables` keys MUST be valid CEL identifiers, matching `[_a-zA-Z][_a-zA-Z0-9]*`. Names containing hyphens, dots, or other non-identifier characters are rejected because CEL would parse them as operators rather than variable references.
 
 ## 11.2 Tool Conformance: General
 
@@ -47,19 +45,17 @@ All conforming tools (adversarial and evaluation):
 1. MUST apply default values for omitted optional fields as defined in this specification: `name` to `"Untitled"`, `version` to `1`, `status` to `"draft"`, `severity.confidence` to `50` (when `severity` is present), `phase.name` to `"phase-{N}"` (1-based index within actor), `phase.mode` to `execution.mode` (when present); in multi-actor form (including after normalization items 6-7) `phase.mode` to `actor.mode` (when `phase.mode` is still absent), `trigger.count` to `1` (when `trigger.event` is present and `trigger.count` is absent), `indicator.protocol` to protocol component of `execution.mode` (when both `indicators` and `execution.mode` are present), `correlation.logic` to `any` (when `indicators` is present), `mapping.relationship` to `"primary"`.
 2. MUST expand severity scalar form (`severity: "high"`) to the object form (`{level: "high", confidence: 50}`) before processing, when `severity` is present.
 3. MUST auto-generate `indicator.id` values for indicators that omit `id`. When `attack.id` is present, the format is `{attack.id}-{NN}`. When `attack.id` is absent, the format is `indicator-{NN}`. `NN` is the 1-based, zero-padded position of the indicator in the `indicators` array.
-4. MUST resolve `pattern.target` and `semantic.target` from the surface's default target path (as defined in [§7](/specification/protocol-bindings/) surface tables) when the target is omitted. If a surface does not define a default target path, the `target` field is REQUIRED for indicators using that surface. Tools MUST reject such indicators when `target` is absent.
+4. MUST resolve `pattern.target` and `semantic.target` from the indicator-level `target` when omitted on the pattern or semantic block. The indicator-level `target` is always required ([§6.1](/specification/indicators/#61-structure)).
 5. MUST expand pattern shorthand form (condition operator as direct key) to the standard form before evaluation.
 
 **Normalization**
 
 6. MUST normalize single-phase form to multi-actor form internally (N-006): when `execution.state` is present (and `execution.phases` and `execution.actors` are absent), wrap it in `actors: [{name: "default", mode: <execution.mode>, phases: [{name: "phase-1", state: <execution.state>}]}]`. All subsequent processing operates on the normalized `actors` array.
 7. MUST normalize multi-phase form to multi-actor form internally (N-007): when `execution.phases` is present (and `execution.actors` is absent), wrap it in `actors: [{name: "default", mode: <execution.mode>, phases: <execution.phases>}]`. When `execution.mode` is absent (the mode-less multi-phase form, where every phase declares its own mode), `actor.mode` is set from `phases[0].mode`. All subsequent processing operates on the normalized `actors` array.
-8. MUST apply MCP tool field defaults during normalization (N-008): `inputSchema` → `{"type": "object"}` when omitted, `description` → `""` when omitted.
-
 **Validation and output**
 
-9. MUST validate trigger event types against the Event-Mode Validity Matrix ([§7](/specification/protocol-bindings/)) after mode resolution for recognized modes. For unrecognized modes, MUST skip event type validation.
-10. Tools that emit OATF documents MUST emit `oatf` as the first key and SHOULD emit the fully-expanded explicit form with all defaults materialized for maximum portability.
+8. MUST skip event type validation for unrecognized modes. For recognized modes, tools SHOULD emit warnings when trigger event types are not listed in the binding's Events section, and these warnings MUST NOT make the document non-conforming.
+9. Tools that emit OATF documents MUST emit `oatf` as the first key and SHOULD emit the fully-expanded explicit form with all defaults materialized for maximum portability.
 
 ## 11.3 Tool Conformance: Adversarial
 
@@ -73,17 +69,17 @@ A conforming adversarial tool:
 4. MUST evaluate triggers and progress between phases accordingly.
 5. MUST support template interpolation for extractor values, including cross-actor references (`{{actor_name.extractor_name}}`).
 6. MUST ensure all server-role actors (modes ending in `_server`) are accepting connections before any client-role actor (modes ending in `_client`) begins executing its first phase (readiness guarantee).
-7. MUST evaluate `responses` and `task_responses` entries in order (first match wins) when processing tool calls, prompt gets, or task messages.
+7. MUST evaluate binding-defined response-dispatch lists in order (first match wins): `responses`, `sampling_responses`, `elicitation_responses`, `task_responses`, and `tool_responses`.
 
 **Recommended capabilities**
 
 8. SHOULD support all four trigger types: event (`trigger.event`), count (`trigger.count`), match (`trigger.match`), and time (`trigger.after`).
-9. SHOULD support behavioral modifiers for realistic simulation.
+9. SHOULD support the full set of response-dispatch lists and binding-specific entry actions for the bindings the tool claims to implement.
 10. SHOULD execute each OATF document in an isolated protocol session to prevent state from one attack affecting subsequent attacks in a regression suite.
 
 **Optional capabilities**
 
-11. MAY support `synthesize` blocks. Tools that support `synthesize` MUST validate generated output against the protocol binding's message structure before injection ([§7.4](/specification/protocol-bindings/llm-synthesis/)). Tools that do not support `synthesize` MUST reject documents containing `synthesize` blocks with a clear error rather than silently skipping them.
+11. MAY support `synthesize` blocks (reserved for a future version; see §F.5). Tools that support `synthesize` MUST validate generated output against the protocol binding's message structure before injection. Tools that do not support `synthesize` SHOULD emit a warning when encountering `synthesize` blocks.
 12. MAY ignore indicators (the detection side of the document).
 13. MUST document which protocol bindings and features it supports.
 
@@ -117,7 +113,6 @@ A tool MAY implement a subset of OATF capabilities. A tool that supports only MC
 When a tool encounters an OATF document containing features it does not support, the expected behavior depends on whether the feature is structural or semantic:
 
 - **Structural features** (unrecognized protocol bindings, unrecognized modes): MUST be skipped without error. The tool SHOULD emit a warning identifying the unsupported feature. Documents using unrecognized modes are structurally valid, as the core document model is protocol-agnostic.
-- **Semantic features** (known features that alter output, such as `synthesize`): MUST be rejected with a clear error rather than silently skipped. Silently skipping `synthesize` would produce incorrect results (empty static responses instead of LLM-generated content), and that is worse than a clear failure.
+- **Semantic features** (known features that alter output, such as `synthesize`): SHOULD emit a warning. The `synthesize` block is reserved for a future version; tools that do not support it SHOULD warn and fall back to static content when available.
 
 This distinction ensures that tools fail loudly when they cannot produce correct results, but degrade gracefully when encountering extensions they were not designed to handle.
-

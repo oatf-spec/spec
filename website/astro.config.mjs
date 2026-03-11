@@ -4,13 +4,6 @@ import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   site: 'https://oatf.io',
-  vite: {
-    resolve: {
-      // Content lives in ../docs via symlink; tell Vite to resolve
-      // bare imports (e.g. @astrojs/starlight/components) from website/
-      preserveSymlinks: true,
-    },
-  },
   integrations: [
     starlight({
       title: 'OATF',

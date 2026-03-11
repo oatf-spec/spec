@@ -9,7 +9,8 @@
   id: EVAL-PAT-01
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: "tools[*].description"
       pattern:
         target: "tools[*].description"
         condition:
@@ -24,7 +25,8 @@
   id: EVAL-PAT-02
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: "tools[*].description"
       pattern:
         target: "tools[*].description"
         condition:
@@ -39,7 +41,8 @@
   id: EVAL-PAT-03
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: "tools[*].description"
       pattern:
         target: "tools[*].description"
         condition:
@@ -54,7 +57,8 @@
   id: EVAL-PAT-04
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: "tools[*].description"
       pattern:
         target: "tools[*].description"
         condition:
@@ -69,7 +73,8 @@
   id: EVAL-PAT-05
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: "tools[*].description"
       pattern:
         target: "tools[*].description"
         condition:
@@ -84,7 +89,8 @@
   id: EVAL-PAT-06
   input:
     indicator:
-      surface: "tool_arguments"
+      surface: "tools/call"
+      target: "arguments"
       pattern:
         target: "arguments.role"
         condition:
@@ -101,7 +107,8 @@
   id: EVAL-PAT-07
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: "tools[*].description"
       pattern:
         target: "tools[*].description"
         condition:
@@ -116,7 +123,8 @@
   id: EVAL-PAT-08
   input:
     indicator:
-      surface: "tool_arguments"
+      surface: "tools/call"
+      target: "arguments"
       pattern:
         target: "nonexistent.path"
         condition:
@@ -129,7 +137,8 @@
   id: EVAL-PAT-09
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: "tools[*].description"
       pattern:
         target: "tools[*].description"
         condition:
@@ -142,7 +151,8 @@
   id: EVAL-PAT-10
   input:
     indicator:
-      surface: "tool_arguments"
+      surface: "tools/call"
+      target: "arguments"
       pattern:
         target: "arguments.count"
         condition:
@@ -156,7 +166,8 @@
   id: EVAL-PAT-11
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: "tools[*].description"
       pattern:
         target: "tools[*].description"
         condition:
@@ -170,7 +181,8 @@
   id: EVAL-PAT-12
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: "tools[*].description"
       pattern:
         target: "tools[*].description"
         condition:
@@ -185,7 +197,8 @@
   id: EVAL-PAT-22
   input:
     indicator:
-      surface: "tool_arguments"
+      surface: "tools/call"
+      target: "arguments"
       pattern:
         target: "arguments.count"
         condition:
@@ -199,7 +212,8 @@
   id: EVAL-PAT-13
   input:
     indicator:
-      surface: "tool_name"
+      surface: "tools/list"
+      target: "tools[*].name"
       pattern:
         target: "tools[*].name"
         condition: "evil_tool"
@@ -212,7 +226,8 @@
   id: EVAL-PAT-23
   input:
     indicator:
-      surface: "tool_title"
+      surface: "tools/list"
+      target: "tools[*].title"
       pattern:
         target: "tools[*].title"
         condition:
@@ -227,7 +242,8 @@
   id: EVAL-PAT-15
   input:
     indicator:
-      surface: "tool_icons"
+      surface: "tools/list"
+      target: "tools[*].icons[*].src"
       pattern:
         target: "tools[*].icons[*].src"
         condition:
@@ -244,7 +260,8 @@
   id: EVAL-PAT-16
   input:
     indicator:
-      surface: "resource_title"
+      surface: "resources/list"
+      target: "resources[*].title"
       pattern:
         target: "resources[*].title"
         condition:
@@ -260,7 +277,8 @@
   id: EVAL-PAT-17
   input:
     indicator:
-      surface: "resource_icons"
+      surface: "resources/list"
+      target: "resources[*].icons[*].src"
       pattern:
         target: "resources[*].icons[*].src"
         condition:
@@ -277,7 +295,8 @@
   id: EVAL-PAT-18
   input:
     indicator:
-      surface: "prompt_title"
+      surface: "prompts/list"
+      target: "prompts[*].title"
       pattern:
         target: "prompts[*].title"
         condition:
@@ -292,7 +311,8 @@
   id: EVAL-PAT-19
   input:
     indicator:
-      surface: "prompt_icons"
+      surface: "prompts/list"
+      target: "prompts[*].icons[*].src"
       pattern:
         target: "prompts[*].icons[*].src"
         condition:
@@ -308,7 +328,8 @@
   id: EVAL-PAT-20
   input:
     indicator:
-      surface: "server_instructions"
+      surface: "initialize"
+      target: "instructions"
       pattern:
         target: "instructions"
         condition:
@@ -321,7 +342,8 @@
   id: EVAL-PAT-21
   input:
     indicator:
-      surface: "server_instructions"
+      surface: "initialize"
+      target: "instructions"
       pattern:
         target: "instructions"
         condition:
@@ -334,7 +356,8 @@
   id: EVAL-PAT-24
   input:
     indicator:
-      surface: "tool_arguments"
+      surface: "tools/call"
+      target: "arguments"
       pattern:
         target: "arguments"
         condition:
@@ -349,7 +372,8 @@
   id: EVAL-PAT-25
   input:
     indicator:
-      surface: "tool_arguments"
+      surface: "tools/call"
+      target: "arguments"
       pattern:
         target: "arguments"
         condition:
@@ -363,7 +387,8 @@
   id: EVAL-PAT-26
   input:
     indicator:
-      surface: "tool_arguments"
+      surface: "tools/call"
+      target: "arguments"
       pattern:
         target: "arguments"
         condition:

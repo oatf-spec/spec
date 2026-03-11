@@ -7,7 +7,8 @@
   id: EVAL-CEL-01
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: ""
       expression:
         cel: "size(message.tools) > 2"
         variables: null
@@ -23,7 +24,8 @@
   id: EVAL-CEL-02
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: ""
       expression:
         cel: "size(message.tools) > 10"
         variables: null
@@ -38,7 +40,8 @@
   id: EVAL-CEL-03
   input:
     indicator:
-      surface: "tool_name"
+      surface: "tools/list"
+      target: ""
       expression:
         cel: "message.name.startsWith(\"evil\")"
         variables: null
@@ -51,7 +54,8 @@
   id: EVAL-CEL-04
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: ""
       expression:
         cel: "tools[0].description.contains('inject')"
         variables:
@@ -66,7 +70,8 @@
   id: EVAL-CEL-05
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: ""
       expression:
         cel: "true"
         variables: null
@@ -78,7 +83,8 @@
   id: EVAL-CEL-06
   input:
     indicator:
-      surface: "tool_definition"
+      surface: "run_agent_input"
+      target: ""
       expression:
         cel: "message.tools.exists(t, t.name == 'admin' && size(t.description) > 100)"
         variables: null
@@ -93,7 +99,8 @@
   id: EVAL-CEL-07
   input:
     indicator:
-      surface: "tool_arguments"
+      surface: "tools/call"
+      target: ""
       expression:
         cel: "message.nonexistent.field > 0"
         variables: null
@@ -106,7 +113,8 @@
   id: EVAL-CEL-08
   input:
     indicator:
-      surface: "tool_arguments"
+      surface: "tools/call"
+      target: ""
       expression:
         cel: "size(message.tools)"
         variables: null
@@ -122,7 +130,8 @@
   id: EVAL-CEL-09
   input:
     indicator:
-      surface: "tool_description"
+      surface: "tools/list"
+      target: ""
       expression:
         cel: "desc == null || desc.contains('inject')"
         variables:
@@ -136,7 +145,8 @@
   id: EVAL-CEL-10
   input:
     indicator:
-      surface: "server_instructions"
+      surface: "initialize"
+      target: ""
       expression:
         cel: "has(message.instructions) && size(message.instructions) > 50 && message.instructions.contains('ignore')"
         variables: null
@@ -149,7 +159,8 @@
   id: EVAL-CEL-10b
   input:
     indicator:
-      surface: "sampling_request"
+      surface: "sampling/createMessage"
+      target: ""
       expression:
         cel: "has(message.toolChoice) && message.toolChoice.mode == 'required'"
         variables: null
@@ -165,7 +176,8 @@
   id: EVAL-CEL-11
   input:
     indicator:
-      surface: "tool_title"
+      surface: "tools/list"
+      target: ""
       expression:
         cel: "message.tools.exists(t, has(t.title) && t.title.startsWith('Admin'))"
         variables: null
@@ -182,7 +194,8 @@
   id: EVAL-CEL-12
   input:
     indicator:
-      surface: "tool_definition"
+      surface: "run_agent_input"
+      target: ""
       expression:
         cel: "message.tools.exists(t, has(t.annotations) && has(t.annotations.title) && t.annotations.title.contains('Override'))"
         variables: null
@@ -202,7 +215,8 @@
   id: EVAL-CEL-13
   input:
     indicator:
-      surface: "tool_definition"
+      surface: "run_agent_input"
+      target: ""
       expression:
         cel: "message.tools.exists(t, has(t.execution) && t.execution.taskSupport == 'required')"
         variables: null

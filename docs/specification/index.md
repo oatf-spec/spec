@@ -43,14 +43,14 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 A conforming OATF document MUST validate against the schema defined in this specification. The normative JSON Schema is published at `https://oatf.io/schemas/v0.1.json` and distributed as a companion file (`v0.1.json`). The schema validates the protocol-agnostic document core (envelope, execution forms, phases, triggers, extractors, indicators, correlation). Binding-specific state validation (MCP tools/resources/prompts structure, A2A agent card, AG-UI run input) is the responsibility of binding-aware tools and is not enforced by the JSON Schema. The schema at a given `MAJOR.MINOR` URL is immutable: once published, it MUST NOT be modified. Patch releases clarify prose but do not change the schema; minor releases publish a new schema at a new URL (e.g., `v0.2.json`). A conforming tool MAY implement support for a subset of protocol bindings (for example, MCP only) but MUST correctly parse and ignore bindings it does not support.
 
-Several MUST-level constraints defined in this specification are not enforced by the JSON Schema in this version, because they involve cross-field or cross-element semantics better validated with richer diagnostics at the SDK level (see the [SDK specification, §3.2](/sdk/entry-points/)):
+Several conformance requirements and recommended diagnostics defined in this specification are not enforced by the JSON Schema in this version, because they involve cross-field or cross-element semantics better validated with richer diagnostics at the SDK level (see the [SDK specification, §3.2](/sdk/entry-points/)):
 
 - **Uniqueness of names and identifiers.** Indicator IDs (V-010), phase names (V-011), and actor names (V-031) MUST be unique within their respective scopes.
 - **Terminal phase ordering.** A terminal phase (one without a trigger) MUST be the last phase in its actor's phase list (V-008).
 - **YAML source constraints.** Documents MUST NOT use YAML anchors, aliases, merge keys, or custom YAML tags (V-020). The `oatf` key SHOULD appear first in the source mapping (V-002); tools that serialize MUST emit it first.
-- **Event-mode and surface-protocol validity.** Trigger events MUST be valid for the actor's mode (V-029). Indicator surfaces MUST be valid for the indicator's protocol (V-018).
+- **Binding-aware warnings.** The schema does not enforce recommended diagnostics such as unrecognized trigger events on recognized modes (V-029) or unrecognized surface values on recognized protocols (V-018).
 - **Conditional requiredness.** `phase.mode` is required when `execution.mode` is absent (V-028). `indicator.protocol` is required when `execution.mode` is absent (V-028).
-- **Action key cardinality.** Binding-specific action objects MUST contain exactly one non-`x-` key (V-043).
+- **Action key cardinality.** Binding-specific action objects MUST contain exactly one non-`x-` key (V-041).
 
 ## 1.4 Relationship to Other Standards
 
@@ -80,4 +80,3 @@ Schema definitions in this specification use YAML syntax. Type annotations follo
 - `T[]`: An ordered list of values of type T.
 - `T?`: An optional value of type T. When absent, the field is omitted entirely.
 - `map<K, V>`: A mapping from keys of type K to values of type V.
-
