@@ -3227,7 +3227,7 @@
 # V-027 branch: when predicates in sampling_responses
 # ---------------------------------------------------------------------------
 
-- name: "V-027 valid: when predicate key in sampling_responses"
+- name: "V-027 valid: simple dot-path predicate key in sampling_responses"
   id: VAL-027c
   input: |
     oatf: "0.1"
@@ -3238,7 +3238,7 @@
           tools: []
           sampling_responses:
             - when:
-                messages[*].role: "user"
+                role: "user"
               content:
                 role: user
                 content:
@@ -3318,7 +3318,8 @@
             defaultOutputModes: ["text/plain"]
           task_responses:
             - content:
-                status: completed
+                status:
+                  state: completed
                 history:
                   - kind: "message"
                     role: agent
@@ -3327,7 +3328,8 @@
                         text: "first"
                     messageId: "msg-001"
             - content:
-                status: completed
+                status:
+                  state: completed
                 history:
                   - kind: "message"
                     role: agent
@@ -3383,3 +3385,101 @@
     errors:
       - rule: "V-047"
         path: "attack.correlation"
+
+# ---------------------------------------------------------------------------
+# V-048: indicator.actor references existing actor
+# ---------------------------------------------------------------------------
+
+- name: "V-048 valid: indicator.actor references existing actor"
+  id: VAL-048a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        actors:
+          - name: mcp_attacker
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: test
+                      description: "test"
+      indicators:
+        - protocol: mcp
+          target: "tools[*].description"
+          actor: mcp_attacker
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-048 invalid: indicator.actor references nonexistent actor"
+  id: VAL-048b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        actors:
+          - name: mcp_attacker
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: test
+                      description: "test"
+      indicators:
+        - protocol: mcp
+          target: "tools[*].description"
+          actor: nonexistent_actor
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-048"
+        path: "attack.indicators[0].actor"
+
+# ---------------------------------------------------------------------------
+# V-049: indicator.method matches detection key
+# ---------------------------------------------------------------------------
+
+- name: "V-049 valid: method matches detection key"
+  id: VAL-049a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test
+              description: "test"
+      indicators:
+        - target: "tools[*].description"
+          method: pattern
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-049 invalid: method says pattern but indicator has expression"
+  id: VAL-049b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test
+              description: "test"
+      indicators:
+        - target: "tools[*].description"
+          method: pattern
+          expression:
+            cel: "message.tools[0].description.contains('test')"
+  expected:
+    errors:
+      - rule: "V-049"
+        path: "attack.indicators[0].method"

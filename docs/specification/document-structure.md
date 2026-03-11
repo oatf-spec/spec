@@ -282,3 +282,21 @@ references:
 
 External references providing context for the attack: research papers, blog posts, CVE entries, or related OATF documents.
 
+## 4.7 Correlation
+
+The `correlation` object controls how indicator verdicts combine to produce the attack-level verdict. It MUST only appear when `indicators` is also present; correlation is meaningless without indicators (the JSON Schema enforces this via `dependentRequired`).
+
+```yaml
+correlation:
+  logic: enum(any, all)?
+```
+
+### `correlation.logic` (OPTIONAL)
+
+How indicator verdicts combine to produce the attack-level verdict. Defaults to `any` when omitted:
+
+- `any` (default): The attack is `exploited` if any indicator matches.
+- `all`: The attack is `exploited` only if every indicator matches.
+
+The `compute_verdict` function ([§4.5](/sdk/evaluation/#45-compute_verdict)) implements this logic. For cross-protocol attacks using multi-actor execution profiles, indicators targeting different protocols are evaluated independently and combined according to this setting. See [§8.3](/specification/cross-protocol-chains/#83-indicator-correlation) for details.
+

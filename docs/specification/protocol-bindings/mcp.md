@@ -155,6 +155,8 @@ state:
 
 **Capabilities.** The `capabilities` object is pass-through, serialized into the `initialize` response. First-phase capabilities are sent during handshake; subsequent phases can modify them to simulate capability mutation.
 
+**Protocol-native fields.** Because pass-through content is preserved without validation, protocol-native fields such as `title`, `icons`, `annotations`, and `_meta` are accepted on tool, resource, prompt, and other MCP objects. Documents MAY include any fields defined by any MCP version; the runtime serializes them verbatim.
+
 ## 7.1.5 Execution State (MCP Client)
 
 When the phase mode is `mcp_client`, the phase state defines the client's behavior. The same naming convention and pass-through rules from §7.1.4 apply: structural keys use `snake_case`, their contents are protocol-native pass-through.

@@ -69,7 +69,8 @@ attack:
           
           task_responses:
             - content:
-                status: completed
+                status:
+                  state: completed
                 history:
                   - kind: "message"
                     role: agent

@@ -5,9 +5,7 @@ description: "Document conformance rules, tool conformance requirements, and par
 
 ## 11.1 Document Conformance
 
-A conforming OATF document:
-
-The [SDK specification](/sdk/) ([SDK specification, §3.2](/sdk/entry-points/)) assigns stable rule identifiers (V-001 through V-047) to conformance requirements across this specification. Conformance test suites reference these identifiers. The numbered rules below define the structural requirements; additional V-rules cover field-level validation constraints defined in their respective sections ([§4](/specification/document-structure/) through [§7](/specification/protocol-bindings/)).
+A conforming OATF document MUST satisfy all structural requirements in this section. The [SDK specification](/sdk/) ([§3.2](/sdk/entry-points/)) assigns stable rule identifiers (V-001 through V-049) to conformance requirements across this specification. Conformance test suites reference these identifiers. The numbered rules below define the structural requirements; additional V-rules cover field-level validation constraints defined in their respective sections ([§4](/specification/document-structure/) through [§7](/specification/protocol-bindings/)).
 
 **Core structure**
 
@@ -39,6 +37,24 @@ The [SDK specification](/sdk/) ([SDK specification, §3.2](/sdk/entry-points/)) 
 **Actions**
 
 16. Binding-specific action objects (those containing no known action key) MUST contain exactly one non-`x-` key.
+
+**Field-level validation**
+
+17. `attack.version`, when present, MUST be a positive integer (≥ 1).
+18. `trigger.after`, when present, MUST be a valid duration (shorthand or ISO 8601).
+19. Extractor names MUST match the pattern `[a-z][a-z0-9_]*`.
+20. `trigger` MUST specify at least one of `event` or `after`. An empty trigger object is invalid.
+21. When `extractor.type` is `regex`, the `extractor.selector` MUST contain at least one capture group.
+22. `phase.on_enter`, when present, MUST contain at least one entry.
+23. In multi-actor form, `phase.mode` when specified MUST match `actor.mode`. Cross-protocol attacks use separate actors.
+24. `attack.impact`, when present, MUST NOT contain duplicate values.
+25. `attack.grace_period`, when present, MUST be a valid duration (shorthand or ISO 8601).
+26. `correlation`, when present, MUST only appear when `indicators` is also present.
+
+**Indicator cross-references**
+
+27. When `indicator.actor` is present, it MUST reference an `actor.name` that exists in the document's (normalized) `execution.actors` list.
+28. When `indicator.method` is present, it MUST match the detection key present on the indicator (`pattern`, `expression`, or `semantic`).
 
 ## 11.2 Tool Conformance: General
 

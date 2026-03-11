@@ -123,7 +123,7 @@ Extension fields (`x-` prefixed) on `Execution` are stored in an `extensions: Op
 
 ## 2.7a Action
 
-An entry action executed when a phase begins. Exactly one action key MUST be present per action object. The v0.1 specification defines three known actions; protocol bindings MAY define additional actions.
+An entry action executed when a phase begins. Exactly one action key MUST be present per action object. The v0.1 specification defines two known actions; protocol bindings MAY define additional actions.
 
 **Known actions (v0.1):**
 

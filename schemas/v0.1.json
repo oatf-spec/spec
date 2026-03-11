@@ -756,7 +756,7 @@
             "request",
             "response"
           ],
-          "description": "Extract from incoming requests or outgoing responses."
+          "description": "Extract from protocol requests or responses. Refers to protocol-level roles, not network direction."
         },
         "type": {
           "type": "string",

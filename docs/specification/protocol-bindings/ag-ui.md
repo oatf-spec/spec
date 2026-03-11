@@ -105,3 +105,5 @@ state:
 **Pass-through content.** The `messages`, `tools`, `context`, `state`, `forwardedProps` fields in `run_agent_input` and the `content` field in `tool_responses` entries are all protocol-native pass-through.
 
 **Template interpolation** (§5.6) applies recursively to all string-valued fields within `run_agent_input` and `tool_responses` content.
+
+**Entry actions.** The AG-UI binding does not define protocol-specific entry actions beyond the core `send` and `log` actions ([§2.7a](/sdk/core-types/#27a-action)). Client-mode actors initiate interaction by submitting the `RunAgentInput` POST body, which is defined by the phase state rather than an entry action. The core `send` action (with `method` set to an AG-UI event type) and `log` action are available for use in AG-UI phases.

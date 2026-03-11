@@ -22,7 +22,7 @@ A binding SHOULD also define:
 
 ### 7.0.1 Response Dispatch
 
-Bindings that support request-response operations (MCP tools/call, MCP prompts/get, A2A message/send, AG-UI tool responses) use a response dispatch pattern. Each dispatchable operation includes an ordered list of response entries:
+Bindings that support request-response operations use a response dispatch pattern. The v0.1 bindings define five dispatch lists: `responses` (MCP tools and prompts), `sampling_responses` (MCP sampling), `elicitation_responses` (MCP elicitation), `task_responses` (A2A), and `tool_responses` (AG-UI). Each dispatchable operation includes an ordered list of response entries:
 
 - **`when`**: Optional match predicate evaluated against the incoming request or binding-defined triggering event payload. Absent on the default (fallback) entry.
 - **`content`**: Protocol-native response content (pass-through).
