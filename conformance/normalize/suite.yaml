@@ -1191,3 +1191,54 @@
                       description: ""
                       inputSchema:
                         type: object
+
+# ---------------------------------------------------------------------------
+# N-001: mapping.relationship defaults to "primary"
+# ---------------------------------------------------------------------------
+
+- name: "N-001 mapping without relationship gets default primary"
+  id: NORM-001k
+  input: |
+    oatf: "0.1"
+    attack:
+      severity: medium
+      classification:
+        category: capability_poisoning
+        mappings:
+          - framework: atlas
+            id: AML.T0051
+            name: "Prompt Injection"
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test
+              description: "test"
+  expected: |
+    oatf: "0.1"
+    attack:
+      name: "Untitled"
+      version: 1
+      status: draft
+      severity:
+        level: medium
+        confidence: 50
+      classification:
+        category: capability_poisoning
+        mappings:
+          - framework: atlas
+            id: AML.T0051
+            name: "Prompt Injection"
+            relationship: primary
+      execution:
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: test
+                      description: "test"
+                      inputSchema:
+                        type: object

@@ -3493,7 +3493,7 @@
       correlation:
         logic: all
   expected:
-    errors: []
+    valid: true
 
 - name: "V-050 invalid: correlation without indicators"
   id: VAL-050b

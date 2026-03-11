@@ -127,7 +127,7 @@ Extractors that capture values from protocol messages during this phase. Extract
 
 ### `phase.on_enter` (OPTIONAL)
 
-Actions executed when this phase begins, before any client interaction is processed. Actions are protocol-specific and defined in the protocol binding sections ([§7](/specification/protocol-bindings/)). Common actions include sending notifications and emitting log events.
+Actions executed when this phase begins, before any client interaction is processed. When present, MUST contain at least one entry. Actions are protocol-specific and defined in the protocol binding sections ([§7](/specification/protocol-bindings/)). Common actions include sending notifications and emitting log events.
 
 ### `phase.trigger` (OPTIONAL)
 
