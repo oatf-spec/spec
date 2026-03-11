@@ -133,8 +133,8 @@ The following transformations are applied in order. Each references the normativ
 | N-003 | §11.2.3 | Auto-generate `indicator.id` for indicators that omit it. When `attack.id` is present, format as `{attack.id}-{NN}`. When `attack.id` is absent, format as `indicator-{NN}`. `NN` is the 1-based zero-padded indicator index. |
 | N-004 | §11.2.4 | Resolve indicator.protocol from mode when omitted. For pattern and semantic indicators, materialize the method-specific `target` from the indicator-level `target` when it is absent (so that `pattern.target` and `semantic.target` are always present after normalization). When the method-specific `target` is already present, it takes precedence. |
 | N-005 | §11.2.5 | Expand pattern shorthand form to standard form: move condition operator into explicit `condition` field. |
-| N-006 | [§5.1](/sdk/execution-primitives/#51-path-resolution) | Normalize single-phase form to multi-actor form: when `execution.state` is present (and `execution.phases` and `execution.actors` are absent), wrap it in `actors: [{name: "default", mode: <execution.mode>, phases: [{name: "phase-1", state: <execution.state>}]}]`. Remove the top-level `mode` and `state` from `execution`. |
-| N-007 | [§5.1](/sdk/execution-primitives/#51-path-resolution) | Normalize multi-phase form to multi-actor form: when `execution.phases` is present (and `execution.actors` is absent), wrap it in `actors: [{name: "default", mode: <execution.mode>, phases: <execution.phases>}]`. When `execution.mode` is absent (mode-less multi-phase form), set `actor.mode` from `phases[0].mode`. Remove the top-level `mode` and `phases` from `execution`. All subsequent normalization steps and all runtime processing operate on the `actors` array. |
+| N-006 | §11.2.6 | Normalize single-phase form to multi-actor form: when `execution.state` is present (and `execution.phases` and `execution.actors` are absent), wrap it in `actors: [{name: "default", mode: <execution.mode>, phases: [{name: "phase-1", state: <execution.state>}]}]`. Remove the top-level `mode` and `state` from `execution`. |
+| N-007 | §11.2.7 | Normalize multi-phase form to multi-actor form: when `execution.phases` is present (and `execution.actors` is absent), wrap it in `actors: [{name: "default", mode: <execution.mode>, phases: <execution.phases>}]`. When `execution.mode` is absent (mode-less multi-phase form), set `actor.mode` from `phases[0].mode`. Remove the top-level `mode` and `phases` from `execution`. All subsequent normalization steps and all runtime processing operate on the `actors` array. |
 `normalize` MUST be idempotent: `normalize(normalize(doc))` produces the same result as `normalize(doc)`.
 
 The caller MUST receive a normalized document. The original document MUST NOT be observably mutated through any retained reference. SDKs MAY implement this in either of two ways:
@@ -161,7 +161,7 @@ When `indicators` is present:
 - Every indicator has a resolved `protocol`.
 - Every indicator has a detection method determined by which method-specific key is present.
 - Every `PatternMatch` is in standard form with an explicit `condition` field.
-- Every `PatternMatch` and `SemanticMatch` has a `target` when present on the method-specific object, overriding the indicator-level `target` for that evaluation.
+- Every `PatternMatch` and `SemanticMatch` has a `target` (materialized from the indicator-level `target` by N-004 when not explicitly specified).
 
 Always:
 
