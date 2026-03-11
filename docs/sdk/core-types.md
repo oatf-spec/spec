@@ -123,22 +123,20 @@ Extension fields (`x-` prefixed) on `Execution` are stored in an `extensions: Op
 
 ## 2.7a Action
 
-An entry action executed when a phase begins. Exactly one action key MUST be present per action object. The v0.1 specification defines three known actions; protocol bindings MAY define additional actions.
+An entry action executed when a phase begins. Exactly one action key MUST be present per action object. The v0.1 specification defines two known actions; protocol bindings MAY define additional actions.
 
 **Known actions (v0.1):**
 
 | Key | Required Fields | Description |
 |---|---|---|
-| `send_notification` | `method: String` | Send a protocol notification. Optional `params: Map<String, Value>` for notification parameters. |
+| `send` | `method: String` | Send a protocol message (notification or request). `method` is the protocol method name; optional `params: Value` carries protocol-native message parameters (pass-through). Entry actions execute before client interaction, so notifications are the primary use case. |
 | `log` | `message: String` | Emit a log message. `message` supports `{{template}}` interpolation. Optional `level: LogLevel`. |
-| `send_elicitation` | `message: String` | Send an elicitation request to the client (MCP server-mode only). Optional `mode: ElicitationMode` (default: `form`), `requestedSchema: Map<String, Value>` (JSON Schema object, for form mode), `url: String` (for url mode). |
 
 **Associated enums:**
 
 | Enumeration | Values |
 |---|---|
 | `LogLevel` | `info`, `warn`, `error` |
-| `ElicitationMode` | `form`, `url` |
 
 **Binding-specific actions:** Action objects MAY contain a single key not in the known set above (e.g., `delay_ms: 500`, `send_ui_event: {...}`). The value type is unconstrained: it may be an object, string, number, or any JSON value. SDKs MUST preserve unrecognized action keys through parse → normalize → serialize round-trips. When evaluating, SDKs SHOULD skip actions they do not recognize and emit a warning diagnostic.
 
@@ -159,8 +157,7 @@ Represents a protocol-level event observed during execution. Used by `evaluate_t
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `event_type` | `String` | Yes | The base event type (e.g., `tools/call`, `message/send`, `run_started`). |
-| `qualifier` | `Optional<String>` | No | Pre-resolved event qualifier, if present (the portion after `:` in `tools/call:calculator`). When set, `evaluate_trigger` uses this value directly instead of calling `resolve_event_qualifier`. When absent, the qualifier is resolved from `content` at trigger evaluation time. |
+| `event_type` | `String` | Yes | The event type (e.g., `tools/call`, `message/send`, `run_started`). |
 | `content` | `Value` | Yes | The event payload. Evaluated against `trigger.match` predicates via `evaluate_predicate`. |
 
 ## 2.8b TriggerResult
@@ -180,7 +177,7 @@ Mutable state tracked per-actor-per-phase for trigger evaluation. The runtime cr
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `event_count` | `Integer` | `0` | Number of fully-matched events observed so far in this phase. Initialized to `0` on phase entry; incremented by `evaluate_trigger` ([§5.8](/sdk/execution-primitives/#58-evaluate_trigger)) when base event, qualifier, and predicate all match. |
+| `event_count` | `Integer` | `0` | Number of fully-matched events observed so far in this phase. Initialized to `0` on phase entry; incremented by `evaluate_trigger` ([§5.8](/sdk/execution-primitives/#58-evaluate_trigger)) when base event and predicate match. |
 
 ## 2.9 Extractor
 
@@ -228,7 +225,11 @@ A condition applied to a resolved field value. At least one operator MUST be pre
 |---|---|---|---|---|
 | `id` | `Optional<String>` | No | Auto-generated (see N-003) | Unique indicator identifier. Always present after normalization. |
 | `protocol` | `Optional<String>` | No | Protocol component of `execution.mode` | Protocol this indicator targets. Required when `execution.mode` is absent. |
-| `surface` | `Surface` | Yes | — | Protocol surface being examined. |
+| `surface` | `Optional<Surface>` | No | — | Protocol operation name scoping this indicator. Optional. |
+| `target` | `String` | Yes | — | Dot-path into the protocol message to examine. Supports wildcards. |
+| `actor` | `Optional<String>` | No | — | References an actor by name. When present, evaluates only against that actor's traffic. |
+| `direction` | `Optional<Direction>` | No | — | Restricts which side examined: `request` or `response`. When omitted, tool selects applicable messages; v0.1 does not define inference. |
+| `method` | `Optional<IndicatorMethod>` | No | — | Explicit evaluation method: `pattern`, `expression`, or `semantic`. Inferred from which field is present when omitted. |
 | `description` | `Optional<String>` | No | — | What this indicator evaluates. |
 | `pattern` | `Optional<PatternMatch>` | No | — | Pattern evaluation definition. Exactly one of `pattern`, `expression`, `semantic` required. |
 | `expression` | `Optional<ExpressionMatch>` | No | — | CEL evaluation definition. |
@@ -242,7 +243,7 @@ A condition applied to a resolved field value. At least one operator MUST be pre
 
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `target` | `Optional<String>` | No | Surface default target | Wildcard dot-path to field to inspect ([§5.1.2](/sdk/execution-primitives/#512-wildcard-dot-path)). |
+| `target` | `Optional<String>` | No | — | Override for the indicator-level target. When present, takes precedence for this pattern evaluation. |
 | `condition` | `Optional<Condition>` | No | — | Absent in shorthand form. Always present after normalization. |
 
 A `Condition` is either:
@@ -256,7 +257,7 @@ The YAML representation supports two forms:
 - **Standard form:** `target` + `condition` (both explicit). `condition` may be a bare value (e.g., `condition: "ls"`) or an operator object (e.g., `condition: {contains: "ls"}`).
 - **Shorthand form:** a single condition operator as a direct key (e.g., `contains: "foo"`). No `condition` wrapper.
 
-Normalization (N-005): When a `PatternMatch` is parsed in shorthand form, the SDK MUST expand it to standard form with an explicit `condition` field (as a `MatchCondition` object) and `target` defaulted from the surface. Bare-value conditions in standard form are preserved as-is (not wrapped in an operator object).
+Normalization (N-005): When a `PatternMatch` is parsed in shorthand form, the SDK MUST expand it to standard form with an explicit `condition` field (as a `MatchCondition` object). The indicator-level `target` provides the evaluation path; `pattern.target` overrides it when present. Bare-value conditions in standard form are preserved as-is (not wrapped in an operator object).
 
 ## 2.14 ExpressionMatch
 
@@ -269,7 +270,7 @@ Normalization (N-005): When a `PatternMatch` is parsed in shorthand form, the SD
 
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `target` | `Optional<String>` | No | Surface default target | Dot-path to field to analyze. |
+| `target` | `Optional<String>` | No | — | Override for the indicator-level target. When present, takes precedence for this semantic evaluation. |
 | `intent` | `String` | Yes | — | Natural-language intent description. |
 | `intent_class` | `Optional<SemanticIntentClass>` | No | — | Intent category hint for classification engines. |
 | `threshold` | `Optional<Float>` | No | — | Similarity/confidence threshold, 0.0–1.0. |
@@ -360,183 +361,45 @@ SDKs MUST define named types for the following enumerations. The canonical strin
 | `DiagnosticSeverity` | `error`, `warning` |
 | `LogLevel` | `info`, `warn`, `error` |
 | `ElicitationMode` | `form`, `url` |
-| `Surface` | Open string. Values defined per-protocol in format spec [§7](/specification/protocol-bindings/) surface tables. |
+| `Surface` | Open string. Values are protocol operation names (e.g., `tools/call`, `agent_card/get`). See [§2.21](/sdk/core-types/#221-surface-model). |
+| `Direction` | `request`, `response` |
+| `IndicatorMethod` | `pattern`, `expression`, `semantic` |
 | `AdvanceReason` | `event_matched`, `timeout` |
 
-**Open vs closed enums:** `Protocol`, `Mode`, `Surface` ([§2.21](/sdk/core-types/#221-surface-registry)), and `Framework` are open strings: unknown values are accepted (with optional warnings for unrecognized bindings, per [§3.2](/sdk/entry-points/#32-validate)). All other enumerations in this table are closed: unknown values MUST be rejected during parsing (`ParseError` with `kind: unknown_variant`). This distinction ensures extensibility for protocol bindings and framework mappings while maintaining strict validation for lifecycle, verdict, and structural enums.
+**Open vs closed enums:** `Protocol`, `Mode`, `Surface` ([§2.21](/sdk/core-types/#221-surface-model)), and `Framework` are open strings: unknown values are accepted (with optional warnings for unrecognized bindings, per [§3.2](/sdk/entry-points/#32-validate)). All other enumerations in this table are closed: unknown values MUST be rejected during parsing (`ParseError` with `kind: unknown_variant`). This distinction ensures extensibility for protocol bindings and framework mappings while maintaining strict validation for lifecycle, verdict, and structural enums.
 
-## 2.21 Surface Registry
+**Output-only enumerations:** `IndicatorResult`, `AttackResult`, `AdvanceReason`, `GenerationErrorKind`, `EvaluationErrorKind`, `ParseErrorKind`, and `DiagnosticSeverity` describe SDK output types (verdicts, errors, diagnostics) — not fields in OATF documents. They are intentionally absent from the JSON Schema, which validates only document input. SDKs define these types to ensure interoperability of evaluation results across implementations.
 
-SDKs MUST maintain a registry mapping each `Surface` value to its protocol and default target path. This registry is used during normalization to resolve omitted `target` fields and during validation to verify that surfaces match their indicator's protocol. The registry is a compile-time constant populated with the v0.1 binding data (MCP, A2A, AG-UI). For indicators targeting unrecognized protocols (not in the registry), SDKs MUST skip surface validation and require explicit `target` fields.
+## 2.21 Surface Model
 
-| Surface | Protocol | Default Target |
-|---|---|---|
-| `tool_description` | `mcp` | `tools[*].description` |
-| `tool_title` | `mcp` | `tools[*].title` |
-| `tool_input_schema` | `mcp` | `tools[*].inputSchema` |
-| `tool_name` | `mcp` | `tools[*].name` |
-| `tool_annotations` | `mcp` | `tools[*].annotations` |
-| `tool_output_schema` | `mcp` | `tools[*].outputSchema` |
-| `tool_icons` | `mcp` | `tools[*].icons` |
-| `tool_response` | `mcp` | `content[*]` |
-| `tool_structured_response` | `mcp` | `structuredContent` |
-| `tool_arguments` | `mcp` | `arguments` |
-| `resource_content` | `mcp` | `contents[*]` |
-| `resource_uri` | `mcp` | `resources[*].uri` |
-| `resource_title` | `mcp` | `resources[*].title` |
-| `resource_description` | `mcp` | `resources[*].description` |
-| `resource_icons` | `mcp` | `resources[*].icons` |
-| `prompt_content` | `mcp` | `messages[*].content` |
-| `prompt_arguments` | `mcp` | `arguments` |
-| `prompt_title` | `mcp` | `prompts[*].title` |
-| `prompt_description` | `mcp` | `prompts[*].description` |
-| `prompt_icons` | `mcp` | `prompts[*].icons` |
-| `server_notification` | `mcp` | `""` (root) |
-| `server_capability` | `mcp` | `capabilities` |
-| `server_info` | `mcp` | `serverInfo` |
-| `server_instructions` | `mcp` | `instructions` |
-| `sampling_request` | `mcp` | `""` (root) |
-| `elicitation_request` | `mcp` | `""` (root) |
-| `elicitation_response` | `mcp` | `""` (root) |
-| `mcp_task_status` | `mcp` | `task` |
-| `mcp_task_result` | `mcp` | `""` (root) |
-| `roots_response` | `mcp` | `roots[*]` |
-| `agent_card` | `a2a` | `""` (root) |
-| `card_name` | `a2a` | `name` |
-| `card_description` | `a2a` | `description` |
-| `skill_description` | `a2a` | `skills[*].description` |
-| `skill_name` | `a2a` | `skills[*].name` |
-| `task_message` | `a2a` | `parts[*]` |
-| `task_artifact` | `a2a` | `artifacts[*]` |
-| `task_status` | `a2a` | `status.state` |
-| `message_history` | `ag_ui` | `messages[*]` |
-| `tool_definition` | `ag_ui` | `tools[*]` |
-| `tool_result` | `ag_ui` | `messages[*]` |
-| `agent_state` | `ag_ui` | `state` |
-| `agent_context` | `ag_ui` | `context[*]` |
-| `forwarded_props` | `ag_ui` | `forwardedProps` |
-| `agent_event` | `ag_ui` | `""` (root) |
-| `agent_tool_call` | `ag_ui` | `""` (root) |
+In the v0.1 binding model, `surface` is an optional indicator field that references a protocol operation name (e.g., `tools/call`, `agent_card/get`, `run_agent_input`). The `target` field (required on every indicator) provides the explicit dot-path into the protocol message.
 
-## 2.22 Event-Mode Validity Registry
+SDKs do not need a compile-time surface registry for target resolution. Surface values, when present, are used for scoping (limiting which protocol traffic the indicator evaluates against) and for documentation. SDKs SHOULD validate surface values against the protocol's known operation names for recognized bindings and emit warnings for unrecognized values.
 
-SDKs MUST maintain a registry mapping each event type to the set of modes for which it is valid. This registry is used during validation (V-029) to check trigger events against the actor's resolved mode. Events listed in the registry that are not valid for the actor's mode MUST be rejected. Events not listed in the registry on a recognized mode SHOULD produce a warning but MUST NOT be rejected, since upstream protocols may define events beyond the subset covered by this OATF version. Events are identified by their base name (without qualifier).
+## 2.22 Event-Mode Validity
 
-SDKs MUST define this as a compile-time constant data structure. Event types with qualifiers are validated by stripping the qualifier (everything after the first `:`) and looking up the base event name. For modes not present in the registry (from unrecognized protocol bindings), SDKs MUST skip event type validation.
+For recognized modes (v0.1: `mcp_server`, `mcp_client`, `a2a_server`, `a2a_client`, `ag_ui_client`), SDKs SHOULD maintain awareness of which event types are defined by each binding's Events section. When a trigger references an event type not listed for the actor's mode, SDKs SHOULD emit a warning. SDKs MUST NOT reject documents based on event-mode validity; upstream protocols may define events beyond the subset covered by this OATF version. For unrecognized modes, SDKs MUST skip event validation entirely.
 
-**v0.1 Event-Mode Validity Matrix:**
+The complete event-mode mapping is defined in each binding's Events section (§7.1.2, §7.2.2, §7.3.2).
 
-This table is reproduced from [format specification §7](/specification/protocol-bindings/) for implementor convenience. The format specification is authoritative.
+## 2.23 SynthesizeBlock (Reserved)
 
-| Event | `mcp_server` | `mcp_client` | `a2a_server` | `a2a_client` | `ag_ui_client` |
-|-------|:---:|:---:|:---:|:---:|:---:|
-| `initialize` | ✓ | ✓ | | | |
-| `tools/list` | ✓ | ✓ | | | |
-| `tools/call` | ✓ | ✓ | | | |
-| `resources/list` | ✓ | ✓ | | | |
-| `resources/read` | ✓ | ✓ | | | |
-| `resources/subscribe` | ✓ | | | | |
-| `resources/unsubscribe` | ✓ | | | | |
-| `prompts/list` | ✓ | ✓ | | | |
-| `prompts/get` | ✓ | ✓ | | | |
-| `resources/templates/list` | ✓ | ✓ | | | |
-| `completion/complete` | ✓ | ✓ | | | |
-| `sampling/createMessage` | ✓ | ✓ | | | |
-| `elicitation/create` | ✓ | ✓ | | | |
-| `tasks/get` | ✓ | ✓ | ✓ | ✓ | |
-| `tasks/result` | ✓ | ✓ | | | |
-| `tasks/list` | ✓ | ✓ | | | |
-| `tasks/cancel` | ✓ | ✓ | ✓ | ✓ | |
-| `roots/list` | ✓ | ✓ | | | |
-| `ping` | ✓ | ✓ | | | |
-| `notifications/initialized` | ✓ | | | | |
-| `notifications/roots/list_changed` | ✓ | | | | |
-| `notifications/cancelled` | ✓ | ✓ | | | |
-| `notifications/tools/list_changed` | | ✓ | | | |
-| `notifications/resources/list_changed` | | ✓ | | | |
-| `notifications/resources/updated` | | ✓ | | | |
-| `notifications/prompts/list_changed` | | ✓ | | | |
-| `notifications/tasks/status` | | ✓ | | | |
-| `notifications/elicitation/complete` | | ✓ | | | |
-| `notifications/message` | | ✓ | | | |
-| `notifications/progress` | | ✓ | | | |
-| `message/send` | | | ✓ | ✓ | |
-| `message/stream` | | | ✓ | ✓ | |
-| `tasks/resubscribe` | | | ✓ | ✓ | |
-| `tasks/pushNotificationConfig/set` | | | ✓ | ✓ | |
-| `tasks/pushNotificationConfig/get` | | | ✓ | ✓ | |
-| `tasks/pushNotificationConfig/list` | | | ✓ | ✓ | |
-| `tasks/pushNotificationConfig/delete` | | | ✓ | ✓ | |
-| `agent/getAuthenticatedExtendedCard` | | | ✓ | ✓ | |
-| `agent_card/get` | | | ✓ | ✓ | |
-| `task/status` | | | | ✓ | |
-| `task/artifact` | | | | ✓ | |
-| `run_started` | | | | | ✓ |
-| `run_finished` | | | | | ✓ |
-| `run_error` | | | | | ✓ |
-| `step_started` | | | | | ✓ |
-| `step_finished` | | | | | ✓ |
-| `text_message_start` | | | | | ✓ |
-| `text_message_content` | | | | | ✓ |
-| `text_message_end` | | | | | ✓ |
-| `tool_call_start` | | | | | ✓ |
-| `tool_call_args` | | | | | ✓ |
-| `tool_call_end` | | | | | ✓ |
-| `tool_call_result` | | | | | ✓ |
-| `state_snapshot` | | | | | ✓ |
-| `state_delta` | | | | | ✓ |
-| `messages_snapshot` | | | | | ✓ |
-| `activity_snapshot` | | | | | ✓ |
-| `activity_delta` | | | | | ✓ |
-| `reasoning_start` | | | | | ✓ |
-| `reasoning_message_start` | | | | | ✓ |
-| `reasoning_message_content` | | | | | ✓ |
-| `reasoning_message_end` | | | | | ✓ |
-| `reasoning_message_chunk` | | | | | ✓ |
-| `reasoning_end` | | | | | ✓ |
-| `reasoning_encrypted_value` | | | | | ✓ |
-| `raw` | | | | | ✓ |
-| `custom` | | | | | ✓ |
-
-## 2.23 SynthesizeBlock
-
-Defines an LLM-powered response generation request. See [format specification §7.4](/specification/protocol-bindings/llm-synthesis/).
+Reserved for a future version. The `SynthesizeBlock` type appears in binding state schemas as a placeholder for LLM-powered response generation. It has no normative semantics in v0.1. See [future-work §F.5](/reference/future-work/#f5-llm-synthesis) for the planned design.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `prompt` | `String` | Yes | Free-text prompt for the LLM. Supports `{{template}}` interpolation from extractors and request fields. |
-
-`SynthesizeBlock` appears within response entries (MCP tool `responses`, MCP prompt `responses`, A2A `task_responses`) as a mutually exclusive alternative to static content, and within AG-UI `run_agent_input` as a mutually exclusive alternative to static `messages`. The SDK parses and validates `SynthesizeBlock` but does not execute LLM generation; that is a runtime concern handled by the consuming tool's `GenerationProvider` ([§6.3](/sdk/extension-points/#63-generationprovider)).
+| `prompt` | `String` | No | Free-text prompt for the LLM. Supports `{{template}}` interpolation. |
 
 ## 2.24 ResponseEntry
 
-A conditional response entry used for request-specific response dispatch. Appears in MCP tool/prompt `responses` and A2A `task_responses`. AG-UI uses a different structure: `messages` and `synthesize` are mutually exclusive directly on `run_agent_input`, not within an ordered response list.
+A conditional response entry used for binding-specific response dispatch. Appears in MCP tool/prompt `responses`, MCP client `sampling_responses`/`elicitation_responses`, A2A `task_responses`, and AG-UI `tool_responses`.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `when` | `Optional<MatchPredicate>` | No | Predicate evaluated against the incoming request. Absent on the default (fallback) entry. |
-| `synthesize` | `Optional<SynthesizeBlock>` | No | LLM-generated response. Mutually exclusive with static content fields. |
+| `when` | `Optional<MatchPredicate>` | No | Predicate evaluated against the incoming request or binding-defined triggering event payload. Absent on the default (fallback) entry. |
+| `content` | `Optional<Value>` | No | Protocol-native response content (pass-through). |
+| `synthesize` | `Optional<SynthesizeBlock>` | No | Reserved for a future version. |
 
-Static content fields are protocol-binding-specific: MCP tools use `content`, MCP prompts use `messages`, A2A uses `history`/`artifacts`, AG-UI uses `messages`. See [format specification §7](/specification/protocol-bindings/) for the complete structure of each binding's response entries.
-
-## 2.25 Qualifier Resolution Registry
-
-SDKs MUST maintain a compile-time registry mapping `(protocol, base_event)` pairs to a content field path used for qualifier resolution. This registry is used by `resolve_event_qualifier` ([§5.9a](/sdk/execution-primitives/#59a-resolve_event_qualifier)) to determine whether a protocol event matches a trigger's qualifier token. The mapping is derived from the qualifier resolution rules in the format specification (§7.1.2, §7.2.2, §7.3.2).
-
-| Protocol | Base Event | Content Field Path |
-|---|---|---|
-| `mcp` | `tools/call` | `params.name` |
-| `mcp` | `prompts/get` | `params.name` |
-| `a2a` | `task/status` | `status.state` |
-| `ag_ui` | `tool_call_start` | `toolCallName` |
-| `ag_ui` | `tool_call_args` | `toolCallName` |
-| `ag_ui` | `tool_call_end` | `toolCallName` |
-| `ag_ui` | `custom` | `name` |
-
-The content field path is resolved against the event's `content` field using `resolve_simple_path` ([§5.1.1](/sdk/execution-primitives/#511-simple-dot-path)). A qualifier matches when the resolved value, converted to its string representation, equals the qualifier token. Events whose `(protocol, base_event)` pair is not in the registry do not support qualifier resolution, and `resolve_event_qualifier` returns `None` for such events.
-
-**Correlated response events.** For protocols that use request/response correlation rather than embedding all necessary fields in the response payload (notably MCP JSON-RPC for `mcp_client` actors), SDKs MUST construct `ProtocolEvent.content` for correlated response events so that the qualifier paths in this registry are resolvable. Specifically, for MCP `tools/call` and `prompts/get` events observed in client mode, `content` MUST be an enriched object that includes the originating request's `params` (in addition to any response payload fields), since JSON-RPC responses do not themselves carry `params`. When the registry specifies `params.name` for these MCP entries, it resolves against this enriched `content` derived from the correlated original request. See [format specification §7.1.2](/specification/protocol-bindings/mcp/#712-event-types) for the full correlation semantics.
-
-SDKs SHOULD define this as a compile-time constant data structure, paralleling the Event-Mode Validity Registry ([§2.22](/sdk/core-types/#222-event-mode-validity-registry)) and Surface Registry ([§2.21](/sdk/core-types/#221-surface-registry)).
+Static content fields are protocol-binding-specific: see the individual binding pages (§7.1–§7.3) for the complete structure of each binding's response entries.
 
 

@@ -12,16 +12,41 @@ Protocol bindings are OATF's extension mechanism for supporting specific agent c
 Each binding MUST define:
 
 1. **Modes**: One or more mode strings following the `{protocol}_{role}` convention (e.g., `mcp_server`, `mcp_client`). Each mode represents a distinct attacker posture.
-2. **Surfaces**: Named locations in the protocol's message structure where attacks manifest. Each surface has a protocol, a default target path, and prose describing what it represents.
-3. **Event types**: The protocol events that can appear as trigger conditions. Each event is associated with the modes for which it is valid.
-4. **Execution state**: The YAML structure for `phase.state` when operating in the binding's modes. This defines the protocol messages the adversarial tool presents.
-5. **CEL context**: The variables available in CEL expressions for this binding's indicators, defining what fields of the protocol message are accessible.
+2. **Events**: The protocol-native method names or event types that can appear as trigger conditions. Each binding documents which events apply to which modes.
+3. **CEL context**: The variables available in CEL expressions for this binding's indicators, defining what fields of the protocol message are accessible.
+4. **Execution state**: The YAML structure for `phase.state` when operating in the binding's modes. State has two layers: structural keys (defined by the binding) that tell the runtime how to map content to protocol operations, and pass-through content (within structural keys) that is preserved verbatim without OATF validation.
 
 A binding SHOULD also define:
 
-6. **Entry actions**: Protocol-specific actions performed when entering a phase (e.g., sending notifications).
-7. **Behavioral modifiers**: Fine-grained control over message delivery (delays, side effects).
-8. **Payload generation**: Protocol-specific fuzzing strategies.
+5. **Entry actions**: Protocol-specific actions performed when entering a phase (e.g., sending notifications).
+
+### 7.0.1 Response Dispatch
+
+Bindings that support request-response operations use a response dispatch pattern. The v0.1 bindings define five dispatch lists: `responses` (MCP tools and prompts), `sampling_responses` (MCP sampling), `elicitation_responses` (MCP elicitation), `task_responses` (A2A), and `tool_responses` (AG-UI). Each dispatchable operation includes an ordered list of response entries:
+
+- **`when`**: Optional match predicate evaluated against the incoming request or binding-defined triggering event payload. Absent on the default (fallback) entry.
+- **`content`**: Protocol-native response content (pass-through).
+- **`synthesize`**: Reserved for a future version (LLM-powered generation).
+
+Entries are evaluated in order; the first entry whose `when` predicate matches the triggering request/event payload (or the first entry without `when`) is selected. At most one entry may omit `when` (the catch-all), and it should be the last entry.
+
+The `select_response` primitive ([§5.7](/sdk/execution-primitives/#57-select_response)) implements this evaluation.
+
+### 7.0.2 Synthetic Event Names
+
+When a protocol operation does not have a native method name or event type, the binding defines a synthetic name following the `entity/verb` or `snake_case` pattern consistent with the protocol's naming conventions. Synthetic names are documented in each binding's Events section. Examples:
+- `agent_card/get` (A2A: HTTP GET has no JSON-RPC method)
+- `run_agent_input` (AG-UI: POST body has no SSE event type)
+
+### 7.0.3 Pass-Through Principle
+
+Protocol-native message content within execution state is pass-through: the OATF parser preserves it without validation against the upstream protocol's schema. This enables documents to describe attacks involving non-conformant, malformed, or version-skewed protocol messages.
+
+Each binding's state schema has two layers:
+- **Structural keys** (defined by the binding): Tell the runtime how to map state content to protocol operations (e.g., `tools` → `tools/list` response, `agent_card` → Agent Card endpoint).
+- **Pass-through content** (within structural keys): Protocol-native fields preserved verbatim. No OATF validation applied.
+
+**Naming convention.** Structural keys use OATF's `snake_case` convention (`protocol_version`, `server_info`, `agent_card`, `run_agent_input`). Fields within pass-through content retain the protocol's native naming (e.g., MCP's `inputSchema`, A2A's `pushNotifications`, AG-UI's `forwardedProps`).
 
 ### Interaction Models
 
@@ -37,7 +62,7 @@ These models are stable abstractions. The protocols serving them may change; the
 
 ### Extensibility
 
-Adding a new protocol binding does not require changes to the core specification. A new binding defines its modes, surfaces, events, and state structures following the conventions above. Tools that do not implement the new binding parse documents using it without error but skip execution for unrecognized modes and skip validation for unrecognized surfaces and events.
+Adding a new protocol binding does not require changes to the core specification. A new binding defines its modes, events, and state structures following the conventions above. Tools that do not implement the new binding parse documents using it without error but skip execution for unrecognized modes and skip validation for unrecognized events.
 
 Third-party bindings (not included in this specification) SHOULD use a namespaced protocol identifier to avoid collisions with future OATF-defined bindings (e.g., `vendor_protocol_server` rather than `protocol_server`).
 
@@ -45,10 +70,10 @@ Third-party bindings (not included in this specification) SHOULD use a namespace
 
 Each binding carries a maturity level:
 
-- **Stable**: Complete coverage of the protocol's attack surface. All surfaces, event types, execution state structures, CEL context, behavioral modifiers, and payload generation are defined. Suitable for production use.
-- **Provisional**: Structurally sound and usable, but incomplete. Core surfaces and event types are defined, and execution state covers the primary attack vectors. CEL context, behavioral modifiers, and payload generation may be absent. Future OATF minor versions will expand provisional bindings toward stable.
+- **Stable**: Complete coverage of the protocol's attack surface. All events, execution state structures, CEL context, and entry actions are defined. Suitable for production use.
+- **Provisional**: Structurally sound and usable, but incomplete. Core events are defined, and execution state covers the primary attack vectors. CEL context and entry actions may be absent or incomplete. Future OATF minor versions will expand provisional bindings toward stable.
 
-## 7.0.1 Included Bindings Summary
+## 7.0.4 Included Bindings Summary
 
 | Aspect | MCP ([§7.1](/specification/protocol-bindings/mcp/)) | A2A ([§7.2](/specification/protocol-bindings/a2a/)) | AG-UI ([§7.3](/specification/protocol-bindings/ag-ui/)) |
 |--------|-----------|-----------|-------------|
@@ -57,89 +82,10 @@ Each binding carries a maturity level:
 | Transport | JSON-RPC 2.0 over stdio/Streamable HTTP | JSON-RPC 2.0 over HTTP(S), SSE for streaming | Transport-agnostic (typically HTTP POST + SSE) |
 | Primary attack surface | Tool/resource/prompt descriptions, tool responses | Agent Card, skill descriptions, task messages | Message history, tool results, context, agent state |
 | Default mode | `mcp_server` | `a2a_server` | `ag_ui_client` |
-| Surfaces defined | 30 | 8 | 8 |
-| Event types defined | 30 | 13 | 26 |
-| Execution state | Full (tools, resources, prompts, elicitations, capabilities, behavior) | Partial (agent card, task responses) | Partial (RunAgentInput) |
-| Behavioral modifiers | Defined (delivery, side effects) | Not yet defined | Not yet defined |
-| Payload generation | Defined | Not yet defined | Not yet defined (deterministic `generate` blocks; `synthesize` is defined in [§7.4](/specification/protocol-bindings/llm-synthesis/)) |
+| Execution state | Full (tools, resources, prompts, elicitations, capabilities); pass-through content | Partial (agent card, task responses); pass-through content | Partial (RunAgentInput, tool responses); pass-through content |
 
 ### Naming Conventions in Protocol Bindings
 
-OATF structural fields (the format's own constructs: `phase.name`, `trigger.event`, `indicator.surface`) use `snake_case`. Protocol passthrough fields (values that an adversarial tool serializes directly onto the wire) use the protocol's native naming convention. This means execution state fields mirror MCP's `camelCase` (e.g., `inputSchema`, `isError`, `listChanged`), A2A's `camelCase` (e.g., `pushNotifications`), and AG-UI's `camelCase` (e.g., `forwardedProps`, `threadId`, `runId`). CEL context fields ([§7.1.3](/specification/protocol-bindings/mcp/#713-cel-context-mcp), [§7.2.3](/specification/protocol-bindings/a2a/#723-cel-context-a2a), [§7.3.3](/specification/protocol-bindings/ag-ui/#733-cel-context-ag-ui)) also use the protocol's native naming because CEL expressions evaluate against protocol messages.
+OATF structural fields (the format's own constructs: `phase.name`, `trigger.event`, `indicator.surface`) use `snake_case`. Protocol pass-through fields (values that an adversarial tool serializes directly onto the wire) use the protocol's native naming convention. This means execution state fields mirror MCP's `camelCase` (e.g., `inputSchema`, `isError`, `listChanged`), A2A's `camelCase` (e.g., `pushNotifications`), and AG-UI's `camelCase` (e.g., `forwardedProps`, `threadId`, `runId`). CEL context fields ([§7.1.3](/specification/protocol-bindings/mcp/#713-cel-context), [§7.2.3](/specification/protocol-bindings/a2a/#723-cel-context), [§7.3.3](/specification/protocol-bindings/ag-ui/#733-cel-context)) also use the protocol's native naming because CEL expressions evaluate against protocol messages.
 
 Event type values follow the naming conventions of their respective protocols. MCP and A2A use slash-separated method names mirroring their JSON-RPC methods (e.g., `tools/call`, `message/send`). Non-RPC HTTP endpoints use an `entity/verb` pattern (e.g., `agent_card/get`). AG-UI uses `snake_case` names derived from its `EventType` enum (e.g., `tool_call_start`, `run_started`). A2A status values use the protocol's native naming, which includes hyphens (e.g., `input-required`).
-
-### Event-Mode Validity Matrix
-
-The following matrix defines the event types recognized by the v0.1 protocol bindings for each mode. For event types listed in this matrix, using one on a mode where it is not marked valid is a validation error (V-029). For event types *not* listed in this matrix on a recognized mode, tools SHOULD emit a warning but MUST NOT reject the document; upstream protocols may define events beyond the subset covered by this OATF version. For modes defined by bindings not included in this specification, tools MUST skip event validation entirely.
-
-| Event | `mcp_server` | `mcp_client` | `a2a_server` | `a2a_client` | `ag_ui_client` |
-|-------|:---:|:---:|:---:|:---:|:---:|
-| `initialize` | ✓ | ✓ | | | |
-| `tools/list` | ✓ | ✓ | | | |
-| `tools/call` | ✓ | ✓ | | | |
-| `resources/list` | ✓ | ✓ | | | |
-| `resources/read` | ✓ | ✓ | | | |
-| `resources/subscribe` | ✓ | | | | |
-| `resources/unsubscribe` | ✓ | | | | |
-| `prompts/list` | ✓ | ✓ | | | |
-| `prompts/get` | ✓ | ✓ | | | |
-| `resources/templates/list` | ✓ | ✓ | | | |
-| `completion/complete` | ✓ | ✓ | | | |
-| `sampling/createMessage` | ✓ | ✓ | | | |
-| `elicitation/create` | ✓ | ✓ | | | |
-| `tasks/get` | ✓ | ✓ | ✓ | ✓ | |
-| `tasks/result` | ✓ | ✓ | | | |
-| `tasks/list` | ✓ | ✓ | | | |
-| `tasks/cancel` | ✓ | ✓ | ✓ | ✓ | |
-| `roots/list` | ✓ | ✓ | | | |
-| `ping` | ✓ | ✓ | | | |
-| `notifications/initialized` | ✓ | | | | |
-| `notifications/roots/list_changed` | ✓ | | | | |
-| `notifications/cancelled` | ✓ | ✓ | | | |
-| `notifications/tools/list_changed` | | ✓ | | | |
-| `notifications/resources/list_changed` | | ✓ | | | |
-| `notifications/resources/updated` | | ✓ | | | |
-| `notifications/prompts/list_changed` | | ✓ | | | |
-| `notifications/tasks/status` | | ✓ | | | |
-| `notifications/elicitation/complete` | | ✓ | | | |
-| `notifications/message` | | ✓ | | | |
-| `notifications/progress` | | ✓ | | | |
-| `message/send` | | | ✓ | ✓ | |
-| `message/stream` | | | ✓ | ✓ | |
-| `tasks/resubscribe` | | | ✓ | ✓ | |
-| `tasks/pushNotificationConfig/set` | | | ✓ | ✓ | |
-| `tasks/pushNotificationConfig/get` | | | ✓ | ✓ | |
-| `tasks/pushNotificationConfig/list` | | | ✓ | ✓ | |
-| `tasks/pushNotificationConfig/delete` | | | ✓ | ✓ | |
-| `agent/getAuthenticatedExtendedCard` | | | ✓ | ✓ | |
-| `agent_card/get` | | | ✓ | ✓ | |
-| `task/status` | | | | ✓ | |
-| `task/artifact` | | | | ✓ | |
-| `run_started` | | | | | ✓ |
-| `run_finished` | | | | | ✓ |
-| `run_error` | | | | | ✓ |
-| `step_started` | | | | | ✓ |
-| `step_finished` | | | | | ✓ |
-| `text_message_start` | | | | | ✓ |
-| `text_message_content` | | | | | ✓ |
-| `text_message_end` | | | | | ✓ |
-| `tool_call_start` | | | | | ✓ |
-| `tool_call_args` | | | | | ✓ |
-| `tool_call_end` | | | | | ✓ |
-| `tool_call_result` | | | | | ✓ |
-| `state_snapshot` | | | | | ✓ |
-| `state_delta` | | | | | ✓ |
-| `messages_snapshot` | | | | | ✓ |
-| `activity_snapshot` | | | | | ✓ |
-| `activity_delta` | | | | | ✓ |
-| `reasoning_start` | | | | | ✓ |
-| `reasoning_message_start` | | | | | ✓ |
-| `reasoning_message_content` | | | | | ✓ |
-| `reasoning_message_end` | | | | | ✓ |
-| `reasoning_message_chunk` | | | | | ✓ |
-| `reasoning_end` | | | | | ✓ |
-| `reasoning_encrypted_value` | | | | | ✓ |
-| `raw` | | | | | ✓ |
-| `custom` | | | | | ✓ |
-

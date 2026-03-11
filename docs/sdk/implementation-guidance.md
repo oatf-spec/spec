@@ -43,7 +43,7 @@ OATF documents may contain fields prefixed with `x-`. SDKs MUST preserve these t
 
 - Regex patterns SHOULD be compiled once during `validate` or `normalize` and cached for reuse during evaluation.
 - CEL expressions SHOULD be parsed once during `validate` and the parsed AST cached for evaluation.
-- The surface registry ([§2.21](/sdk/core-types/#221-surface-registry)) is static data. SDKs SHOULD represent it as a compile-time constant, not a runtime lookup.
+- Surface validation against known operation names ([§2.21](/sdk/core-types/#221-surface-model)) is optional. SDKs that perform it SHOULD use a static lookup for recognized bindings.
 
 ## 8.6 Dependency Guidance
 
@@ -87,7 +87,7 @@ Each SDK specification version declares which OATF format specification version(
 
 This version (SDK Spec 0.1) supports **OATF Format Spec 0.1**.
 
-When the format specification adds a new protocol binding (for example, a hypothetical OATF 0.2 adding a new protocol), the SDK specification will be updated to include the new surfaces and event types. During the 0.x series, minor versions may introduce breaking changes (per [format specification §10.1](/specification/versioning/#101-specification-versioning)), so SDKs are not required to handle unknown format versions gracefully. Post-1.0, SDKs implementing a prior SDK specification version MUST still correctly parse documents using new minor-version bindings, ignoring unknown surfaces.
+When the format specification adds a new protocol binding (for example, a hypothetical OATF 0.2 adding a new protocol), the SDK specification will be updated to include the new operation names, event types, and binding-specific state shapes. During the 0.x series, minor versions may introduce breaking changes (per [format specification §10.1](/specification/versioning/#101-specification-versioning)), so SDKs are not required to handle unknown format versions gracefully. Post-1.0, SDKs implementing a prior SDK specification version MUST still correctly parse documents using new minor-version bindings, ignoring unknown surface values.
 
 ## 9.3 Language SDK Versioning
 
@@ -97,4 +97,3 @@ Individual language SDKs version independently of both specifications. A languag
 - `oatf-py 0.1.0` implements SDK Spec 0.1.
 
 Patch versions of language SDKs (bug fixes, performance improvements) do not require SDK specification changes. Language SDKs SHOULD document their SDK specification version in their README and crate/package metadata.
-

@@ -22,9 +22,8 @@ description: "Key terms and definitions used throughout the OATF specification."
 
 **Indicator**: A protocol-specific pattern describing observable evidence that the agent complied with the attack. Each indicator targets a specific protocol and attack surface, examining the agent's behavior in response to the simulated attack.
 
-**Surface**: The specific protocol construct through which an attack manifests (for example, a tool description in MCP, an Agent Card in A2A, or a message history in AG-UI). Surfaces are defined by protocol bindings.
+**Surface**: A protocol operation name used to scope indicators to a specific kind of traffic (for example, `tools/call` in MCP, `agent_card/get` in A2A, or `run_agent_input` in AG-UI). Surface values are defined by protocol bindings.
 
 **Phase**: A distinct stage in a multi-step attack. Phases execute sequentially. Each phase defines protocol messages to produce and conditions that trigger advancement to the next phase.
 
 **Verdict**: The outcome of evaluating indicators against observed protocol traffic. Indicator-level verdicts roll up into an attack-level verdict indicating whether the agent was exploited.
-

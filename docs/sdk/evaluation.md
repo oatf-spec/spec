@@ -9,7 +9,7 @@ The evaluation interface allows tools to assess whether observed protocol traffi
 
 Indicator evaluation operates on protocol messages represented as `Value`, a dynamically-typed JSON-like tree. The SDK does not define message types for specific protocols. The consuming tool is responsible for constructing the `Value` from whatever wire format it captures.
 
-The `Value` passed to indicator evaluation corresponds to the `result` (for responses) or `params` (for requests/notifications) field of the JSON-RPC message, not the full JSON-RPC envelope. This is the convention defined in the [format specification §7.1.3](/specification/protocol-bindings/mcp/#713-cel-context-mcp). For correlated response events in client mode (notably MCP `tools/call` and `prompts/get`), the `Value` MUST be an enriched object that includes the originating request's `params`, since JSON-RPC responses do not carry them. See the Qualifier Resolution Registry ([§2.25](/sdk/core-types/#225-qualifier-resolution-registry)) for details. For non-JSON-RPC bindings (e.g., AG-UI, or future protocols that do not use JSON-RPC framing), tools SHOULD pass the protocol-specific message payload, the semantic equivalent of "the content the agent produced or received." Indicators evaluate whatever structure is present; the dot-path and CEL machinery is format-agnostic.
+The `Value` passed to indicator evaluation corresponds to the `result` (for responses) or `params` (for requests/notifications) field of the JSON-RPC message, not the full JSON-RPC envelope. This is the convention defined in the [format specification §7.1.3](/specification/protocol-bindings/mcp/#713-cel-context). For correlated response events in client mode (notably MCP `tools/call` and `prompts/get`), the `Value` MUST be an enriched object that includes the originating request's `params`, since JSON-RPC responses do not carry them. For non-JSON-RPC bindings (e.g., AG-UI, or future protocols that do not use JSON-RPC framing), tools SHOULD pass the protocol-specific message payload, the semantic equivalent of "the content the agent produced or received." Indicators evaluate whatever structure is present; the dot-path and CEL machinery is format-agnostic.
 
 SDKs MUST NOT require messages to conform to any particular protocol schema. Indicators evaluate against whatever structure is present. For pattern and semantic indicators, missing target fields produce `not_matched` verdicts, not errors. For expression indicators, missing field access follows CEL runtime semantics — accessing a nonexistent field is a CEL evaluation error, which the SDK surfaces as an `EvaluationError`.
 
@@ -25,9 +25,10 @@ Evaluates a pattern indicator against a protocol message.
 
 **Behavior:**
 
-1. Resolve `pattern.target` against `message` using `resolve_wildcard_path` ([§5.1.2](/sdk/execution-primitives/#512-wildcard-dot-path)). This may produce zero, one, or many values (when the path contains wildcards).
-2. For each resolved value, evaluate the condition ([§5.3](/sdk/execution-primitives/#53-evaluate_condition)) against the value. If a regex condition exceeds the tool's match time limit, return `Err(EvaluationError { kind: regex_timeout })`.
-3. Return `Ok(true)` if any resolved value matches the condition. Return `Ok(false)` if no values match or if the target path resolves to nothing.
+1. If the condition contains `exists` as its only operator: resolve `pattern.target` against `message` using `resolve_wildcard_path` ([§5.1.2](/sdk/execution-primitives/#512-wildcard-dot-path)). Return `Ok(exists_value == (resolved_count > 0))` — i.e., `exists: true` matches when the path resolves to at least one value; `exists: false` matches when the path resolves to nothing. `evaluate_condition` is not called (see [§5.3a](/sdk/execution-primitives/#53-evaluate_condition), "The `exists` operator").
+2. Otherwise, resolve `pattern.target` against `message` using `resolve_wildcard_path`. This may produce zero, one, or many values (when the path contains wildcards).
+3. For each resolved value, evaluate the condition ([§5.3](/sdk/execution-primitives/#53-evaluate_condition)) against the value. If a regex condition exceeds the tool's match time limit, return `Err(EvaluationError { kind: regex_timeout })`.
+4. Return `Ok(true)` if any resolved value matches the condition. Return `Ok(false)` if no values match or if the target path resolves to nothing.
 
 ## 4.3 evaluate_expression
 
@@ -68,13 +69,15 @@ evaluate_indicator(
 
 Top-level indicator evaluation. Dispatches to the appropriate method evaluator and wraps the result in a verdict.
 
+**Precondition:** The indicator MUST be normalized (i.e., the output of `normalize()` or `load()`). After normalization, method-specific target fields (`pattern.target`, `semantic.target`) are always populated via N-004 ([§3.3](/sdk/entry-points/#33-normalize)). Passing an un-normalized indicator produces undefined behavior for pattern and semantic evaluation, which rely on the method-specific `target` being present.
+
 **Behavior:**
 
 1. Dispatch on the present detection key:
    - `pattern` → call `evaluate_pattern(indicator.pattern, message)`. If it returns `Ok(bool)`, the verdict result is `matched`/`not_matched` accordingly. If it returns `Err(EvaluationError)`, return verdict with `result: error` and the error message as evidence.
    - `expression` → if `cel_evaluator` is absent, return verdict with `result: skipped` and evidence indicating CEL support is unavailable. Otherwise call `evaluate_expression(indicator.expression, message, cel_evaluator)`. If it returns `Ok(bool)`, the result is that boolean. If it returns `Err(EvaluationError)`, return verdict with `result: error` and the error as evidence.
    - `semantic` → if `semantic_evaluator` is absent, return verdict with `result: skipped` and evidence indicating semantic evaluation is unavailable. Otherwise:
-     a. Resolve `indicator.semantic.target` against `message` using `resolve_wildcard_path` ([§5.1.2](/sdk/execution-primitives/#512-wildcard-dot-path)). If the path resolves to nothing, return verdict with `result: not_matched`.
+     a. Resolve `indicator.semantic.target` (or, when absent, the indicator-level `indicator.target`) against `message` using `resolve_wildcard_path` ([§5.1.2](/sdk/execution-primitives/#512-wildcard-dot-path)). If the path resolves to nothing, return verdict with `result: not_matched`.
      b. For each resolved value, serialize to string and call `semantic_evaluator.evaluate(text, indicator.semantic.intent, indicator.semantic.intent_class, indicator.semantic.threshold, indicator.semantic.examples)`. When `intent_class` is absent, pass `None`; the evaluator MUST handle this gracefully.
      c. Determine the effective threshold: use `indicator.semantic.threshold` if present, otherwise `0.7` (per [format specification §6.4](/specification/indicators/#64-semantic-analysis)).
      d. If the highest returned score across all resolved values ≥ the effective threshold, the result is `true` (matched). Otherwise `false` (not matched). Use the highest score as evidence.

@@ -95,7 +95,7 @@ Parses a duration string in either shorthand or ISO 8601 format.
 | `PT{N}H{N}M{N}S` | `PT1H30M15S` | 1 hour 30 minutes 15 seconds (ISO 8601 composite) |
 | `P{N}DT{...}` | `P1DT12H` | 1 day 12 hours (ISO 8601 composite) |
 
-`N` is a non-negative integer (≥ 0); `0s` is a valid duration meaning zero elapsed time. Fractional values are not supported. Any ISO 8601 duration composed of integer D, H, M, and S components is accepted; the components must appear in descending order (days → hours → minutes → seconds) and the `T` separator is required before any time components.
+`N` is a non-negative integer (≥ 0); `0s` is a valid duration meaning zero elapsed time. Negative values (e.g., `-5s`, `PT-30S`) are invalid and MUST produce a `ParseError`. Fractional values are not supported. Any ISO 8601 duration composed of integer D, H, M, and S components is accepted; the components must appear in descending order (days → hours → minutes → seconds) and the `T` separator is required before any time components.
 
 ## 5.3 evaluate_condition
 
@@ -242,7 +242,7 @@ select_response(
 ) → Optional<ResponseEntry>
 ```
 
-Selects the first matching response entry from an ordered list, using `when` predicates for conditional dispatch.
+Selects the first matching response entry from an ordered list, using `when` predicates for conditional dispatch. The `request` parameter is the protocol message payload that triggered the dispatch — for server-mode dispatch lists (`responses`, `sampling_responses`, `elicitation_responses`, `task_responses`) this is the incoming request; for client-mode dispatch lists (`tool_responses`) this is the outgoing request that the response corresponds to.
 
 **Behavior:**
 
@@ -260,74 +260,25 @@ evaluate_trigger(
     trigger: Trigger,
     event: Optional<ProtocolEvent>,
     elapsed: Duration,
-    state: TriggerState,
-    protocol: String
+    state: TriggerState
 ) → TriggerResult
 ```
 
-Evaluates whether a trigger condition is satisfied for phase advancement. The function manages event counting internally via the mutable `state` parameter ([§2.8c](/sdk/core-types/#28c-triggerstate)), which the caller persists across calls but does not inspect or modify. The `protocol` argument MUST be the normalized protocol identifier (the output of `extract_protocol(mode)`) corresponding to the registry keys defined in [§2.25](/sdk/core-types/#225-qualifier-resolution-registry) (`mcp`, `a2a`, `ag_ui`); passing an unnormalized or free-form value will cause silent qualifier resolution failures.
+Evaluates whether a trigger condition is satisfied for phase advancement. The function manages event counting internally via the mutable `state` parameter ([§2.8c](/sdk/core-types/#28c-triggerstate)), which the caller persists across calls but does not inspect or modify.
 
 **Behavior:**
 
 1. If `trigger.after` is present and `elapsed` ≥ `trigger.after`, return `TriggerResult::Advanced { reason: timeout }`.
 2. If `trigger.event` is present and `event` is present:
-   a. Parse `trigger.event` via `parse_event_qualifier` ([§5.9](/sdk/execution-primitives/#59-parse_event_qualifier)) to obtain `(trigger_base, trigger_qualifier)`.
-   b. **Base match:** If `event.event_type` ≠ `trigger_base`, return `TriggerResult::NotAdvanced`.
-   c. **Qualifier match:** If `trigger_qualifier` is present:
-      i. Determine the event's qualifier: if `event.qualifier` is present, use that value. Otherwise, call `resolve_event_qualifier(protocol, event.event_type, event.content)` ([§5.9a](/sdk/execution-primitives/#59a-resolve_event_qualifier)) and use its result (which may be `None`).
-      ii. If the event's qualifier is `None` or does not equal `trigger_qualifier`, return `TriggerResult::NotAdvanced`.
-   d. **Predicate check:** If `trigger.match` is present, evaluate the match predicate against `event.content` using `evaluate_predicate` ([§5.4](/sdk/execution-primitives/#54-evaluate_predicate)). If the predicate does not match, return `TriggerResult::NotAdvanced`.
-   e. **Count increment:** Increment `state.event_count` by 1. This increment occurs only after base event, qualifier, and predicate have all passed.
-   f. **Count check:** If `state.event_count` ≥ `trigger.count` (resolved, default `1`), return `TriggerResult::Advanced { reason: event_matched }`.
+   a. **Base match:** If `event.event_type` ≠ `trigger.event`, return `TriggerResult::NotAdvanced`.
+   b. **Predicate check:** If `trigger.match` is present, evaluate the match predicate against `event.content` using `evaluate_predicate` ([§5.4](/sdk/execution-primitives/#54-evaluate_predicate)). If the predicate does not match, return `TriggerResult::NotAdvanced`.
+   c. **Count increment:** Increment `state.event_count` by 1. This increment occurs only after base event and predicate have all passed.
+   d. **Count check:** If `state.event_count` ≥ `trigger.count` (resolved, default `1`), return `TriggerResult::Advanced { reason: event_matched }`.
 3. Return `TriggerResult::NotAdvanced`.
 
 `TriggerResult` and `AdvanceReason` are defined in [§2.8b](/sdk/core-types/#28b-triggerresult). `TriggerState` is defined in [§2.8c](/sdk/core-types/#28c-triggerstate).
 
-## 5.9 parse_event_qualifier
-
-```
-parse_event_qualifier(event_string: String) → (String, Optional<String>)
-```
-
-Splits an event type string on the first `:` separator, returning the base event type and an optional qualifier.
-
-**Behavior:**
-
-1. If `event_string` contains `:`, split on the first occurrence. Return `(base, Some(qualifier))`.
-2. Otherwise, return `(event_string, None)`.
-
-**Examples:**
-- `"tools/call:calculator"` → `("tools/call", Some("calculator"))`
-- `"tools/call"` → `("tools/call", None)`
-- `"resources/read"` → `("resources/read", None)`
-
-## 5.9a resolve_event_qualifier
-
-```
-resolve_event_qualifier(
-    protocol: String,
-    base_event: String,
-    content: Value
-) → Optional<String>
-```
-
-Resolves the qualifier value from a protocol event's content by looking up the content field path in the Qualifier Resolution Registry ([§2.25](/sdk/core-types/#225-qualifier-resolution-registry)).
-
-**Behavior:**
-
-1. Look up `(protocol, base_event)` in the Qualifier Resolution Registry ([§2.25](/sdk/core-types/#225-qualifier-resolution-registry)).
-2. If no entry exists, return `None`. This event type does not support qualifier resolution.
-3. Resolve the registered content field path against `content` using `resolve_simple_path` ([§5.1.1](/sdk/execution-primitives/#511-simple-dot-path)).
-4. If the path resolves to a value `v`, return a qualifier string: if `v` is a string, return it unchanged; if `v` is a number or boolean, return its canonical JSON encoding (e.g., `42`, `true`); for `null`, arrays, or objects, return `None` (these types are not valid qualifier values).
-5. If the path does not resolve, return `None`.
-
-**Examples:**
-- `resolve_event_qualifier("mcp", "tools/call", {"params": {"name": "calculator"}})` → `Some("calculator")`
-- `resolve_event_qualifier("mcp", "tools/call", {"params": {}})` → `None`
-- `resolve_event_qualifier("mcp", "resources/read", {"uri": "file://x"})` → `None` (event not in registry)
-- `resolve_event_qualifier("ag_ui", "custom", {"name": "my_event"})` → `Some("my_event")`
-
-## 5.10 extract_protocol
+## 5.9 extract_protocol
 
 ```
 extract_protocol(mode: String) → String
@@ -339,14 +290,14 @@ Extracts the protocol identifier from a mode string by stripping the `_server` o
 
 1. If `mode` ends with `_server`, return the prefix before `_server`.
 2. If `mode` ends with `_client`, return the prefix before `_client`.
-3. Otherwise, return `mode` unchanged (this case should not occur for valid modes per V-036).
+3. Otherwise, return `mode` unchanged (this case should not occur for valid modes per V-034).
 
 **Examples:**
 - `"mcp_server"` → `"mcp"`
 - `"a2a_client"` → `"a2a"`
 - `"ag_ui_client"` → `"ag_ui"`
 
-## 5.11 compute_effective_state
+## 5.10 compute_effective_state
 
 ```
 compute_effective_state(phases: List<Phase>, phase_index: Integer) → Value

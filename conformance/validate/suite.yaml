@@ -21,7 +21,8 @@
               inputSchema:
                 type: object
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -40,7 +41,8 @@
               inputSchema:
                 type: object
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -62,7 +64,8 @@
               inputSchema:
                 type: object
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -88,7 +91,8 @@
               inputSchema:
                 type: object
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -107,7 +111,8 @@
               inputSchema:
                 type: object
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
     oatf: "0.1"
@@ -135,7 +140,8 @@
               inputSchema:
                 type: object
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -238,7 +244,8 @@
       name: "Test Attack"
       severity: high
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -283,7 +290,8 @@
               inputSchema:
                 type: object
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -304,7 +312,7 @@
       - rule: "V-005"
         path: "attack.severity"
 
-- name: "V-036 invalid: execution.mode does not match pattern"
+- name: "V-034 invalid: execution.mode does not match pattern"
   id: VAL-005c
   input: |
     oatf: "0.1"
@@ -318,10 +326,10 @@
               tools: []
   expected:
     errors:
-      - rule: "V-036"
+      - rule: "V-034"
         path: "attack.execution.mode"
 
-- name: "V-036 invalid: execution.mode missing _{role} suffix"
+- name: "V-034 invalid: execution.mode missing _{role} suffix"
   id: VAL-005d
   input: |
     oatf: "0.1"
@@ -332,7 +340,7 @@
           tools: []
   expected:
     errors:
-      - rule: "V-036"
+      - rule: "V-034"
         path: "attack.execution.mode"
 
 - name: "V-005 invalid: status 'published' is not a valid enum value"
@@ -351,7 +359,7 @@
       - rule: "V-005"
         path: "attack.status"
 
-- name: "V-018 invalid: indicator surface 'invalid_surface' for MCP protocol"
+- name: "V-018 warning: indicator surface 'invalid_surface' for MCP protocol triggers warning"
   id: VAL-005f
   input: |
     oatf: "0.1"
@@ -362,10 +370,11 @@
           tools: []
       indicators:
         - surface: invalid_surface
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
-    errors:
+    warnings:
       - rule: "V-018"
         path: "attack.indicators[0].surface"
 
@@ -379,7 +388,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
       correlation:
@@ -399,7 +409,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
   expected:
     errors:
       - rule: "V-012"
@@ -417,6 +428,7 @@
             - action: decline
       indicators:
         - surface: elicitation_request
+          target: "params"
           pattern:
             contains: "credentials"
   expected:
@@ -434,6 +446,7 @@
             - action: deny
       indicators:
         - surface: elicitation_request
+          target: "params"
           pattern:
             contains: "credentials"
   expected:
@@ -473,7 +486,8 @@
         mode: mcp_server
         phases: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -505,7 +519,8 @@
           - name: phase-2
             description: "Terminal phase, no trigger."
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -530,7 +545,8 @@
             trigger:
               event: tools/call
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -560,7 +576,8 @@
           - name: phase-3
             description: "Second terminal phase."
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -584,7 +601,8 @@
                   inputSchema:
                     type: object
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -610,7 +628,8 @@
                   inputSchema:
                     type: object
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -627,7 +646,8 @@
           - name: phase-1
             description: "No state defined."
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -650,11 +670,13 @@
           tools: []
       indicators:
         - id: IND-01
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
         - id: IND-02
-          surface: tool_name
+          surface: tools/list
+          target: "tools[*].name"
           pattern:
             contains: "evil"
   expected:
@@ -671,11 +693,13 @@
           tools: []
       indicators:
         - id: IND-01
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
         - id: IND-01
-          surface: tool_name
+          surface: tools/list
+          target: "tools[*].name"
           pattern:
             contains: "evil"
   expected:
@@ -703,7 +727,8 @@
           - name: exploit
             description: "Terminal phase."
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -725,7 +750,8 @@
           - name: setup
             description: "Duplicate name."
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -747,7 +773,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -763,7 +790,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
           expression:
@@ -783,7 +811,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
           semantic:
@@ -803,7 +832,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
   expected:
     errors:
       - rule: "V-012"
@@ -823,7 +853,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             regex: "id_rsa|passwd"
   expected:
@@ -839,7 +870,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             regex: "[unclosed"
   expected:
@@ -866,7 +898,8 @@
           - name: phase-2
             description: "Terminal phase."
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -888,7 +921,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           expression:
             cel: "message.tools.exists(t, size(t.description) > 100)"
   expected:
@@ -904,7 +938,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           expression:
             cel: "size(message.tools"
   expected:
@@ -933,7 +968,8 @@
                 type: json_path
                 selector: "$.tools[0].name"
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -956,7 +992,8 @@
                 type: json_path
                 selector: "$.tools["
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -985,10 +1022,12 @@
                     type: object
                   responses:
                     - content:
-                        - type: text
-                          text: "Result for {{request.arguments.query}}"
+                        content:
+                          - type: text
+                            text: "Result for {{request.arguments.query}}"
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -1011,16 +1050,18 @@
                     type: object
                   responses:
                     - content:
-                        - type: text
-                          text: "Result for {{unclosed"
+                        content:
+                          - type: text
+                            text: "Result for {{unclosed"
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     errors:
       - rule: "V-016"
-        path: "attack.execution.phases[0].state.tools[0].responses[0].content[0].text"
+        path: "attack.execution.phases[0].state.tools[0].responses[0].content.content[0].text"
 
 - name: "V-016 valid: escaped template is not flagged"
   id: VAL-016c
@@ -1039,10 +1080,12 @@
                     type: object
                   responses:
                     - content:
-                        - type: text
-                          text: "Literal \\{{not_a_template}} here"
+                        content:
+                          - type: text
+                            text: "Literal \\{{not_a_template}} here"
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -1145,13 +1188,14 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     valid: true
 
-- name: "V-018 invalid: MCP execution with A2A surface agent_card"
+- name: "V-018 warning: MCP execution with A2A surface agent_card triggers warning"
   id: VAL-018b
   input: |
     oatf: "0.1"
@@ -1161,11 +1205,12 @@
         state:
           tools: []
       indicators:
-        - surface: agent_card
+        - surface: agent_card/get
+          target: ""
           pattern:
             contains: "malicious"
   expected:
-    errors:
+    warnings:
       - rule: "V-018"
         path: "attack.indicators[0].surface"
 
@@ -1189,7 +1234,8 @@
           - name: phase-2
             description: "Terminal phase."
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -1214,7 +1260,8 @@
           - name: phase-2
             description: "Terminal phase."
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -1297,7 +1344,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -1334,7 +1382,8 @@
                     skills: []
       indicators:
         - protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -1365,7 +1414,8 @@
                     skills: []
       indicators:
         - protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -1392,11 +1442,11 @@
         path: "attack.execution.actors[0].name"
 
 # ---------------------------------------------------------------------------
-# V-036: Mode pattern validation
+# V-034: Mode pattern validation
 # ---------------------------------------------------------------------------
 
-- name: "V-036 valid: standard mode pattern"
-  id: VAL-036a
+- name: "V-034 valid: standard mode pattern"
+  id: VAL-034a
   input: |
     oatf: "0.1"
     attack:
@@ -1407,8 +1457,8 @@
   expected:
     valid: true
 
-- name: "V-036 valid: unknown but valid mode pattern"
-  id: VAL-036b
+- name: "V-034 valid: unknown but valid mode pattern"
+  id: VAL-034b
   input: |
     oatf: "0.1"
     attack:
@@ -1437,7 +1487,8 @@
         state: &anchor
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
     extra: *anchor
@@ -1459,7 +1510,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             target: "tools[*].description"
             condition:
@@ -1477,7 +1529,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             target: "tools[0].description"
             condition:
@@ -1497,7 +1550,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             target: "tools[*].desc!!ion"
             condition:
@@ -1506,6 +1560,44 @@
     errors:
       - rule: "V-021"
         path: "attack.indicators[0].pattern.target"
+
+- name: "V-021 invalid: indicator-level target with numeric index"
+  id: VAL-021d
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tools/list
+          target: "tools[0].description"
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-021"
+        path: "attack.indicators[0].target"
+
+- name: "V-021 invalid: indicator-level target with empty segment"
+  id: VAL-021e
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tools/list
+          target: "tools..name"
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-021"
+        path: "attack.indicators[0].target"
 
 # ---------------------------------------------------------------------------
 # V-022: semantic.threshold in range [0.0, 1.0]
@@ -1521,7 +1613,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           semantic:
             intent: "Detect injection"
             threshold: 0.5
@@ -1538,7 +1631,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           semantic:
             intent: "Detect injection"
             threshold: -0.1
@@ -1557,7 +1651,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           semantic:
             intent: "Detect injection"
             threshold: 1.1
@@ -1576,7 +1671,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           semantic:
             intent: "Detect injection"
             threshold: 0.0
@@ -1593,7 +1689,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           semantic:
             intent: "Detect injection"
             threshold: 1.0
@@ -1663,7 +1760,8 @@
           tools: []
       indicators:
         - id: OATF-001-01
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -1681,7 +1779,8 @@
           tools: []
       indicators:
         - id: OTHER-001-01
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -1701,7 +1800,8 @@
           tools: []
       indicators:
         - id: OATF-001
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -1723,7 +1823,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           confidence: 50
           pattern:
             contains: "test"
@@ -1740,7 +1841,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           confidence: -1
           pattern:
             contains: "test"
@@ -1759,7 +1861,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           confidence: 101
           pattern:
             contains: "test"
@@ -1782,7 +1885,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           expression:
             cel: "desc.contains('inject')"
             variables:
@@ -1800,7 +1904,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           expression:
             cel: "desc.contains('inject')"
             variables:
@@ -1832,7 +1937,8 @@
           - name: phase-2
             description: "Terminal phase."
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -1856,7 +1962,8 @@
           - name: phase-2
             description: "Terminal phase."
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -1868,8 +1975,36 @@
 # V-028: Mode-less multi-phase: every phase specifies mode, every indicator specifies protocol
 # ---------------------------------------------------------------------------
 
-- name: "V-028 valid: mode-less multi-phase, all phases have mode, all indicators have protocol"
+- name: "V-028 valid: mode-less multi-phase, all phases have identical mode, all indicators have protocol"
   id: VAL-028a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        phases:
+          - name: phase-1
+            mode: mcp_server
+            state:
+              tools: []
+            trigger:
+              event: tools/call
+          - name: phase-2
+            mode: mcp_server
+            state:
+              tools:
+                - name: "updated-tool"
+                  description: "Updated tool description."
+      indicators:
+        - protocol: mcp
+          surface: tools/list
+          target: "tools[*].description"
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-028 invalid: mode-less multi-phase, phases use different protocols"
+  id: VAL-028d
   input: |
     oatf: "0.1"
     attack:
@@ -1891,11 +2026,45 @@
                 skills: []
       indicators:
         - protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
-    valid: true
+    errors:
+      - rule: "V-028"
+        path: "attack.execution.phases"
+
+- name: "V-028 invalid: mode-less multi-phase, same protocol but different roles"
+  id: VAL-028e
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        phases:
+          - name: phase-1
+            mode: mcp_server
+            state:
+              tools: []
+            trigger:
+              event: tools/call
+          - name: phase-2
+            mode: mcp_client
+            state:
+              actions:
+                - method: tools/call
+                  params:
+                    name: "test"
+      indicators:
+        - protocol: mcp
+          surface: tools/list
+          target: "tools[*].description"
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-028"
+        path: "attack.execution.phases"
 
 - name: "V-028 invalid: mode-less multi-phase, one phase missing mode"
   id: VAL-028b
@@ -1915,7 +2084,8 @@
               tools: []
       indicators:
         - protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -1935,7 +2105,8 @@
             state:
               tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -1963,13 +2134,14 @@
           - name: phase-2
             description: "Terminal phase."
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     valid: true
 
-- name: "V-029 invalid: mcp_server trigger event message/send (a2a event)"
+- name: "V-029 warning: mcp_server trigger event message/send (a2a event) warns"
   id: VAL-029b
   input: |
     oatf: "0.1"
@@ -1985,11 +2157,12 @@
           - name: phase-2
             description: "Terminal phase."
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
-    errors:
+    warnings:
       - rule: "V-029"
         path: "attack.execution.phases[0].trigger.event"
 
@@ -2011,7 +2184,7 @@
   expected:
     valid: true
 
-- name: "V-029 invalid: notifications/elicitation/complete on mcp_server (server-to-client only)"
+- name: "V-029 warning: notifications/elicitation/complete on mcp_server warns"
   id: VAL-029d
   input: |
     oatf: "0.1"
@@ -2032,13 +2205,13 @@
           - name: phase-2
             description: "Terminal phase."
       indicators:
-        - surface: server_notification
+        - target: "params"
           pattern:
             target: "params"
             condition:
               contains: "elicit-001"
   expected:
-    errors:
+    warnings:
       - rule: "V-029"
         path: "attack.execution.phases[0].trigger.event"
 
@@ -2065,8 +2238,9 @@
                         type: object
                       responses:
                         - content:
-                            - type: text
-                              text: "Result: {{actor_b.extracted_val}}"
+                            content:
+                              - type: text
+                                text: "Result: {{actor_b.extracted_val}}"
                 extractors:
                   - name: local_var
                     source: request
@@ -2089,7 +2263,8 @@
                     selector: "$.task_id"
       indicators:
         - protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -2114,11 +2289,13 @@
                         type: object
                       responses:
                         - content:
-                            - type: text
-                              text: "Result: {{nonexistent.var}}"
+                            content:
+                              - type: text
+                                text: "Result: {{nonexistent.var}}"
       indicators:
         - protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -2127,58 +2304,11 @@
         path: "attack.execution.actors[0].phases[0].state.tools[0].response.content[0].text"
 
 # ---------------------------------------------------------------------------
-# V-033: content/messages and synthesize mutually exclusive
+# V-033: At most one catch-all response entry (omitting when)
 # ---------------------------------------------------------------------------
 
-- name: "V-033 valid: MCP tool responses entry with synthesize only"
+- name: "V-033 valid: responses with one catch-all at end"
   id: VAL-033a
-  input: |
-    oatf: "0.1"
-    attack:
-      execution:
-        mode: mcp_server
-        state:
-          tools:
-            - name: "test"
-              description: "A test tool"
-              inputSchema:
-                type: object
-              responses:
-                - synthesize:
-                    prompt: "Generate a plausible response"
-  expected:
-    valid: true
-
-- name: "V-033 invalid: MCP tool responses entry with content and synthesize"
-  id: VAL-033b
-  input: |
-    oatf: "0.1"
-    attack:
-      execution:
-        mode: mcp_server
-        state:
-          tools:
-            - name: "test"
-              description: "A test tool"
-              inputSchema:
-                type: object
-              responses:
-                - content:
-                    - type: text
-                      text: "static"
-                  synthesize:
-                    prompt: "Generate a plausible response"
-  expected:
-    errors:
-      - rule: "V-033"
-        path: "attack.execution.state.tools[0].response"
-
-# ---------------------------------------------------------------------------
-# V-034: At most one catch-all response entry (omitting when)
-# ---------------------------------------------------------------------------
-
-- name: "V-034 valid: responses with one catch-all at end"
-  id: VAL-034a
   input: |
     oatf: "0.1"
     attack:
@@ -2202,8 +2332,8 @@
   expected:
     valid: true
 
-- name: "V-034 invalid: responses with two entries both omitting when"
-  id: VAL-034b
+- name: "V-033 invalid: responses with two entries both omitting when"
+  id: VAL-033b
   input: |
     oatf: "0.1"
     attack:
@@ -2217,59 +2347,17 @@
                 type: object
               responses:
                 - content:
-                    - type: text
-                      text: "first default"
+                    content:
+                      - type: text
+                        text: "first default"
                 - content:
-                    - type: text
-                      text: "second default"
+                    content:
+                      - type: text
+                        text: "second default"
   expected:
     errors:
-      - rule: "V-034"
+      - rule: "V-033"
         path: "attack.execution.state.tools[0].responses"
-
-# ---------------------------------------------------------------------------
-# V-035: synthesize.prompt non-empty string
-# ---------------------------------------------------------------------------
-
-- name: "V-035 valid: synthesize with non-empty prompt"
-  id: VAL-035a
-  input: |
-    oatf: "0.1"
-    attack:
-      execution:
-        mode: mcp_server
-        state:
-          tools:
-            - name: "test"
-              description: "A test tool"
-              inputSchema:
-                type: object
-              responses:
-                - synthesize:
-                    prompt: "Generate a convincing response"
-  expected:
-    valid: true
-
-- name: "V-035 invalid: synthesize with empty prompt"
-  id: VAL-035b
-  input: |
-    oatf: "0.1"
-    attack:
-      execution:
-        mode: mcp_server
-        state:
-          tools:
-            - name: "test"
-              description: "A test tool"
-              inputSchema:
-                type: object
-              responses:
-                - synthesize:
-                    prompt: ""
-  expected:
-    errors:
-      - rule: "V-035"
-        path: "attack.execution.state.tools[0].responses[0].synthesize.prompt"
 
 # ---------------------------------------------------------------------------
 # Multi-error: document violating multiple rules simultaneously
@@ -2299,11 +2387,11 @@
         path: "attack.execution.phases[1].name"
 
 # ---------------------------------------------------------------------------
-# V-037: attack.version, when present, MUST be a positive integer (>= 1)
+# V-035: attack.version, when present, MUST be a positive integer (>= 1)
 # ---------------------------------------------------------------------------
 
-- name: "V-037 valid: version is 1"
-  id: VAL-037a
+- name: "V-035 valid: version is 1"
+  id: VAL-035a
   input: |
     oatf: "0.1"
     attack:
@@ -2317,14 +2405,15 @@
               inputSchema:
                 type: object
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     valid: true
 
-- name: "V-037 valid: version is large positive integer"
-  id: VAL-037b
+- name: "V-035 valid: version is large positive integer"
+  id: VAL-035b
   input: |
     oatf: "0.1"
     attack:
@@ -2338,14 +2427,15 @@
               inputSchema:
                 type: object
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     valid: true
 
-- name: "V-037 invalid: version is 0"
-  id: VAL-037c
+- name: "V-035 invalid: version is 0"
+  id: VAL-035c
   input: |
     oatf: "0.1"
     attack:
@@ -2359,16 +2449,17 @@
               inputSchema:
                 type: object
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     errors:
-      - rule: "V-037"
+      - rule: "V-035"
         path: "attack.version"
 
-- name: "V-037 invalid: version is negative"
-  id: VAL-037d
+- name: "V-035 invalid: version is negative"
+  id: VAL-035d
   input: |
     oatf: "0.1"
     attack:
@@ -2382,20 +2473,21 @@
               inputSchema:
                 type: object
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     errors:
-      - rule: "V-037"
+      - rule: "V-035"
         path: "attack.version"
 
 # ---------------------------------------------------------------------------
-# V-038: trigger.after, when present, MUST be a valid duration
+# V-036: trigger.after, when present, MUST be a valid duration
 # ---------------------------------------------------------------------------
 
-- name: "V-038 valid: shorthand duration"
-  id: VAL-038a
+- name: "V-036 valid: shorthand duration"
+  id: VAL-036a
   input: |
     oatf: "0.1"
     attack:
@@ -2416,14 +2508,15 @@
               after: 30s
           - name: terminal
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     valid: true
 
-- name: "V-038 valid: ISO 8601 duration"
-  id: VAL-038b
+- name: "V-036 valid: ISO 8601 duration"
+  id: VAL-036b
   input: |
     oatf: "0.1"
     attack:
@@ -2444,14 +2537,15 @@
               after: PT1H30M
           - name: terminal
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     valid: true
 
-- name: "V-038 invalid: malformed duration"
-  id: VAL-038c
+- name: "V-036 invalid: malformed duration"
+  id: VAL-036c
   input: |
     oatf: "0.1"
     attack:
@@ -2472,20 +2566,21 @@
               after: "not-a-duration"
           - name: terminal
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     errors:
-      - rule: "V-038"
+      - rule: "V-036"
         path: "attack.execution.phases[1].trigger.after"
 
 # ---------------------------------------------------------------------------
-# V-039: Extractor names MUST match [a-z][a-z0-9_]*
+# V-037: Extractor names MUST match [a-z][a-z0-9_]*
 # ---------------------------------------------------------------------------
 
-- name: "V-039 valid: lowercase extractor name with underscores"
-  id: VAL-039a
+- name: "V-037 valid: lowercase extractor name with underscores"
+  id: VAL-037a
   input: |
     oatf: "0.1"
     attack:
@@ -2508,14 +2603,15 @@
               event: tools/call
           - name: terminal
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     valid: true
 
-- name: "V-039 invalid: extractor name with uppercase"
-  id: VAL-039b
+- name: "V-037 invalid: extractor name with uppercase"
+  id: VAL-037b
   input: |
     oatf: "0.1"
     attack:
@@ -2538,16 +2634,17 @@
               event: tools/call
           - name: terminal
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     errors:
-      - rule: "V-039"
+      - rule: "V-037"
         path: "attack.execution.phases[0].extractors[0].name"
 
-- name: "V-039 invalid: extractor name starting with digit"
-  id: VAL-039c
+- name: "V-037 invalid: extractor name starting with digit"
+  id: VAL-037c
   input: |
     oatf: "0.1"
     attack:
@@ -2570,20 +2667,21 @@
               event: tools/call
           - name: terminal
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     errors:
-      - rule: "V-039"
+      - rule: "V-037"
         path: "attack.execution.phases[0].extractors[0].name"
 
 # ---------------------------------------------------------------------------
-# V-040: phase.extractors, when present, MUST contain at least one entry
+# V-038: phase.extractors, when present, MUST contain at least one entry
 # ---------------------------------------------------------------------------
 
-- name: "V-040 invalid: empty extractors array"
-  id: VAL-040a
+- name: "V-038 invalid: empty extractors array"
+  id: VAL-038a
   input: |
     oatf: "0.1"
     attack:
@@ -2602,20 +2700,21 @@
               event: tools/call
           - name: terminal
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     errors:
-      - rule: "V-040"
+      - rule: "V-038"
         path: "attack.execution.phases[0].extractors"
 
 # ---------------------------------------------------------------------------
-# V-041: expression.variables keys must be valid CEL identifiers
+# V-039: expression.variables keys must be valid CEL identifiers
 # ---------------------------------------------------------------------------
 
-- name: "V-041 valid: variables key is a valid CEL identifier"
-  id: VAL-041a
+- name: "V-039 valid: variables key is a valid CEL identifier"
+  id: VAL-039a
   input: |
     oatf: "0.1"
     attack:
@@ -2624,7 +2723,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           expression:
             cel: "size(tools) > 0"
             variables:
@@ -2632,8 +2732,8 @@
   expected:
     valid: true
 
-- name: "V-041 invalid: variables key contains a hyphen"
-  id: VAL-041b
+- name: "V-039 invalid: variables key contains a hyphen"
+  id: VAL-039b
   input: |
     oatf: "0.1"
     attack:
@@ -2642,18 +2742,19 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           expression:
             cel: "true"
             variables:
               my-var: "tools"
   expected:
     errors:
-      - rule: "V-041"
+      - rule: "V-039"
         path: "attack.indicators[0].expression.variables.my-var"
 
-- name: "V-041 invalid: variables key contains a dot"
-  id: VAL-041c
+- name: "V-039 invalid: variables key contains a dot"
+  id: VAL-039c
   input: |
     oatf: "0.1"
     attack:
@@ -2662,18 +2763,19 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           expression:
             cel: "true"
             variables:
               my.var: "tools"
   expected:
     errors:
-      - rule: "V-041"
+      - rule: "V-039"
         path: "attack.indicators[0].expression.variables.my.var"
 
-- name: "V-041 valid: underscore-prefixed identifier"
-  id: VAL-041d
+- name: "V-039 valid: underscore-prefixed identifier"
+  id: VAL-039d
   input: |
     oatf: "0.1"
     attack:
@@ -2682,7 +2784,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           expression:
             cel: "_tools != null"
             variables:
@@ -2691,11 +2794,11 @@
     valid: true
 
 # ---------------------------------------------------------------------------
-# V-042: trigger must specify at least one of event or after
+# V-040: trigger must specify at least one of event or after
 # ---------------------------------------------------------------------------
 
-- name: "V-042 valid: trigger with event only"
-  id: VAL-042a
+- name: "V-040 valid: trigger with event only"
+  id: VAL-040a
   input: |
     oatf: "0.1"
     attack:
@@ -2713,14 +2816,15 @@
               event: tools/call
           - name: terminal
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     valid: true
 
-- name: "V-042 valid: trigger with after only"
-  id: VAL-042b
+- name: "V-040 valid: trigger with after only"
+  id: VAL-040b
   input: |
     oatf: "0.1"
     attack:
@@ -2738,14 +2842,15 @@
               after: 30s
           - name: terminal
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     valid: true
 
-- name: "V-042 invalid: empty trigger object"
-  id: VAL-042c
+- name: "V-040 invalid: empty trigger object"
+  id: VAL-040c
   input: |
     oatf: "0.1"
     attack:
@@ -2762,20 +2867,21 @@
             trigger: {}
           - name: terminal
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     errors:
-      - rule: "V-042"
+      - rule: "V-040"
         path: "attack.execution.phases[0].trigger"
 
 # ---------------------------------------------------------------------------
-# V-043: binding-specific action objects must have exactly one non-x- key
+# V-041: binding-specific action objects must have exactly one non-x- key
 # ---------------------------------------------------------------------------
 
-- name: "V-043 valid: known action send_notification"
-  id: VAL-043a
+- name: "V-041 valid: known action send"
+  id: VAL-041a
   input: |
     oatf: "0.1"
     attack:
@@ -2790,20 +2896,21 @@
                   inputSchema:
                     type: object
             on_enter:
-              - send_notification:
+              - send:
                   method: "notifications/tools/list_changed"
             trigger:
               event: tools/call
           - name: terminal
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     valid: true
 
-- name: "V-043 invalid: action object with two non-x- keys"
-  id: VAL-043b
+- name: "V-041 invalid: action object with two non-x- keys"
+  id: VAL-041b
   input: |
     oatf: "0.1"
     attack:
@@ -2818,7 +2925,7 @@
                   inputSchema:
                     type: object
             on_enter:
-              - send_notification:
+              - send:
                   method: "notifications/tools/list_changed"
                 log:
                   message: "Triggered"
@@ -2827,16 +2934,17 @@
               event: tools/call
           - name: terminal
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     errors:
-      - rule: "V-043"
+      - rule: "V-041"
         path: "attack.execution.phases[0].on_enter[0]"
 
-- name: "V-043 valid: binding-specific action with single custom key"
-  id: VAL-043c
+- name: "V-041 valid: binding-specific action with single custom key"
+  id: VAL-041c
   input: |
     oatf: "0.1"
     attack:
@@ -2857,14 +2965,15 @@
               event: tools/call
           - name: terminal
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     valid: true
 
-- name: "V-043 valid: action with x- extension key alongside action key"
-  id: VAL-043d
+- name: "V-041 valid: action with x- extension key alongside action key"
+  id: VAL-041d
   input: |
     oatf: "0.1"
     attack:
@@ -2879,25 +2988,26 @@
                   inputSchema:
                     type: object
             on_enter:
-              - send_notification:
+              - send:
                   method: "notifications/tools/list_changed"
                 x-metadata: "extra info"
             trigger:
               event: tools/call
           - name: terminal
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     valid: true
 
 # ---------------------------------------------------------------------------
-# V-044: regex extractor selectors must contain at least one capture group
+# V-042: regex extractor selectors must contain at least one capture group
 # ---------------------------------------------------------------------------
 
-- name: "V-044 valid: regex extractor with capture group"
-  id: VAL-044a
+- name: "V-042 valid: regex extractor with capture group"
+  id: VAL-042a
   input: |
     oatf: "0.1"
     attack:
@@ -2920,14 +3030,15 @@
               event: tools/call
           - name: terminal
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     valid: true
 
-- name: "V-044 invalid: regex extractor without capture group"
-  id: VAL-044b
+- name: "V-042 invalid: regex extractor without capture group"
+  id: VAL-042b
   input: |
     oatf: "0.1"
     attack:
@@ -2950,20 +3061,21 @@
               event: tools/call
           - name: terminal
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     errors:
-      - rule: "V-044"
+      - rule: "V-042"
         path: "attack.execution.phases[0].extractors[0].selector"
 
 # ---------------------------------------------------------------------------
-# V-045: phase.on_enter must contain at least one action when present
+# V-043: phase.on_enter must contain at least one action when present
 # ---------------------------------------------------------------------------
 
-- name: "V-045 invalid: phase.on_enter is an empty array"
-  id: VAL-045a
+- name: "V-043 invalid: phase.on_enter is an empty array"
+  id: VAL-043a
   input: |
     oatf: "0.1"
     attack:
@@ -2982,20 +3094,21 @@
               event: tools/call
           - name: terminal
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
     errors:
-      - rule: "V-045"
+      - rule: "V-043"
         path: "attack.execution.phases[0].on_enter"
 
 # ---------------------------------------------------------------------------
-# V-046: phase.mode MUST match actor.mode in multi-actor form
+# V-044: phase.mode MUST match actor.mode in multi-actor form
 # ---------------------------------------------------------------------------
 
-- name: "V-046 valid: phase.mode matches actor.mode"
-  id: VAL-046a
+- name: "V-044 valid: phase.mode matches actor.mode"
+  id: VAL-044a
   input: |
     oatf: "0.1"
     attack:
@@ -3011,15 +3124,16 @@
                     - name: test
                       description: "A test tool"
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           protocol: mcp
           pattern:
             contains: "test"
   expected:
     valid: true
 
-- name: "V-046 invalid: phase.mode differs from actor.mode"
-  id: VAL-046b
+- name: "V-044 invalid: phase.mode differs from actor.mode"
+  id: VAL-044b
   input: |
     oatf: "0.1"
     attack:
@@ -3037,105 +3151,22 @@
                     url: "https://example.com"
                     skills: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           protocol: mcp
           pattern:
             contains: "test"
   expected:
     errors:
-      - rule: "V-046"
+      - rule: "V-044"
         path: "attack.execution.actors[0].phases[0].mode"
 
 # ---------------------------------------------------------------------------
-# V-047: A2A client-phase action mutual exclusivity
+# V-045: attack.impact must not contain duplicate values
 # ---------------------------------------------------------------------------
 
-- name: "V-047 valid: A2A client phase with only task_message"
-  id: VAL-047a
-  input: |
-    oatf: "0.1"
-    attack:
-      execution:
-        mode: a2a_client
-        state:
-          task_message:
-            message:
-              kind: "message"
-              role: user
-              parts:
-                - kind: text
-                  text: "Hello"
-              messageId: "msg-001"
-      indicators:
-        - surface: task_status
-          protocol: a2a
-          pattern:
-            contains: "completed"
-  expected:
-    valid: true
-
-- name: "V-047 invalid: A2A client phase with task_message and task_query"
-  id: VAL-047b
-  input: |
-    oatf: "0.1"
-    attack:
-      execution:
-        mode: a2a_client
-        state:
-          task_message:
-            message:
-              kind: "message"
-              role: user
-              parts:
-                - kind: text
-                  text: "Hello"
-              messageId: "msg-001"
-          task_query:
-            id: "task-001"
-      indicators:
-        - surface: task_status
-          protocol: a2a
-          pattern:
-            contains: "completed"
-  expected:
-    errors:
-      - rule: "V-047"
-        path: "attack.execution.state"
-
-- name: "V-047 invalid: A2A client task_message with message and synthesize"
-  id: VAL-047c
-  input: |
-    oatf: "0.1"
-    attack:
-      execution:
-        mode: a2a_client
-        state:
-          task_message:
-            message:
-              kind: "message"
-              role: user
-              parts:
-                - kind: text
-                  text: "Hello"
-              messageId: "msg-001"
-            synthesize:
-              prompt: "Generate a message"
-      indicators:
-        - surface: task_status
-          protocol: a2a
-          pattern:
-            contains: "completed"
-  expected:
-    errors:
-      - rule: "V-047"
-        path: "attack.execution.state.task_message"
-
-# ---------------------------------------------------------------------------
-# V-048: attack.impact must not contain duplicate values
-# ---------------------------------------------------------------------------
-
-- name: "V-048 valid: impact with unique values"
-  id: VAL-048a
+- name: "V-045 valid: impact with unique values"
+  id: VAL-045a
   input: |
     oatf: "0.1"
     attack:
@@ -3149,8 +3180,8 @@
   expected:
     valid: true
 
-- name: "V-048 invalid: impact with duplicate values"
-  id: VAL-048b
+- name: "V-045 invalid: impact with duplicate values"
+  id: VAL-045b
   input: |
     oatf: "0.1"
     attack:
@@ -3164,15 +3195,15 @@
           tools: []
   expected:
     errors:
-      - rule: "V-048"
+      - rule: "V-045"
         path: "attack.impact"
 
 # ---------------------------------------------------------------------------
-# V-049: attack.grace_period must be a valid duration
+# V-046: attack.grace_period must be a valid duration
 # ---------------------------------------------------------------------------
 
-- name: "V-049 valid: grace_period shorthand 30s"
-  id: VAL-049a
+- name: "V-046 valid: grace_period shorthand 30s"
+  id: VAL-046a
   input: |
     oatf: "0.1"
     attack:
@@ -3184,8 +3215,8 @@
   expected:
     valid: true
 
-- name: "V-049 valid: grace_period ISO 8601 PT5M"
-  id: VAL-049b
+- name: "V-046 valid: grace_period ISO 8601 PT5M"
+  id: VAL-046b
   input: |
     oatf: "0.1"
     attack:
@@ -3197,8 +3228,8 @@
   expected:
     valid: true
 
-- name: "V-049 invalid: grace_period malformed duration"
-  id: VAL-049c
+- name: "V-046 invalid: grace_period malformed duration"
+  id: VAL-046c
   input: |
     oatf: "0.1"
     attack:
@@ -3209,7 +3240,7 @@
           tools: []
   expected:
     errors:
-      - rule: "V-049"
+      - rule: "V-046"
         path: "attack.grace_period"
 
 # ---------------------------------------------------------------------------
@@ -3234,7 +3265,7 @@
 # V-027 branch: when predicates in sampling_responses
 # ---------------------------------------------------------------------------
 
-- name: "V-027 valid: when predicate key in sampling_responses"
+- name: "V-027 valid: simple dot-path predicate key in sampling_responses"
   id: VAL-027c
   input: |
     oatf: "0.1"
@@ -3245,7 +3276,7 @@
           tools: []
           sampling_responses:
             - when:
-                messages.0.role: "user"
+                role: "user"
               content:
                 role: user
                 content:
@@ -3277,136 +3308,11 @@
         path: "attack.execution.state.sampling_responses[0].when.messages[*].role"
 
 # ---------------------------------------------------------------------------
-# V-033 branch: sampling_responses content/synthesize exclusivity
+# V-033 branch: sampling_responses catch-all ordering
 # ---------------------------------------------------------------------------
 
-- name: "V-033 valid: MCP sampling_responses entry with synthesize only"
+- name: "V-033 invalid: sampling_responses with two entries both omitting when"
   id: VAL-033c
-  input: |
-    oatf: "0.1"
-    attack:
-      execution:
-        mode: mcp_server
-        state:
-          tools: []
-          sampling_responses:
-            - synthesize:
-                prompt: "Generate a sampling response"
-  expected:
-    valid: true
-
-- name: "V-033 invalid: MCP sampling_responses entry with content and synthesize"
-  id: VAL-033d
-  input: |
-    oatf: "0.1"
-    attack:
-      execution:
-        mode: mcp_server
-        state:
-          tools: []
-          sampling_responses:
-            - content:
-                role: user
-                content:
-                  - type: text
-                    text: "static"
-              synthesize:
-                prompt: "Generate a sampling response"
-  expected:
-    errors:
-      - rule: "V-033"
-        path: "attack.execution.state.sampling_responses[0]"
-
-- name: "V-033 invalid: MCP elicitation_responses entry with content and synthesize"
-  id: VAL-033e
-  input: |
-    oatf: "0.1"
-    attack:
-      execution:
-        mode: mcp_server
-        state:
-          tools: []
-          elicitation_responses:
-            - content:
-                name: "Test"
-              synthesize:
-                prompt: "Generate an elicitation response"
-  expected:
-    errors:
-      - rule: "V-033"
-        path: "attack.execution.state.elicitation_responses[0]"
-
-- name: "V-033 invalid: A2A task_responses entry with history and synthesize"
-  id: VAL-033f
-  input: |
-    oatf: "0.1"
-    attack:
-      execution:
-        mode: a2a_server
-        state:
-          agent_card:
-            name: "Test"
-            description: "Test agent"
-            url: "https://example.com"
-            version: "1.0"
-            protocolVersion: "0.3.0"
-            skills: []
-            capabilities: {}
-            defaultInputModes: ["text/plain"]
-            defaultOutputModes: ["text/plain"]
-          task_responses:
-            - status: completed
-              history:
-                - kind: "message"
-                  role: agent
-                  parts:
-                    - kind: text
-                      text: "Done"
-                  messageId: "msg-001"
-              synthesize:
-                prompt: "Generate a response"
-  expected:
-    errors:
-      - rule: "V-033"
-        path: "attack.execution.state.task_responses[0]"
-
-- name: "V-033 invalid: AG-UI run_agent_input with messages and synthesize"
-  id: VAL-033g
-  input: |
-    oatf: "0.1"
-    attack:
-      execution:
-        mode: ag_ui_client
-        state:
-          run_agent_input:
-            threadId: "t-001"
-            runId: "r-001"
-            messages:
-              - id: "msg-001"
-                role: user
-                content: "Hello"
-            synthesize:
-              prompt: "Generate message history"
-            tools: []
-            context: []
-            state: {}
-            forwardedProps: {}
-      indicators:
-        - surface: message_history
-          protocol: ag_ui
-          pattern:
-            contains: "test"
-  expected:
-    errors:
-      - rule: "V-033"
-        path: "attack.execution.state.run_agent_input"
-
-# ---------------------------------------------------------------------------
-# V-034 branch: sampling_responses catch-all ordering
-# ---------------------------------------------------------------------------
-
-- name: "V-034 invalid: sampling_responses with two entries both omitting when"
-  id: VAL-034c
   input: |
     oatf: "0.1"
     attack:
@@ -3427,11 +3333,11 @@
                     text: "second default"
   expected:
     errors:
-      - rule: "V-034"
+      - rule: "V-033"
         path: "attack.execution.state.sampling_responses"
 
-- name: "V-034 invalid: A2A task_responses with two entries both omitting when"
-  id: VAL-034d
+- name: "V-033 invalid: A2A task_responses with two entries both omitting when"
+  id: VAL-033d
   input: |
     oatf: "0.1"
     attack:
@@ -3449,33 +3355,37 @@
             defaultInputModes: ["text/plain"]
             defaultOutputModes: ["text/plain"]
           task_responses:
-            - status: completed
-              history:
-                - kind: "message"
-                  role: agent
-                  parts:
-                    - kind: text
-                      text: "first"
-                  messageId: "msg-001"
-            - status: completed
-              history:
-                - kind: "message"
-                  role: agent
-                  parts:
-                    - kind: text
-                      text: "second"
-                  messageId: "msg-002"
+            - content:
+                status:
+                  state: completed
+                history:
+                  - kind: "message"
+                    role: agent
+                    parts:
+                      - kind: text
+                        text: "first"
+                    messageId: "msg-001"
+            - content:
+                status:
+                  state: completed
+                history:
+                  - kind: "message"
+                    role: agent
+                    parts:
+                      - kind: text
+                        text: "second"
+                    messageId: "msg-002"
   expected:
     errors:
-      - rule: "V-034"
+      - rule: "V-033"
         path: "attack.execution.state.task_responses"
 
 # ---------------------------------------------------------------------------
-# V-050: correlation requires indicators
+# V-047: correlation requires indicators
 # ---------------------------------------------------------------------------
 
-- name: "V-050 valid: correlation with indicators"
-  id: VAL-050a
+- name: "V-047 valid: correlation with indicators"
+  id: VAL-047a
   input: |
     oatf: "0.1"
     attack:
@@ -3486,7 +3396,8 @@
             - name: test
               description: "test"
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             condition:
               contains: "malicious"
@@ -3495,8 +3406,8 @@
   expected:
     errors: []
 
-- name: "V-050 invalid: correlation without indicators"
-  id: VAL-050b
+- name: "V-047 invalid: correlation without indicators"
+  id: VAL-047b
   input: |
     oatf: "0.1"
     attack:
@@ -3510,5 +3421,103 @@
         logic: any
   expected:
     errors:
-      - rule: "V-050"
+      - rule: "V-047"
         path: "attack.correlation"
+
+# ---------------------------------------------------------------------------
+# V-048: indicator.actor references existing actor
+# ---------------------------------------------------------------------------
+
+- name: "V-048 valid: indicator.actor references existing actor"
+  id: VAL-048a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        actors:
+          - name: mcp_attacker
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: test
+                      description: "test"
+      indicators:
+        - protocol: mcp
+          target: "tools[*].description"
+          actor: mcp_attacker
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-048 invalid: indicator.actor references nonexistent actor"
+  id: VAL-048b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        actors:
+          - name: mcp_attacker
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: test
+                      description: "test"
+      indicators:
+        - protocol: mcp
+          target: "tools[*].description"
+          actor: nonexistent_actor
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-048"
+        path: "attack.indicators[0].actor"
+
+# ---------------------------------------------------------------------------
+# V-049: indicator.method matches detection key
+# ---------------------------------------------------------------------------
+
+- name: "V-049 valid: method matches detection key"
+  id: VAL-049a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test
+              description: "test"
+      indicators:
+        - target: "tools[*].description"
+          method: pattern
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
+
+- name: "V-049 invalid: method says pattern but indicator has expression"
+  id: VAL-049b
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test
+              description: "test"
+      indicators:
+        - target: "tools[*].description"
+          method: pattern
+          expression:
+            cel: "message.tools[0].description.contains('test')"
+  expected:
+    errors:
+      - rule: "V-049"
+        path: "attack.indicators[0].method"

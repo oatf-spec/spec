@@ -1,6 +1,6 @@
 # =============================================================================
 # OATF Conformance: Validation Warning Test Suite
-# Tests SDK validate() warning diagnostics per SDK spec §2.23.
+# Tests SDK validate() warning diagnostics per SDK spec §7.0.
 #
 # Only deterministic, validate-time warnings are tested here.
 # Runtime-dependent warnings (W-004b: unresolvable request/response paths)
@@ -95,7 +95,8 @@
           tools: []
       indicators:
         - protocol: voice
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -114,7 +115,8 @@
           tools: []
       indicators:
         - protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:
@@ -142,8 +144,9 @@
                     type: object
                   responses:
                     - content:
-                        - type: text
-                          text: "Value: {{nonexistent}}"
+                        content:
+                          - type: text
+                            text: "Value: {{nonexistent}}"
             on_enter:
               - log:
                   message: "Phase entered with {{also_missing}}"
@@ -170,8 +173,9 @@
                     type: object
                   responses:
                     - content:
-                        - type: text
-                          text: "Value: {{defined_var}}"
+                        content:
+                          - type: text
+                            text: "Value: {{defined_var}}"
             extractors:
               - name: defined_var
                 source: request
@@ -200,7 +204,8 @@
                   tools: []
       indicators:
         - protocol: a2a
-          surface: skill_description
+          surface: agent_card/get
+          target: "skills[*].description"
           pattern:
             contains: "test"
   expected:
@@ -223,7 +228,8 @@
                   tools: []
       indicators:
         - protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected:

@@ -24,7 +24,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected: |
@@ -48,7 +49,8 @@
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             target: "tools[*].description"
             condition:
@@ -70,7 +72,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected: |
@@ -94,7 +97,8 @@
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             target: "tools[*].description"
             condition:
@@ -116,7 +120,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected: |
@@ -140,7 +145,8 @@
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             target: "tools[*].description"
             condition:
@@ -165,7 +171,8 @@
             url: "https://example.com"
             skills: []
       indicators:
-        - surface: skill_description
+        - surface: agent_card/get
+          target: "skills[*].description"
           pattern:
             contains: "test"
   expected: |
@@ -193,7 +200,8 @@
       indicators:
         - id: OATF-TEST-001-01
           protocol: a2a
-          surface: skill_description
+          surface: agent_card/get
+          target: "skills[*].description"
           pattern:
             target: "skills[*].description"
             condition:
@@ -214,7 +222,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected: |
@@ -238,7 +247,8 @@
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             target: "tools[*].description"
             condition:
@@ -319,8 +329,6 @@
                   tools:
                     - name: "tool-a"
                       description: "Tool A"
-                      inputSchema:
-                        type: object
                 trigger:
                   event: tools/call
                   count: 1
@@ -329,8 +337,6 @@
                   tools:
                     - name: "tool-b"
                       description: "Tool B"
-                      inputSchema:
-                        type: object
                 trigger:
                   event: tools/call
                   count: 1
@@ -394,7 +400,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected: |
@@ -418,7 +425,8 @@
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             target: "tools[*].description"
             condition:
@@ -439,7 +447,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected: |
@@ -463,7 +472,8 @@
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             target: "tools[*].description"
             condition:
@@ -488,7 +498,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected: |
@@ -512,7 +523,8 @@
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             target: "tools[*].description"
             condition:
@@ -533,13 +545,16 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
-        - surface: tool_name
+        - surface: tools/list
+          target: "tools[*].name"
           pattern:
             contains: "evil"
-        - surface: tool_response
+        - surface: tools/call
+          target: "content[*]"
           pattern:
             contains: "exfil"
   expected: |
@@ -563,21 +578,24 @@
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             target: "tools[*].description"
             condition:
               contains: "test"
         - id: OATF-TEST-001-02
           protocol: mcp
-          surface: tool_name
+          surface: tools/list
+          target: "tools[*].name"
           pattern:
             target: "tools[*].name"
             condition:
               contains: "evil"
         - id: OATF-TEST-001-03
           protocol: mcp
-          surface: tool_response
+          surface: tools/call
+          target: "content[*]"
           pattern:
             target: "content[*]"
             condition:
@@ -599,14 +617,17 @@
           tools: []
       indicators:
         - id: OATF-TEST-001-01
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
-        - surface: tool_name
+        - surface: tools/list
+          target: "tools[*].name"
           pattern:
             contains: "evil"
         - id: OATF-TEST-001-03
-          surface: tool_response
+          surface: tools/call
+          target: "content[*]"
           pattern:
             contains: "exfil"
   expected: |
@@ -630,21 +651,24 @@
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             target: "tools[*].description"
             condition:
               contains: "test"
         - id: OATF-TEST-001-02
           protocol: mcp
-          surface: tool_name
+          surface: tools/list
+          target: "tools[*].name"
           pattern:
             target: "tools[*].name"
             condition:
               contains: "evil"
         - id: OATF-TEST-001-03
           protocol: mcp
-          surface: tool_response
+          surface: tools/call
+          target: "content[*]"
           pattern:
             target: "content[*]"
             condition:
@@ -664,10 +688,12 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
-        - surface: tool_name
+        - surface: tools/list
+          target: "tools[*].name"
           pattern:
             contains: "evil"
   expected: |
@@ -690,14 +716,16 @@
       indicators:
         - id: indicator-01
           protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             target: "tools[*].description"
             condition:
               contains: "test"
         - id: indicator-02
           protocol: mcp
-          surface: tool_name
+          surface: tools/list
+          target: "tools[*].name"
           pattern:
             target: "tools[*].name"
             condition:
@@ -706,10 +734,10 @@
         logic: any
 
 # ---------------------------------------------------------------------------
-# N-004: Target resolution from surface registry
+# N-004: Method-specific target override
 # ---------------------------------------------------------------------------
 
-- name: "N-004 pattern target resolved from surface tool_description"
+- name: "N-004 pattern-level target overrides indicator-level target"
   id: NORM-004a
   input: |
     oatf: "0.1"
@@ -722,8 +750,10 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
+            target: "tools[*].name"
             condition:
               contains: "test"
   expected: |
@@ -747,15 +777,16 @@
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
-            target: "tools[*].description"
+            target: "tools[*].name"
             condition:
               contains: "test"
       correlation:
         logic: any
 
-- name: "N-004 target resolved from surface card_name"
+- name: "N-004 semantic-level target overrides indicator-level target"
   id: NORM-004b
   input: |
     oatf: "0.1"
@@ -764,17 +795,15 @@
       name: "Test Attack"
       severity: high
       execution:
-        mode: a2a_server
+        mode: mcp_server
         state:
-          agent_card:
-            name: "Evil Agent"
-            description: "An evil agent."
-            url: "https://example.com"
-            skills: []
+          tools: []
       indicators:
-        - surface: card_name
-          pattern:
-            contains: "Evil"
+        - surface: tools/list
+          target: "tools[*].description"
+          semantic:
+            intent: "Detect tool name injection"
+            target: "tools[*].name"
   expected: |
     oatf: "0.1"
     attack:
@@ -788,23 +817,19 @@
       execution:
         actors:
           - name: default
-            mode: a2a_server
+            mode: mcp_server
             phases:
               - name: phase-1
                 state:
-                  agent_card:
-                    name: "Evil Agent"
-                    description: "An evil agent."
-                    url: "https://example.com"
-                    skills: []
+                  tools: []
       indicators:
         - id: OATF-TEST-001-01
-          protocol: a2a
-          surface: card_name
-          pattern:
-            target: "name"
-            condition:
-              contains: "Evil"
+          protocol: mcp
+          surface: tools/list
+          target: "tools[*].description"
+          semantic:
+            intent: "Detect tool name injection"
+            target: "tools[*].name"
       correlation:
         logic: any
 
@@ -825,7 +850,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "malicious"
   expected: |
@@ -849,7 +875,8 @@
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             target: "tools[*].description"
             condition:
@@ -870,7 +897,8 @@
         state:
           tools: []
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             regex: "(passwd|shadow|id_rsa)"
   expected: |
@@ -894,7 +922,8 @@
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             target: "tools[*].description"
             condition:
@@ -940,8 +969,6 @@
                   tools:
                     - name: "calc"
                       description: "A calculator tool."
-                      inputSchema:
-                        type: object
 
 # ---------------------------------------------------------------------------
 # N-007: Multi-phase form normalizes to multi-actor form
@@ -994,12 +1021,10 @@
                   tools:
                     - name: "evil"
                       description: "Malicious tool."
-                      inputSchema:
-                        type: object
 
 # ---------------------------------------------------------------------------
 # N-001 (continued): Trigger count default
-# (Trigger count is part of N-001 default values, not N-008.)
+# (Trigger count is part of N-001 default values.)
 # ---------------------------------------------------------------------------
 
 - name: "N-001 trigger with event but no count gets count: 1"
@@ -1021,7 +1046,8 @@
           - name: phase-2
             description: "Terminal phase."
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected: |
@@ -1050,7 +1076,8 @@
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             target: "tools[*].description"
             condition:
@@ -1078,7 +1105,8 @@
           - name: phase-2
             description: "Terminal phase."
       indicators:
-        - surface: tool_description
+        - surface: tools/list
+          target: "tools[*].description"
           pattern:
             contains: "test"
   expected: |
@@ -1107,7 +1135,8 @@
       indicators:
         - id: OATF-TEST-001-01
           protocol: mcp
-          surface: tool_description
+          surface: tools/list
+          target: "tools[*].description"
           pattern:
             target: "tools[*].description"
             condition:
@@ -1115,79 +1144,3 @@
       correlation:
         logic: any
 
-# ---------------------------------------------------------------------------
-# N-008: MCP tool field defaults
-# ---------------------------------------------------------------------------
-
-- name: "N-008 MCP tool without inputSchema gets default {type: object}"
-  id: NORM-008a
-  input: |
-    oatf: "0.1"
-    attack:
-      id: OATF-TEST-001
-      severity: high
-      execution:
-        mode: mcp_server
-        state:
-          tools:
-            - name: "bare-tool"
-              description: "A tool with no inputSchema"
-  expected: |
-    oatf: "0.1"
-    attack:
-      id: OATF-TEST-001
-      name: "Untitled"
-      version: 1
-      status: draft
-      severity:
-        level: high
-        confidence: 50
-      execution:
-        actors:
-          - name: default
-            mode: mcp_server
-            phases:
-              - name: phase-1
-                state:
-                  tools:
-                    - name: "bare-tool"
-                      description: "A tool with no inputSchema"
-                      inputSchema:
-                        type: object
-
-- name: "N-008 MCP tool without description gets default empty string"
-  id: NORM-008b
-  input: |
-    oatf: "0.1"
-    attack:
-      id: OATF-TEST-001
-      severity: high
-      execution:
-        mode: mcp_server
-        state:
-          tools:
-            - name: "no-desc-tool"
-              inputSchema:
-                type: object
-  expected: |
-    oatf: "0.1"
-    attack:
-      id: OATF-TEST-001
-      name: "Untitled"
-      version: 1
-      status: draft
-      severity:
-        level: high
-        confidence: 50
-      execution:
-        actors:
-          - name: default
-            mode: mcp_server
-            phases:
-              - name: phase-1
-                state:
-                  tools:
-                    - name: "no-desc-tool"
-                      description: ""
-                      inputSchema:
-                        type: object

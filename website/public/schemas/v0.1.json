@@ -76,30 +76,24 @@
     },
     "Surface": {
       "type": "string",
-      "description": "Protocol-specific attack surface being examined. Values for v0.1 bindings are defined in the protocol binding sections (spec §7). Surfaces for unrecognized bindings are structurally valid; tools MUST skip surface validation for unrecognized protocols.",
+      "description": "Protocol operation name identifying the attack surface. Values are protocol-native method names or OATF synthetic names (e.g., tools/call, agent_card/get, run_agent_input). Optional on indicators; when present, scopes the indicator to traffic for that operation. For unrecognized bindings, tools MUST skip surface validation.",
       "examples": [
-        "tool_description",
-        "tool_title",
-        "tool_input_schema",
-        "tool_name",
-        "tool_icons",
-        "tool_response",
-        "tool_arguments",
-        "resource_content",
-        "resource_uri",
-        "resource_title",
-        "resource_icons",
-        "prompt_content",
-        "prompt_title",
-        "prompt_icons",
-        "server_info",
-        "server_instructions",
-        "agent_card",
-        "skill_description",
-        "task_message",
-        "message_history",
-        "tool_result",
-        "agent_state"
+        "tools/call",
+        "tools/list",
+        "resources/read",
+        "resources/list",
+        "prompts/get",
+        "prompts/list",
+        "initialize",
+        "sampling/createMessage",
+        "elicitation/create",
+        "message/send",
+        "message/stream",
+        "agent_card/get",
+        "tasks/get",
+        "run_agent_input",
+        "tool_call_start",
+        "state_snapshot"
       ]
     },
     "MatchCondition": {
@@ -762,7 +756,7 @@
             "request",
             "response"
           ],
-          "description": "Extract from incoming requests or outgoing responses."
+          "description": "Extract from protocol requests or responses. Refers to protocol-level roles, not network direction."
         },
         "type": {
           "type": "string",
@@ -770,7 +764,7 @@
             "json_path",
             "regex"
           ],
-          "description": "Extraction method. json_path: JSONPath expression (RFC 9535, first node in document order). regex: first match, first capture group. When type is regex, the selector MUST contain at least one capture group (V-044; not enforceable in JSON Schema)."
+          "description": "Extraction method. json_path: JSONPath expression (RFC 9535, first node in document order). regex: first match, first capture group. When type is regex, the selector MUST contain at least one capture group (V-042; not enforceable in JSON Schema)."
         },
         "selector": {
           "type": "string",
@@ -784,20 +778,20 @@
     },
     "Action": {
       "type": "object",
-      "description": "An action executed on phase entry. Exactly one action key per object (V-043). Known actions defined inline in each oneOf branch; binding-specific actions in the catch-all branch.",
+      "description": "An action executed on phase entry. Exactly one action key per object (V-041). Known actions defined inline in each oneOf branch; binding-specific actions in the catch-all branch.",
       "oneOf": [
         {
           "required": [
-            "send_notification"
+            "send"
           ],
           "additionalProperties": false,
           "patternProperties": {
             "^x-": {}
           },
           "properties": {
-            "send_notification": {
+            "send": {
               "type": "object",
-              "description": "Send a protocol notification.",
+              "description": "Send a protocol message (notification or request). Entry actions execute before any client interaction, so notifications (fire-and-forget) are the primary use case. Requests sent as entry actions constitute standalone server-initiated messaging.",
               "required": [
                 "method"
               ],
@@ -805,15 +799,14 @@
               "properties": {
                 "method": {
                   "type": "string",
-                  "description": "Notification method name.",
+                  "description": "Protocol method name.",
                   "examples": [
                     "notifications/tools/list_changed",
                     "notifications/resources/updated"
                   ]
                 },
                 "params": {
-                  "type": "object",
-                  "description": "Notification parameters."
+                  "description": "Protocol-native message parameters (pass-through)."
                 }
               }
             }
@@ -854,68 +847,17 @@
           }
         },
         {
-          "required": [
-            "send_elicitation"
-          ],
-          "additionalProperties": false,
-          "patternProperties": {
-            "^x-": {}
-          },
-          "properties": {
-            "send_elicitation": {
-              "type": "object",
-              "description": "Send an elicitation request to the client (MCP server-mode only).",
-              "required": [
-                "message"
-              ],
-              "additionalProperties": false,
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Human-readable prompt for the elicitation."
-                },
-                "mode": {
-                  "type": "string",
-                  "enum": [
-                    "form",
-                    "url"
-                  ],
-                  "default": "form",
-                  "description": "Elicitation mode."
-                },
-                "requestedSchema": {
-                  "type": "object",
-                  "description": "JSON Schema for form mode fields."
-                },
-                "elicitationId": {
-                  "type": "string",
-                  "description": "Unique ID for the elicitation (url mode). Auto-generated by the runtime if omitted."
-                },
-                "url": {
-                  "type": "string",
-                  "description": "URL for url mode."
-                }
-              }
-            }
-          }
-        },
-        {
-          "description": "Binding-specific entry action (no known action keys). At least one non-x- key must be present; exact 'one non-x- key' enforcement is SDK-level (V-043).",
+          "description": "Binding-specific entry action (no known action keys). At least one non-x- key must be present; exact 'one non-x- key' enforcement is SDK-level (V-041).",
           "not": {
             "anyOf": [
               {
                 "required": [
-                  "send_notification"
+                  "send"
                 ]
               },
               {
                 "required": [
                   "log"
-                ]
-              },
-              {
-                "required": [
-                  "send_elicitation"
                 ]
               },
               {
@@ -945,24 +887,23 @@
       "properties": {
         "event": {
           "type": "string",
-          "description": "Protocol event type to match. Uses protocol-native naming (slash-separated for MCP/A2A, snake_case for AG-UI). Supports qualifier via colon syntax for simple filtering. Must be valid for the actor's mode per the Event-Mode Validity Matrix (spec §7).",
-          "pattern": "^[a-z][a-zA-Z0-9_/]*(:[a-zA-Z0-9_-]+)?$",
+          "description": "Protocol event type to match. Uses protocol-native naming (slash-separated for MCP/A2A, snake_case for AG-UI). Use trigger.match for instance-level filtering. Must be valid for the actor's mode per the binding specification (spec §7).",
+          "pattern": "^[a-z][a-zA-Z0-9_/]*$",
           "examples": [
             "tools/call",
-            "tools/call:calculator",
             "tools/list",
             "elicitation/create",
             "tasks/get",
             "tasks/result",
             "notifications/tasks/status",
             "message/send",
-            "task/status:completed",
+            "task/status",
             "agent_card/get",
             "tasks/pushNotificationConfig/set",
             "sampling/createMessage",
-            "tool_call_start:transfer_funds",
+            "tool_call_start",
             "run_started",
-            "custom:my_event"
+            "custom"
           ]
         },
         "count": {
@@ -1042,9 +983,9 @@
     },
     "Indicator": {
       "type": "object",
-      "description": "Pattern for determining whether the agent complied with the attack. Targets a specific protocol surface using exactly one of: pattern, expression, or semantic.",
+      "description": "Pattern for determining whether the agent complied with the attack. Uses exactly one of: pattern, expression, or semantic. The target field specifies the dot-path into the protocol message to examine.",
       "required": [
-        "surface"
+        "target"
       ],
       "additionalProperties": false,
       "patternProperties": {
@@ -1061,12 +1002,41 @@
             "indicator-01"
           ]
         },
+        "actor": {
+          "type": "string",
+          "description": "References an actor by name. When present, indicator evaluates only against that actor's traffic. When omitted, evaluates against all actors matching the indicator's protocol.",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
         "protocol": {
           "$ref": "#/$defs/Protocol",
-          "description": "Protocol this indicator applies to. Defaults to the protocol component of execution.mode. Required when execution.mode is absent."
+          "description": "Protocol this indicator applies to. When omitted, inferred from execution.mode. When execution.mode is absent (multi-actor or mode-less forms), SDK validation requires this field on every indicator — actor modes do not substitute because indicators are document-scoped."
         },
         "surface": {
-          "$ref": "#/$defs/Surface"
+          "$ref": "#/$defs/Surface",
+          "description": "Protocol operation name scoping this indicator (e.g., tools/call, agent_card/get). Optional; when present, restricts evaluation to traffic for that operation."
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["request", "response"],
+          "description": "Restricts which side of the operation is examined. When omitted, the evaluation tool selects applicable messages using its own heuristics; v0.1 does not define a normative inference algorithm. Authors who need deterministic scoping SHOULD specify this field explicitly."
+        },
+        "method": {
+          "type": "string",
+          "enum": ["pattern", "expression", "semantic"],
+          "description": "Explicitly selects evaluation method. When omitted, inferred from which field is present (pattern → pattern, expression → expression, semantic → semantic). Exactly one of the three must be present."
+        },
+        "target": {
+          "type": "string",
+          "pattern": "^([a-zA-Z0-9_-]+(\\[\\*\\])?(\\.[a-zA-Z0-9_-]+(\\[\\*\\])?)*)?$",
+          "description": "Dot-path into the protocol message to examine. Supports wildcards (tools[*].description). The empty string targets the root.",
+          "examples": [
+            "tools[*].description",
+            "content[*]",
+            "messages[*].content",
+            "skills[*].description",
+            "status.state",
+            "state"
+          ]
         },
         "description": {
           "type": "string",
@@ -1119,12 +1089,12 @@
     },
     "PatternMatch": {
       "type": "object",
-      "description": "String and structural pattern matching against parsed protocol messages. Standard form uses target + condition. Shorthand places a single condition operator directly on the pattern object.",
+      "description": "String and structural pattern matching against parsed protocol messages. Standard form uses condition (target is on the indicator). Shorthand places a single condition operator directly on the pattern object.",
       "properties": {
         "target": {
           "type": "string",
           "pattern": "^([a-zA-Z0-9_-]+(\\[\\*\\])?(\\.[a-zA-Z0-9_-]+(\\[\\*\\])?)*)?$",
-          "description": "Dot-path to the field to inspect. Supports wildcards (tools[*].description). Defaults to surface's canonical target (spec §7).",
+          "description": "Override for the indicator-level target. When present, takes precedence over the indicator's target for this pattern evaluation.",
           "examples": [
             "tools[*].description",
             "content[*]",
@@ -1174,23 +1144,23 @@
         },
         "contains": {
           "type": "string",
-          "description": "Shorthand: substring match on surface default target."
+          "description": "Shorthand: substring match on the indicator-level target."
         },
         "starts_with": {
           "type": "string",
-          "description": "Shorthand: prefix match on surface default target."
+          "description": "Shorthand: prefix match on the indicator-level target."
         },
         "ends_with": {
           "type": "string",
-          "description": "Shorthand: suffix match on surface default target."
+          "description": "Shorthand: suffix match on the indicator-level target."
         },
         "regex": {
           "type": "string",
-          "description": "Shorthand: RE2 regex on surface default target."
+          "description": "Shorthand: RE2 regex on the indicator-level target."
         },
         "any_of": {
           "type": "array",
-          "description": "Shorthand: match any listed value on surface default target.",
+          "description": "Shorthand: match any listed value on the indicator-level target.",
           "minItems": 1,
           "items": {
             "oneOf": [
@@ -1217,19 +1187,19 @@
         },
         "gt": {
           "type": "number",
-          "description": "Shorthand: greater than on surface default target."
+          "description": "Shorthand: greater than on the indicator-level target."
         },
         "lt": {
           "type": "number",
-          "description": "Shorthand: less than on surface default target."
+          "description": "Shorthand: less than on the indicator-level target."
         },
         "gte": {
           "type": "number",
-          "description": "Shorthand: greater than or equal on surface default target."
+          "description": "Shorthand: greater than or equal on the indicator-level target."
         },
         "lte": {
           "type": "number",
-          "description": "Shorthand: less than or equal on surface default target."
+          "description": "Shorthand: less than or equal on the indicator-level target."
         }
       },
       "additionalProperties": false,
@@ -1290,7 +1260,7 @@
           }
         },
         {
-          "description": "Shorthand form: single condition operator using surface default target.",
+          "description": "Shorthand form: single condition operator using the indicator-level target.",
           "not": {
             "anyOf": [
               {
@@ -1772,7 +1742,7 @@
           "type": "object",
           "propertyNames": {
             "pattern": "^[_a-zA-Z][_a-zA-Z0-9]*$",
-            "description": "Variable names must be valid CEL identifiers (V-041)."
+            "description": "Variable names must be valid CEL identifiers (V-039)."
           },
           "additionalProperties": {
             "type": "string",
@@ -1793,7 +1763,7 @@
         "target": {
           "type": "string",
           "pattern": "^([a-zA-Z0-9_-]+(\\[\\*\\])?(\\.[a-zA-Z0-9_-]+(\\[\\*\\])?)*)?$",
-          "description": "Dot-path to the field to analyze. Defaults to surface's canonical target (spec §7).",
+          "description": "Override for the indicator-level target. When present, takes precedence over the indicator's target for this semantic evaluation.",
           "examples": [
             "tools[*].description",
             "skills[*].description"
@@ -1851,15 +1821,14 @@
     },
     "SynthesizeBlock": {
       "type": "object",
-      "$comment": "Intentionally unreferenced by the core schema. Synthesize blocks appear inside binding-specific state (free-form object). Binding-aware validators and code generators should extract and $ref this definition for protocol-specific validation.",
-      "description": "LLM-powered response generation request. Contains a prompt for runtime LLM synthesis. Model selection, temperature, and other generation parameters are runtime concerns, not part of the document (spec §7.4). This definition is not $ref'd by the core schema because synthesize blocks appear inside binding-specific state (which is free-form); it is provided for binding-aware tools to reuse.",
-      "required": ["prompt"],
+      "$comment": "Reserved for a future version. Intentionally unreferenced by the core schema. Present as a placeholder for binding-aware tools; has no normative semantics in v0.1.",
+      "description": "Reserved for a future version. LLM-powered response generation request. This definition is provided as a placeholder for forward compatibility; it has no normative semantics in v0.1. See future-work §F.5 for the planned design.",
       "additionalProperties": false,
       "properties": {
         "prompt": {
           "type": "string",
           "minLength": 1,
-          "description": "Free-text prompt for the LLM. Supports {{template}} interpolation from extractors and request fields. Must be non-empty (V-035)."
+          "description": "Free-text prompt for the LLM. Supports {{template}} interpolation from extractors and request fields."
         }
       }
     }

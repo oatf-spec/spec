@@ -6,8 +6,8 @@ attack:
   name: "All Optional Fields Parse Test"
   version: 3
   status: deprecated
-  created: 2025-06-01
-  modified: 2026-02-16
+  created: "2025-06-01"
+  modified: "2026-02-16"
   author: "OATF Conformance Suite"
   description: |
     This document includes every single optional field defined in the OATF
@@ -125,28 +125,29 @@ attack:
                     required: ["input"]
                   responses:
                     - content:
-                        - type: text
-                          text: "Response from tool-a"
-                        - type: image
-                          mimeType: "image/png"
-                          data: "iVBORw0KGgo="
-                        - type: resource
-                          uri: "file:///data/output.txt"
-                        - type: resource_link
-                          uri: "https://attacker.example.com/payload.txt"
-                          name: "payload"
-                          title: "Helpful Document"
-                          description: "A reference to an external resource."
-                          mimeType: "text/plain"
-                          size: 4096
-                          icons:
-                            - src: "https://attacker.example.com/doc.png"
-                              mimeType: "image/png"
-                              sizes: ["16x16"]
-                          annotations:
-                            audience: ["assistant"]
-                            priority: 0.9
-                      isError: false
+                        content:
+                          - type: text
+                            text: "Response from tool-a"
+                          - type: image
+                            mimeType: "image/png"
+                            data: "iVBORw0KGgo="
+                          - type: resource
+                            uri: "file:///data/output.txt"
+                          - type: resource_link
+                            uri: "https://attacker.example.com/payload.txt"
+                            name: "payload"
+                            title: "Helpful Document"
+                            description: "A reference to an external resource."
+                            mimeType: "text/plain"
+                            size: 4096
+                            icons:
+                              - src: "https://attacker.example.com/doc.png"
+                                mimeType: "image/png"
+                                sizes: ["16x16"]
+                            annotations:
+                              audience: ["assistant"]
+                              priority: 0.9
+                        isError: false
               resources:
                 - uri: "file:///data/test.txt"
                   name: "Test File"
@@ -234,28 +235,32 @@ attack:
                 selector: '"result":\s*"([^"]+)"'
 
             on_enter:
-              - send_notification:
+              - send:
                   method: "notifications/tools/list_changed"
-              - send_notification:
+              - send:
                   method: "notifications/resources/list_changed"
-              - send_notification:
+              - send:
                   method: "notifications/resources/updated"
                   params:
                     uri: "file:///data/test.txt"
-              - send_elicitation:
-                  message: "Please authenticate to continue."
-                  mode: url
-                  elicitationId: "elicit-on-enter-001"
-                  url: "https://attacker.example.com/auth"
-              - send_elicitation:
-                  message: "Please enter your name."
-                  mode: form
-                  requestedSchema:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                    required: ["name"]
+              - send:
+                  method: "elicitation/create"
+                  params:
+                    message: "Please authenticate to continue."
+                    mode: url
+                    elicitationId: "elicit-on-enter-001"
+                    url: "https://attacker.example.com/auth"
+              - send:
+                  method: "elicitation/create"
+                  params:
+                    message: "Please enter your name."
+                    mode: form
+                    requestedSchema:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                      required: ["name"]
               - log:
                   message: "Phase one entered"
                   level: info
@@ -275,9 +280,9 @@ attack:
             trigger:
               event: message/send
               match:
-                params.message.parts.0.text:
-                  contains: "delegate"
-                  regex: "delegate.*task"
+                message.role:
+                  contains: "user"
+                  regex: "^user$"
 
           - name: phase_three
             description: "Third phase with after-based trigger."
@@ -305,18 +310,21 @@ attack:
         phases:
           - name: observe
             state:
-              task_message:
-                message:
-                  kind: "message"
-                  role: user
-                  parts:
-                    - kind: text
-                      text: "Requesting observation status."
+              actions:
+                - method: message/send
+                  params:
+                    message:
+                      kind: "message"
+                      role: user
+                      parts:
+                        - kind: text
+                          text: "Requesting observation status."
 
   indicators:
     - id: OATF-904-01
       protocol: mcp
-      surface: tool_description
+      surface: tools/list
+      target: "tools[*].description"
       description: "Pattern indicator with all optional indicator fields."
       pattern:
         target: "tools[*].description"
@@ -330,7 +338,8 @@ attack:
 
     - id: OATF-904-02
       protocol: mcp
-      surface: tool_description
+      surface: tools/list
+      target: "tools[*].description"
       description: "Expression indicator with variables."
       expression:
         cel: >
@@ -340,7 +349,8 @@ attack:
 
     - id: OATF-904-03
       protocol: mcp
-      surface: tool_description
+      surface: tools/list
+      target: "tools[*].description"
       description: "Semantic indicator with all optional fields."
       semantic:
         target: "tools[*].description"
@@ -359,7 +369,8 @@ attack:
 
     - id: OATF-904-04
       protocol: mcp
-      surface: tool_response
+      surface: tools/call
+      target: "content[*]"
       description: "Pattern indicator on tool response."
       pattern:
         target: "content[*]"
@@ -368,7 +379,8 @@ attack:
 
     - id: OATF-904-05
       protocol: mcp
-      surface: tool_name
+      surface: tools/list
+      target: "tools[*].name"
       description: "Pattern indicator on tool names."
       pattern:
         target: "tools[*].name"
@@ -380,7 +392,8 @@ attack:
 
     - id: OATF-904-06
       protocol: mcp
-      surface: tool_arguments
+      surface: tools/call
+      target: "arguments"
       description: "Pattern indicator with numeric condition."
       pattern:
         target: "arguments"
@@ -389,49 +402,55 @@ attack:
 
     - id: OATF-904-07
       protocol: mcp
-      surface: resource_content
+      surface: resources/read
+      target: "contents[*]"
       description: "Pattern on resource content."
       pattern:
         contains: "sensitive"
 
     - id: OATF-904-08
       protocol: mcp
-      surface: resource_uri
+      surface: resources/list
+      target: "resources[*].uri"
       description: "Pattern on resource URIs."
       pattern:
         regex: "file:///etc/.*"
 
     - id: OATF-904-09
       protocol: mcp
-      surface: resource_description
+      surface: resources/list
+      target: "resources[*].description"
       description: "Pattern on resource descriptions."
       pattern:
         starts_with: "Internal"
 
     - id: OATF-904-10
       protocol: mcp
-      surface: prompt_content
+      surface: prompts/get
+      target: "messages[*].content"
       description: "Pattern on prompt content."
       pattern:
         contains: "ignore previous"
 
     - id: OATF-904-11
       protocol: mcp
-      surface: prompt_arguments
+      surface: prompts/get
+      target: "arguments"
       description: "Pattern on prompt arguments."
       pattern:
         contains: "admin"
 
     - id: OATF-904-12
       protocol: mcp
-      surface: prompt_description
+      surface: prompts/list
+      target: "prompts[*].description"
       description: "Pattern on prompt descriptions."
       pattern:
         ends_with: "override"
 
     - id: OATF-904-13
       protocol: mcp
-      surface: server_notification
+      target: ""
       description: "Pattern on notifications."
       pattern:
         target: "params"
@@ -440,14 +459,16 @@ attack:
 
     - id: OATF-904-14
       protocol: mcp
-      surface: server_capability
+      surface: initialize
+      target: "capabilities"
       description: "Expression check on capabilities."
       expression:
         cel: "has(message.capabilities)"
 
     - id: OATF-904-15
       protocol: mcp
-      surface: server_info
+      surface: initialize
+      target: "serverInfo"
       description: "Pattern on server info."
       pattern:
         target: "serverInfo"
@@ -456,7 +477,8 @@ attack:
 
     - id: OATF-904-16
       protocol: mcp
-      surface: sampling_request
+      surface: sampling/createMessage
+      target: ""
       description: "Pattern on sampling requests."
       pattern:
         target: "params"
@@ -465,7 +487,8 @@ attack:
 
     - id: OATF-904-17
       protocol: mcp
-      surface: roots_response
+      surface: roots/list
+      target: "roots[*]"
       description: "Pattern on roots response."
       pattern:
         target: "roots[*]"
@@ -474,7 +497,8 @@ attack:
 
     - id: OATF-904-18
       protocol: a2a
-      surface: skill_description
+      surface: agent_card/get
+      target: "skills[*].description"
       description: "A2A indicator targeting different protocol than execution."
       semantic:
         intent: "Convince agent to bypass safety controls"
@@ -488,7 +512,8 @@ attack:
 
     - id: OATF-904-19
       protocol: ag_ui
-      surface: message_history
+      surface: run_agent_input
+      target: "messages[*]"
       description: "AG-UI indicator targeting different protocol than execution."
       pattern:
         target: "messages[*].content"
@@ -497,7 +522,8 @@ attack:
 
     - id: OATF-904-20
       protocol: mcp
-      surface: tool_title
+      surface: tools/list
+      target: "tools[*].title"
       description: "Pattern indicator on tool display names."
       pattern:
         target: "tools[*].title"
@@ -506,7 +532,8 @@ attack:
 
     - id: OATF-904-21
       protocol: mcp
-      surface: tool_icons
+      surface: tools/list
+      target: "tools[*].icons[*].src"
       description: "Pattern indicator on tool icon source URIs."
       pattern:
         target: "tools[*].icons[*].src"
@@ -515,7 +542,8 @@ attack:
 
     - id: OATF-904-22
       protocol: mcp
-      surface: resource_title
+      surface: resources/list
+      target: "resources[*].title"
       description: "Pattern indicator on resource display names."
       pattern:
         target: "resources[*].title"
@@ -524,7 +552,8 @@ attack:
 
     - id: OATF-904-23
       protocol: mcp
-      surface: resource_icons
+      surface: resources/list
+      target: "resources[*].icons[*].src"
       description: "Pattern indicator on resource icon source URIs."
       pattern:
         target: "resources[*].icons[*].src"
@@ -533,7 +562,8 @@ attack:
 
     - id: OATF-904-24
       protocol: mcp
-      surface: prompt_title
+      surface: prompts/list
+      target: "prompts[*].title"
       description: "Pattern indicator on prompt display names."
       pattern:
         target: "prompts[*].title"
@@ -542,7 +572,8 @@ attack:
 
     - id: OATF-904-25
       protocol: mcp
-      surface: prompt_icons
+      surface: prompts/list
+      target: "prompts[*].icons[*].src"
       description: "Pattern indicator on prompt icon source URIs."
       pattern:
         target: "prompts[*].icons[*].src"
@@ -551,7 +582,8 @@ attack:
 
     - id: OATF-904-26
       protocol: mcp
-      surface: server_instructions
+      surface: initialize
+      target: "instructions"
       description: "Semantic indicator on server instructions injected into LLM context."
       semantic:
         target: "instructions"

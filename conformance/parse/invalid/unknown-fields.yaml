@@ -18,7 +18,8 @@ attack:
           tools: []
 
   indicators:
-    - surface: tool_description
+    - surface: tools/list
+      target: "tools[*].description"
       unknown_indicator_field: true
       pattern:
         contains: "test"

@@ -5,8 +5,8 @@ attack:
   name: "Full AG-UI Parse Test"
   version: 1
   status: experimental
-  created: 2026-02-10
-  modified: 2026-02-15
+  created: "2026-02-10"
+  modified: "2026-02-15"
   author: "OATF Conformance Suite"
   description: |
     A comprehensive AG-UI document exercising all AG-UI-specific surfaces,
@@ -98,7 +98,8 @@ attack:
   indicators:
     - id: OATF-903-01
       protocol: ag_ui
-      surface: message_history
+      surface: run_agent_input
+      target: "messages[*]"
       description: "Detect fabricated system messages in conversation history."
       pattern:
         target: "messages[*].content"
@@ -107,7 +108,8 @@ attack:
 
     - id: OATF-903-02
       protocol: ag_ui
-      surface: tool_definition
+      surface: run_agent_input
+      target: "tools[*]"
       description: "Detect dangerous tool definitions."
       expression:
         cel: >
@@ -117,7 +119,8 @@ attack:
 
     - id: OATF-903-03
       protocol: ag_ui
-      surface: tool_result
+      surface: run_agent_input
+      target: "messages[*]"
       description: "Detect tool results containing sensitive file paths."
       pattern:
         target: "messages[*]"
@@ -126,14 +129,16 @@ attack:
 
     - id: OATF-903-04
       protocol: ag_ui
-      surface: agent_state
+      surface: run_agent_input
+      target: "state"
       description: "Detect elevated permissions in state object."
       expression:
         cel: "has(message.state.user_role) && message.state.user_role == 'admin'"
 
     - id: OATF-903-05
       protocol: ag_ui
-      surface: forwarded_props
+      surface: run_agent_input
+      target: "forwardedProps"
       description: "Check forwarded props for debug flags."
       pattern:
         target: "forwardedProps"
@@ -142,7 +147,7 @@ attack:
 
     - id: OATF-903-06
       protocol: ag_ui
-      surface: agent_event
+      target: ""
       description: "Semantic detection of malicious agent events."
       semantic:
         target: ""
@@ -159,7 +164,8 @@ attack:
 
     - id: OATF-903-07
       protocol: ag_ui
-      surface: agent_tool_call
+      surface: tool_call_start
+      target: ""
       description: "Detect unauthorized tool calls in response stream."
       pattern:
         target: ""
@@ -168,7 +174,8 @@ attack:
 
     - id: OATF-903-08
       protocol: ag_ui
-      surface: agent_context
+      surface: run_agent_input
+      target: "context[*]"
       description: "Detect context items granting excessive permissions."
       pattern:
         target: "context[*].value"
