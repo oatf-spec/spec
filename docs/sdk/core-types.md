@@ -129,16 +129,14 @@ An entry action executed when a phase begins. Exactly one action key MUST be pre
 
 | Key | Required Fields | Description |
 |---|---|---|
-| `send_notification` | `method: String` | Send a protocol notification. Optional `params: Map<String, Value>` for notification parameters. |
+| `send` | `method: String` | Send a protocol message (notification or request). `method` is the protocol method name; optional `params: Value` carries protocol-native message parameters (pass-through). Entry actions execute before client interaction, so notifications are the primary use case. |
 | `log` | `message: String` | Emit a log message. `message` supports `{{template}}` interpolation. Optional `level: LogLevel`. |
-| `send_elicitation` | `message: String` | Send an elicitation request to the client (MCP server-mode only). Optional `mode: ElicitationMode` (default: `form`), `requestedSchema: Map<String, Value>` (JSON Schema object, for form mode), `url: String` (for url mode). |
 
 **Associated enums:**
 
 | Enumeration | Values |
 |---|---|
 | `LogLevel` | `info`, `warn`, `error` |
-| `ElicitationMode` | `form`, `url` |
 
 **Binding-specific actions:** Action objects MAY contain a single key not in the known set above (e.g., `delay_ms: 500`, `send_ui_event: {...}`). The value type is unconstrained: it may be an object, string, number, or any JSON value. SDKs MUST preserve unrecognized action keys through parse → normalize → serialize round-trips. When evaluating, SDKs SHOULD skip actions they do not recognize and emit a warning diagnostic.
 

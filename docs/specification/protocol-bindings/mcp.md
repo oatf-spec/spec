@@ -56,7 +56,7 @@ The state has two layers. **Structural keys** (`protocol_version`, `server_info`
 
 **Naming convention.** Structural keys use OATF's `snake_case` convention (`protocol_version`, `server_info`, `client_info`). The runtime maps these to MCP's `camelCase` wire format (`protocolVersion`, `serverInfo`, `clientInfo`). All fields *within* protocol-native pass-through content retain their original naming (e.g., `inputSchema`, `readOnlyHint`, `listChanged`). MCP's `_meta` extension point is preserved verbatim wherever present — this includes `progressToken` for progress tracking and task association metadata.
 
-When a key is omitted, the runtime uses the following defaults: `protocol_version` defaults to `"2025-11-25"`, `server_info` defaults to `{name: "oatf-server", version: "1.0.0"}`. Omitting `tools`, `resources`, `resource_templates`, or `prompts` means the server does not expose that capability — the runtime responds to the corresponding `list` request with an empty array.
+When a key is omitted, the runtime uses the following defaults: `protocol_version` defaults to `"2025-11-25"`, `server_info` defaults to `{name: "oatf-server", version: "1.0.0"}`. Omitting `tools`, `resources`, `resource_templates`, or `prompts` means the capability is declared (advertised in the `initialize` response) but empty — the runtime responds to the corresponding `list` request with an empty array. To simulate a server that does not declare a capability at all, set `capabilities` explicitly and omit the relevant capability key.
 
 Phase state follows full-replacement semantics ([§5.2](/specification/execution-profile/#52-phases)): when a subsequent phase specifies `state`, it completely replaces the previous state. No merging occurs. This enables rug-pull attacks where a later phase presents entirely different tools or capabilities.
 
@@ -221,13 +221,11 @@ MCP-specific actions executed when entering a phase:
 
 ```yaml
 on_enter:
-  - send_notification:
-      method: string           # Notification method name
-      params: <any>?           # Protocol-native notification params (pass-through)
-  - send_elicitation:
-      message: string
-      mode: enum(form, url)?   # Default: form
-      requestedSchema: object? # JSON Schema for form mode
-      elicitationId: string?   # URL-mode ID (runtime generates before emission when omitted)
-      url: string?             # URL for url mode
+  - send:
+      method: string           # Protocol method name
+      params: <any>?           # Protocol-native message params (pass-through)
 ```
+
+Entry actions execute before any client interaction is processed. Notifications (fire-and-forget) are the primary use case — e.g., `notifications/tools/list_changed` to trigger a tool re-list for rug-pull attacks, `notifications/resources/updated` to signal resource changes.
+
+Requests (methods expecting a response) sent as entry actions constitute standalone server-initiated messaging. MCP's Request Association Requirement ([SEP-2260](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2260)) prohibits standalone `elicitation/create`, `sampling/createMessage`, and `roots/list` requests — these MUST be associated with an originating client request. For conformant elicitation during request handling, use the state `elicitations` mechanism (§7.1.4). Documents testing violations of this constraint SHOULD use `send` with an explanatory `description` on the phase.

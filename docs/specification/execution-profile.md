@@ -54,7 +54,7 @@ The attacker posture: which protocol the adversarial tool targets and which side
 
 Additional modes are defined by protocol bindings ([§7](/specification/protocol-bindings/)). Tools that encounter an unrecognized mode MUST parse the document without error but MAY skip execution for bindings they do not implement.
 
-In single-phase and multi-phase forms, `mode` is REQUIRED when `execution.state` is present, and OPTIONAL when `execution.phases` is present. When present with `phases`, all phases inherit it as their default and all indicators inherit its protocol component (the substring before the last `_server` or `_client`). When omitted, every phase MUST specify its own `phase.mode`, and all phase modes MUST share the same protocol component (cross-protocol attacks require the multi-actor form). Every indicator MUST specify its own `indicator.protocol`. In multi-actor form, `execution.mode` is structurally absent, so indicators MUST always specify `indicator.protocol` explicitly.
+In single-phase and multi-phase forms, `mode` is REQUIRED when `execution.state` is present, and OPTIONAL when `execution.phases` is present. When present with `phases`, all phases inherit it as their default and all indicators inherit its protocol component (the substring before the last `_server` or `_client`). When omitted, every phase MUST specify its own `phase.mode`, and all phase modes MUST be identical (attacks requiring different modes — including role changes within the same protocol — require the multi-actor form). Every indicator MUST specify its own `indicator.protocol`. In multi-actor form, `execution.mode` is structurally absent, so indicators MUST always specify `indicator.protocol` explicitly.
 
 ### `execution.state` (OPTIONAL, single-phase form only)
 
@@ -111,7 +111,7 @@ Prose describing the purpose of this phase.
 
 ### `phase.mode` (CONDITIONAL)
 
-The attacker posture for this phase. In single-phase and multi-phase forms: when `execution.mode` is present, this defaults to `execution.mode` and is optional; when `execution.mode` is absent, this field is REQUIRED on every phase, and all phase modes MUST share the same protocol component (V-028). In multi-actor form: phases inherit their actor's `mode` and MAY be omitted. When specified, `phase.mode` MUST match the actor's mode (V-044). Cross-protocol attacks are modeled using separate actors, each with its own mode.
+The attacker posture for this phase. In single-phase and multi-phase forms: when `execution.mode` is present, this defaults to `execution.mode` and is optional; when `execution.mode` is absent, this field is REQUIRED on every phase, and all phase modes MUST be identical (V-028). In multi-actor form: phases inherit their actor's `mode` and MAY be omitted. When specified, `phase.mode` MUST match the actor's mode (V-044). Cross-protocol attacks are modeled using separate actors, each with its own mode.
 
 ### `phase.state` (CONDITIONAL)
 

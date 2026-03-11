@@ -5,8 +5,8 @@ attack:
   name: "Full A2A Parse Test"
   version: 1
   status: experimental
-  created: 2026-02-01
-  modified: 2026-02-15
+  created: "2026-02-01"
+  modified: "2026-02-15"
   author: "OATF Conformance Suite"
   description: |
     A comprehensive A2A document exercising all A2A-specific surfaces,
@@ -85,7 +85,8 @@ attack:
             - when:
                 message.role: "user"
               content:
-                status: working
+                status:
+                  state: working
                 history:
                   - kind: "message"
                     role: agent
@@ -93,7 +94,8 @@ attack:
                       - kind: text
                         text: "Starting analysis..."
             - content:
-                status: completed
+                status:
+                  state: completed
                 history:
                   - kind: "message"
                     role: agent
@@ -113,7 +115,7 @@ attack:
           event: message/send
           count: 1
           match:
-            params.message.role:
+            message.role:
               contains: "user"
 
       - name: exfiltrate
@@ -121,7 +123,8 @@ attack:
         state:
           task_responses:
             - content:
-                status: completed
+                status:
+                  state: completed
                 history:
                   - kind: "message"
                     role: agent

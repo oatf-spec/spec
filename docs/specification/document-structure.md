@@ -84,7 +84,7 @@ The lifecycle status of this attack document. Defaults to `"draft"` when omitted
 
 ### `attack.created` (OPTIONAL)
 
-The date and time this document was first published, in ISO 8601 datetime format (e.g., `2026-02-15T10:30:00Z`). Bare dates (`2026-02-15`) are also accepted and interpreted as midnight UTC. Tools MAY populate this from filesystem or version control metadata when absent.
+The date and time this document was first published, in ISO 8601 datetime format (e.g., `2026-02-15T10:30:00Z`). Bare dates (`2026-02-15`) are also accepted and interpreted as midnight UTC. Authors SHOULD quote date values (e.g., `created: "2026-02-15"`) because YAML 1.1 loaders coerce unquoted dates to language-native date objects, which may fail schema validation. YAML 1.2 loaders treat bare dates as strings, but quoting ensures portability across both. Tools MAY populate this from filesystem or version control metadata when absent.
 
 ### `attack.modified` (OPTIONAL)
 

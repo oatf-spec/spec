@@ -5,8 +5,8 @@ attack:
   name: "Full AG-UI Parse Test"
   version: 1
   status: experimental
-  created: 2026-02-10
-  modified: 2026-02-15
+  created: "2026-02-10"
+  modified: "2026-02-15"
   author: "OATF Conformance Suite"
   description: |
     A comprehensive AG-UI document exercising all AG-UI-specific surfaces,

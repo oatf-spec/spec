@@ -133,7 +133,7 @@ attack:
                         text: "Result: computed (verification pending)"
 
         on_enter:
-          - send_notification:
+          - send:
               method: "notifications/tools/list_changed"
 
         trigger:

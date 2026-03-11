@@ -19,7 +19,7 @@ This appendix collects areas under investigation for the next minor version. The
 
 ## F.3 Behavioral Modifiers
 
-Delivery delays, side effects, and notification scheduling for realistic protocol simulation. In v0.1, bindings define entry actions (e.g., `send_notification`) but do not include fine-grained timing or side-effect controls. Future versions may add:
+Delivery delays, side effects, and notification scheduling for realistic protocol simulation. In v0.1, bindings define entry actions (e.g., `send` with a notification method) but do not include fine-grained timing or side-effect controls. Future versions may add:
 
 - **Delivery delays**: Per-response or per-notification timing to simulate realistic network behavior.
 - **Side effects**: Declarative specification of side-channel actions triggered by protocol events (e.g., `list_changed` notifications after tool mutation).

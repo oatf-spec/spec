@@ -28,13 +28,17 @@ The [SDK specification](/sdk/) ([SDK specification, §3.2](/sdk/entry-points/)) 
 
 10. MUST use unique `indicator.id` values within the document when IDs are specified explicitly.
 11. Each indicator MUST contain exactly one detection key (`pattern`, `expression`, or `semantic`).
-12. When `execution.mode` is absent and `execution.actors` is absent (the mode-less multi-phase form), every phase MUST specify `phase.mode`, and all phase modes MUST share the same protocol component (the substring before `_server` or `_client`). Cross-protocol attacks require the multi-actor form. When `execution.mode` is absent, regardless of whether `execution.actors` is present, every indicator (when present) MUST specify `indicator.protocol`. In multi-actor form, `actor.mode` provides phase-level mode inheritance (so `phase.mode` is typically omitted), but indicators are document-level and not scoped to any actor, so `indicator.protocol` remains required.
+12. When `execution.mode` is absent and `execution.actors` is absent (the mode-less multi-phase form), every phase MUST specify `phase.mode`, and all phase modes MUST be identical. Attacks requiring different modes (including role changes within the same protocol, e.g., `mcp_server` → `mcp_client`) require the multi-actor form. When `execution.mode` is absent, regardless of whether `execution.actors` is present, every indicator (when present) MUST specify `indicator.protocol`. In multi-actor form, `actor.mode` provides phase-level mode inheritance (so `phase.mode` is typically omitted), but indicators are document-level and not scoped to any actor, so `indicator.protocol` remains required.
 13. For modes defined by bindings included in this specification, trigger event types SHOULD produce a warning when not valid for the actor's mode. Event types not listed in the binding's event tables on a recognized mode SHOULD produce a warning but MUST NOT be rejected.
 
 **Response entries and validation**
 
 14. In any `responses`, `sampling_responses`, `elicitation_responses`, `task_responses`, or `tool_responses` list, at most one entry MAY omit `when`. When present, it SHOULD be the last entry in the list. An entry without `when` after another entry without `when` is a validation error.
 15. All `expression.variables` keys MUST be valid CEL identifiers, matching `[_a-zA-Z][_a-zA-Z0-9]*`. Names containing hyphens, dots, or other non-identifier characters are rejected because CEL would parse them as operators rather than variable references.
+
+**Actions**
+
+16. Binding-specific action objects (those containing no known action key) MUST contain exactly one non-`x-` key.
 
 ## 11.2 Tool Conformance: General
 

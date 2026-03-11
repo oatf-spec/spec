@@ -25,9 +25,10 @@ Evaluates a pattern indicator against a protocol message.
 
 **Behavior:**
 
-1. Resolve `pattern.target` against `message` using `resolve_wildcard_path` ([§5.1.2](/sdk/execution-primitives/#512-wildcard-dot-path)). This may produce zero, one, or many values (when the path contains wildcards).
-2. For each resolved value, evaluate the condition ([§5.3](/sdk/execution-primitives/#53-evaluate_condition)) against the value. If a regex condition exceeds the tool's match time limit, return `Err(EvaluationError { kind: regex_timeout })`.
-3. Return `Ok(true)` if any resolved value matches the condition. Return `Ok(false)` if no values match or if the target path resolves to nothing.
+1. If the condition contains `exists` as its only operator: resolve `pattern.target` against `message` using `resolve_wildcard_path` ([§5.1.2](/sdk/execution-primitives/#512-wildcard-dot-path)). Return `Ok(exists_value == (resolved_count > 0))` — i.e., `exists: true` matches when the path resolves to at least one value; `exists: false` matches when the path resolves to nothing. `evaluate_condition` is not called (see [§5.3a](/sdk/execution-primitives/#53-evaluate_condition), "The `exists` operator").
+2. Otherwise, resolve `pattern.target` against `message` using `resolve_wildcard_path`. This may produce zero, one, or many values (when the path contains wildcards).
+3. For each resolved value, evaluate the condition ([§5.3](/sdk/execution-primitives/#53-evaluate_condition)) against the value. If a regex condition exceeds the tool's match time limit, return `Err(EvaluationError { kind: regex_timeout })`.
+4. Return `Ok(true)` if any resolved value matches the condition. Return `Ok(false)` if no values match or if the target path resolves to nothing.
 
 ## 4.3 evaluate_expression
 

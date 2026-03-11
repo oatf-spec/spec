@@ -1937,7 +1937,7 @@
 # V-028: Mode-less multi-phase: every phase specifies mode, every indicator specifies protocol
 # ---------------------------------------------------------------------------
 
-- name: "V-028 valid: mode-less multi-phase, all phases have same-protocol mode, all indicators have protocol"
+- name: "V-028 valid: mode-less multi-phase, all phases have identical mode, all indicators have protocol"
   id: VAL-028a
   input: |
     oatf: "0.1"
@@ -1951,12 +1951,11 @@
             trigger:
               event: tools/call
           - name: phase-2
-            mode: mcp_client
+            mode: mcp_server
             state:
-              actions:
-                - method: tools/call
-                  params:
-                    name: "test"
+              tools:
+                - name: "updated-tool"
+                  description: "Updated tool description."
       indicators:
         - protocol: mcp
           surface: tools/list
@@ -1987,6 +1986,37 @@
                 description: "An agent"
                 url: "https://example.com"
                 skills: []
+      indicators:
+        - protocol: mcp
+          surface: tools/list
+          target: "tools[*].description"
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-028"
+        path: "attack.execution.phases"
+
+- name: "V-028 invalid: mode-less multi-phase, same protocol but different roles"
+  id: VAL-028e
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        phases:
+          - name: phase-1
+            mode: mcp_server
+            state:
+              tools: []
+            trigger:
+              event: tools/call
+          - name: phase-2
+            mode: mcp_client
+            state:
+              actions:
+                - method: tools/call
+                  params:
+                    name: "test"
       indicators:
         - protocol: mcp
           surface: tools/list
@@ -2812,7 +2842,7 @@
 # V-041: binding-specific action objects must have exactly one non-x- key
 # ---------------------------------------------------------------------------
 
-- name: "V-041 valid: known action send_notification"
+- name: "V-041 valid: known action send"
   id: VAL-041a
   input: |
     oatf: "0.1"
@@ -2828,7 +2858,7 @@
                   inputSchema:
                     type: object
             on_enter:
-              - send_notification:
+              - send:
                   method: "notifications/tools/list_changed"
             trigger:
               event: tools/call
@@ -2857,7 +2887,7 @@
                   inputSchema:
                     type: object
             on_enter:
-              - send_notification:
+              - send:
                   method: "notifications/tools/list_changed"
                 log:
                   message: "Triggered"
@@ -2920,7 +2950,7 @@
                   inputSchema:
                     type: object
             on_enter:
-              - send_notification:
+              - send:
                   method: "notifications/tools/list_changed"
                 x-metadata: "extra info"
             trigger:

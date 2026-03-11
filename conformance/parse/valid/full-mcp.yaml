@@ -5,8 +5,8 @@ attack:
   name: "Full MCP Parse Test"
   version: 2
   status: stable
-  created: 2026-01-15
-  modified: 2026-02-15
+  created: "2026-01-15"
+  modified: "2026-02-15"
   author: "OATF Conformance Suite"
   description: |
     A comprehensive MCP document exercising every optional field and feature
@@ -145,7 +145,7 @@ attack:
                         text: "Result: computed (verification pending)"
 
         on_enter:
-          - send_notification:
+          - send:
               method: "notifications/tools/list_changed"
           - log:
               message: "Rug pull triggered for session {{session_id}}"
