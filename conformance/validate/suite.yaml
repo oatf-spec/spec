@@ -1561,6 +1561,44 @@
       - rule: "V-021"
         path: "attack.indicators[0].pattern.target"
 
+- name: "V-021 invalid: indicator-level target with numeric index"
+  id: VAL-021d
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tools/list
+          target: "tools[0].description"
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-021"
+        path: "attack.indicators[0].target"
+
+- name: "V-021 invalid: indicator-level target with empty segment"
+  id: VAL-021e
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tools/list
+          target: "tools..name"
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-021"
+        path: "attack.indicators[0].target"
+
 # ---------------------------------------------------------------------------
 # V-022: semantic.threshold in range [0.0, 1.0]
 # ---------------------------------------------------------------------------

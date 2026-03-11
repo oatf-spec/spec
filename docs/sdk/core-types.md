@@ -368,6 +368,8 @@ SDKs MUST define named types for the following enumerations. The canonical strin
 
 **Open vs closed enums:** `Protocol`, `Mode`, `Surface` ([§2.21](/sdk/core-types/#221-surface-model)), and `Framework` are open strings: unknown values are accepted (with optional warnings for unrecognized bindings, per [§3.2](/sdk/entry-points/#32-validate)). All other enumerations in this table are closed: unknown values MUST be rejected during parsing (`ParseError` with `kind: unknown_variant`). This distinction ensures extensibility for protocol bindings and framework mappings while maintaining strict validation for lifecycle, verdict, and structural enums.
 
+**Output-only enumerations:** `IndicatorResult`, `AttackResult`, `AdvanceReason`, `GenerationErrorKind`, `EvaluationErrorKind`, `ParseErrorKind`, and `DiagnosticSeverity` describe SDK output types (verdicts, errors, diagnostics) — not fields in OATF documents. They are intentionally absent from the JSON Schema, which validates only document input. SDKs define these types to ensure interoperability of evaluation results across implementations.
+
 ## 2.21 Surface Model
 
 In the v0.1 binding model, `surface` is an optional indicator field that references a protocol operation name (e.g., `tools/call`, `agent_card/get`, `run_agent_input`). The `target` field (required on every indicator) provides the explicit dot-path into the protocol message.

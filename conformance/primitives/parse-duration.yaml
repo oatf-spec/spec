@@ -92,3 +92,15 @@
   input: "PT0S"
   expected:
     seconds: 0
+
+- name: "Negative shorthand rejected"
+  id: DUR-016
+  input: "-5s"
+  expected:
+    error: true
+
+- name: "Negative ISO 8601 rejected"
+  id: DUR-017
+  input: "PT-30S"
+  expected:
+    error: true

@@ -1,6 +1,6 @@
 # =============================================================================
 # OATF Conformance: Validation Warning Test Suite
-# Tests SDK validate() warning diagnostics per SDK spec §2.23.
+# Tests SDK validate() warning diagnostics per SDK spec §7.0.
 #
 # Only deterministic, validate-time warnings are tested here.
 # Runtime-dependent warnings (W-004b: unresolvable request/response paths)

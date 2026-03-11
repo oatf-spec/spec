@@ -95,6 +95,38 @@ The `errors` list contains one entry per expected violation. `rule` is the valid
         path: "oatf"
 ```
 
+### Warning Tests (`validate/warnings.yaml`)
+
+Test the warning diagnostics produced by `validate()` per SDK spec [§7.0](/sdk/diagnostics/#70-diagnostic).
+
+**Input:** Same as validation tests — an OATF document as a YAML string.
+
+**Expected:**
+```yaml
+errors: []
+warnings:
+  - rule: "W-NNN"
+```
+
+The `errors` list is empty (the document is valid). The `warnings` list contains one entry per expected warning. `rule` is the warning code (W-NNN) from SDK spec §7.0. Test runners MUST assert that all listed warnings are present in the validation result's `warnings` list. Negative cases (no warning expected) use `warnings: []`.
+
+**Example:**
+```yaml
+- name: "W-002 warning: unrecognized mode voice_server"
+  id: WARN-002a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: voice_server
+        state:
+          tools: []
+  expected:
+    errors: []
+    warnings:
+      - rule: W-002
+```
+
 ### Normalization Tests (`normalize/`)
 
 Test the `normalize()` entry point.

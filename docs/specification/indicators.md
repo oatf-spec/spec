@@ -54,7 +54,7 @@ References an actor by name. When present, this indicator evaluates only against
 
 ### `indicator.direction` (OPTIONAL)
 
-Restricts which side of the protocol exchange is examined: `request` or `response`. When omitted, the evaluation tool selects applicable messages using its own heuristics; v0.1 does not define a normative inference algorithm for direction. Authors who need deterministic scoping SHOULD specify `direction` explicitly. The perspective is that of the actor's protocol role: for server-mode actors, `request` means the incoming message from the agent, and `response` means the outgoing reply. For client-mode actors, `request` means the outgoing message to the agent, and `response` means the incoming reply.
+Restricts which side of the protocol exchange is examined: `request` or `response`. When omitted, the evaluation tool selects applicable messages using its own heuristics; v0.1 does not define a normative inference algorithm for direction. Authors SHOULD specify `direction` explicitly to ensure deterministic, tool-independent evaluation. The perspective is that of the actor's protocol role: for server-mode actors, `request` means the incoming message from the agent, and `response` means the outgoing reply. For client-mode actors, `request` means the outgoing message to the agent, and `response` means the incoming reply.
 
 ### `indicator.method` (OPTIONAL)
 

@@ -69,6 +69,8 @@ evaluate_indicator(
 
 Top-level indicator evaluation. Dispatches to the appropriate method evaluator and wraps the result in a verdict.
 
+**Precondition:** The indicator MUST be normalized (i.e., the output of `normalize()` or `load()`). After normalization, method-specific target fields (`pattern.target`, `semantic.target`) are always populated via N-004 ([§3.3](/sdk/entry-points/#33-normalize)). Passing an un-normalized indicator produces undefined behavior for pattern and semantic evaluation, which rely on the method-specific `target` being present.
+
 **Behavior:**
 
 1. Dispatch on the present detection key:

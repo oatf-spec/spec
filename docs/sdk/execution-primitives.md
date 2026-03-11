@@ -95,7 +95,7 @@ Parses a duration string in either shorthand or ISO 8601 format.
 | `PT{N}H{N}M{N}S` | `PT1H30M15S` | 1 hour 30 minutes 15 seconds (ISO 8601 composite) |
 | `P{N}DT{...}` | `P1DT12H` | 1 day 12 hours (ISO 8601 composite) |
 
-`N` is a non-negative integer (≥ 0); `0s` is a valid duration meaning zero elapsed time. Fractional values are not supported. Any ISO 8601 duration composed of integer D, H, M, and S components is accepted; the components must appear in descending order (days → hours → minutes → seconds) and the `T` separator is required before any time components.
+`N` is a non-negative integer (≥ 0); `0s` is a valid duration meaning zero elapsed time. Negative values (e.g., `-5s`, `PT-30S`) are invalid and MUST produce a `ParseError`. Fractional values are not supported. Any ISO 8601 duration composed of integer D, H, M, and S components is accepted; the components must appear in descending order (days → hours → minutes → seconds) and the `T` separator is required before any time components.
 
 ## 5.3 evaluate_condition
 
@@ -242,7 +242,7 @@ select_response(
 ) → Optional<ResponseEntry>
 ```
 
-Selects the first matching response entry from an ordered list, using `when` predicates for conditional dispatch.
+Selects the first matching response entry from an ordered list, using `when` predicates for conditional dispatch. The `request` parameter is the protocol message payload that triggered the dispatch — for server-mode dispatch lists (`responses`, `sampling_responses`, `elicitation_responses`, `task_responses`) this is the incoming request; for client-mode dispatch lists (`tool_responses`) this is the outgoing request that the response corresponds to.
 
 **Behavior:**
 
