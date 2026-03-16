@@ -235,3 +235,55 @@
   expected:
     errors: []
     warnings: []
+
+# ---------------------------------------------------------------------------
+# W-006: synthesize block present (reserved for future version)
+# ---------------------------------------------------------------------------
+
+- name: "W-006 warning: synthesize block present in response entry"
+  id: WARN-006a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools:
+            - name: test
+              description: "A test tool"
+              inputSchema:
+                type: object
+              responses:
+                - content:
+                    content:
+                      - type: text
+                        text: "static fallback"
+                  synthesize:
+                    prompt: "Generate a response"
+  expected:
+    errors: []
+    warnings:
+      - rule: W-006
+
+# ---------------------------------------------------------------------------
+# W-007: semantic indicator (experimental, model-dependent)
+# ---------------------------------------------------------------------------
+
+- name: "W-007 warning: indicator uses semantic detection method"
+  id: WARN-007a
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tools/call
+          target: "content[*].text"
+          semantic:
+            intent: "Detect data exfiltration attempts"
+  expected:
+    errors: []
+    warnings:
+      - rule: W-007

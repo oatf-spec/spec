@@ -63,12 +63,12 @@ The following rules are checked. Each rule references the normative requirement 
 | V-003 | §11.1.3 | Exactly one `attack` object is present. |
 | V-004 | §11.1.4 | Required fields present: `execution`. |
 | V-005 | §11.1.5 | All closed enumeration values are valid members of their respective types. Open enumerations ([§2.20](/sdk/core-types/#220-enumerations): Protocol, Mode, Surface, Framework) are validated by their pattern or format constraints only, not by membership in a fixed set. |
-| V-006 | §11.1.6 | `indicators`, when present, contains at least one entry. |
-| V-007 | §11.1.8, §11.1.9 | In multi-phase form: `execution.phases` contains at least one entry. In multi-actor form: each actor's `phases` contains at least one entry. (Single-phase form always has exactly one implicit phase.) |
-| V-008 | §11.1.8 | At most one terminal phase per actor (no `trigger`), and it is the last phase in the actor's list. |
-| V-009 | §11.1.8 | First phase in each actor includes `state`. In single-phase form, `execution.state` is present, which always satisfies this. In multi-phase and multi-actor forms, check `phases[0].state` directly. |
+| V-006 | §11.1.9 | `indicators`, when present, contains at least one entry. |
+| V-007 | §11.1.7, §11.1.8 | In multi-phase form: `execution.phases` contains at least one entry. In multi-actor form: each actor's `phases` contains at least one entry. (Single-phase form always has exactly one implicit phase.) |
+| V-008 | §11.1.7 | At most one terminal phase per actor (no `trigger`), and it is the last phase in the actor's list. |
+| V-009 | §11.1.7 | First phase in each actor includes `state`. In single-phase form, `execution.state` is present, which always satisfies this. In multi-phase and multi-actor forms, check `phases[0].state` directly. |
 | V-010 | §11.1.10 | All explicitly specified `indicator.id` values are unique. |
-| V-011 | §11.1.8 | In multi-phase form: all explicitly specified `phase.name` values are unique. In multi-actor form: explicitly specified phase names are unique within each actor (but MAY duplicate across actors). Omitted names (auto-generated) are guaranteed unique by their positional generation. |
+| V-011 | §11.1.7 | In multi-phase form: all explicitly specified `phase.name` values are unique. In multi-actor form: explicitly specified phase names are unique within each actor (but MAY duplicate across actors). Omitted names (auto-generated) are guaranteed unique by their positional generation. |
 | V-012 | §11.1.11 | Each indicator has exactly one detection key (`pattern`, `expression`, or `semantic`). |
 | V-013 | [§6.2](/specification/indicators/#62-pattern-matching) | All regular expressions are syntactically valid RE2. |
 | V-014 | [§6.3](/specification/indicators/#63-expression-evaluation) | All CEL expressions are syntactically valid (parse without error). |
@@ -95,7 +95,7 @@ The following rules are checked. Each rule references the normative requirement 
 | V-035 | [§4.2](/specification/document-structure/#42-attack-envelope) | `attack.version`, when present, MUST be a positive integer (≥ 1). |
 | V-036 | [§5.2](/sdk/execution-primitives/#52-parse_duration) | `trigger.after`, when present, MUST be a valid duration (shorthand or ISO 8601). |
 | V-037 | [§5.5](/sdk/execution-primitives/#55-interpolate_template) | Extractor names MUST match the pattern `[a-z][a-z0-9_]*`. |
-| V-038 | §11.1.8 | `phase.extractors`, when present, MUST contain at least one entry. |
+| V-038 | §11.1.7 | `phase.extractors`, when present, MUST contain at least one entry. |
 | V-039 | §11.1.15 | All `expression.variables` keys MUST be valid CEL identifiers, matching `^[_a-zA-Z][_a-zA-Z0-9]*$`. Names containing hyphens, dots, or other non-identifier characters are rejected because CEL would parse them as operators rather than variable references. |
 | V-040 | [§5.3](/specification/execution-profile/#53-triggers) | Trigger MUST specify at least one of `event` or `after`. An empty trigger object is invalid. |
 | V-041 | §11.1.16 | Binding-specific action objects (those containing no known action key) MUST contain exactly one non-`x-` key. |
@@ -135,6 +135,7 @@ The following transformations are applied in order. Each references the normativ
 | N-005 | §11.2.5 | Expand pattern shorthand form to standard form: move condition operator into explicit `condition` field. |
 | N-006 | §11.2.6 | Normalize single-phase form to multi-actor form: when `execution.state` is present (and `execution.phases` and `execution.actors` are absent), wrap it in `actors: [{name: "default", mode: <execution.mode>, phases: [{name: "phase-1", state: <execution.state>}]}]`. Remove the top-level `mode` and `state` from `execution`. |
 | N-007 | §11.2.7 | Normalize multi-phase form to multi-actor form: when `execution.phases` is present (and `execution.actors` is absent), wrap it in `actors: [{name: "default", mode: <execution.mode>, phases: <execution.phases>}]`. When `execution.mode` is absent (mode-less multi-phase form), set `actor.mode` from `phases[0].mode`. Remove the top-level `mode` and `phases` from `execution`. All subsequent normalization steps and all runtime processing operate on the `actors` array. |
+| N-008 | §4.5 | Normalize `classification.tags`: convert each tag to lowercase and replace underscores and spaces with hyphens. |
 `normalize` MUST be idempotent: `normalize(normalize(doc))` produces the same result as `normalize(doc)`.
 
 The caller MUST receive a normalized document. The original document MUST NOT be observably mutated through any retained reference. SDKs MAY implement this in either of two ways:
@@ -162,6 +163,7 @@ When `indicators` is present:
 - Every indicator has a detection method determined by which method-specific key is present.
 - Every `PatternMatch` is in standard form with an explicit `condition` field.
 - Every `PatternMatch` and `SemanticMatch` has a `target` (materialized from the indicator-level `target` by N-004 when not explicitly specified).
+- Every entry in `classification.tags` (when present) is lowercase and hyphen-delimited.
 
 Always:
 

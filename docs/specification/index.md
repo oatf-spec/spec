@@ -75,7 +75,7 @@ Schema definitions in this specification use YAML syntax. Type annotations follo
 - `number`: A floating-point number.
 - `boolean`: `true` or `false`.
 - `datetime`: An ISO 8601 date-time string (e.g., `2026-02-15T10:30:00Z`). Bare dates (`2026-02-15`) are accepted and interpreted as midnight UTC.
-- `duration`: A time span. ISO 8601 format (`PT30S`, `PT5M`) or shorthand with units: `s` (seconds), `m` (minutes), `h` (hours), `d` (days), e.g., `30s`, `5m`, `1h`. Shorthand supports exactly one numeric-unit pair. For compound durations, use ISO 8601 form (e.g., `PT1H30M`). `0s` is a valid duration meaning zero elapsed time.
+- `duration`: A time span. ISO 8601 format (`PT30S`, `PT5M`) or shorthand with units: `s` (seconds), `m` (minutes), `h` (hours), `d` (days), e.g., `30s`, `5m`, `1h`. Shorthand supports exactly one numeric-unit pair. For compound durations, use ISO 8601 form (e.g., `PT1H30M`). `0s` is a valid duration meaning zero elapsed time. All zero-valued shorthand durations (`0s`, `0m`, `0h`, `0d`) are valid and equivalent to zero elapsed time.
 - `enum(a, b, c)`: One of the listed values.
 - `T[]`: An ordered list of values of type T.
 - `T?`: An optional value of type T. When absent, the field is omitted entirely.

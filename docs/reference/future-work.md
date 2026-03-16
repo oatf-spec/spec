@@ -50,8 +50,12 @@ The `SynthesizeBlock` type definition is preserved in the v0.1 JSON Schema for f
 
 ## F.6 Indicator Trace Evaluation
 
-v0.1 specifies single-message indicator evaluation (`evaluate_indicator`) but leaves trace-level scoping to tool implementers. Future versions will define:
+v0.1 defines a baseline trace-filtering algorithm ([§6](/specification/indicators/)) that selects messages by protocol, surface, actor, and direction. When `indicator.direction` is omitted, both request and response messages are eligible. Future versions may refine this with:
 
-- **Trace-filtering algorithm**: A normative procedure for selecting which observed protocol messages are fed to `evaluate_indicator` based on `indicator.protocol`, `indicator.surface`, `indicator.actor`, and `indicator.direction`.
-- **Direction inference**: An algorithm for inferring `indicator.direction` from the target path and protocol binding context when the field is omitted. v0.1 recommends explicit specification; v0.2 will define deterministic inference.
+- **Direction inference**: Inferring `indicator.direction` from the target path and protocol binding context (e.g., a target path like `content[*].text` on a server-mode actor likely implies `response`).
+- **Temporal scoping**: Restricting indicator evaluation to messages observed during specific phases rather than the entire trace.
+
+## F.7 Document Composition and Templates
+
+v0.1 requires each document to be self-contained. Real-world usage may produce families of related attacks (e.g., twenty prompt injection variants differing only in payload text) where the envelope, execution structure, and indicator set are largely duplicated. Future versions may investigate document templates, shared state fragments, or an `extends` mechanism to reduce duplication without coupling attack lifecycles.
 

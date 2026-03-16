@@ -12,6 +12,8 @@ SDKs that implement the validation and evaluation pipeline (see the [SDK specifi
 | W-003 | A protocol passes pattern validation but is not in the known protocols set. Likely typo. |
 | W-004 | Template interpolation references an undefined extractor or an unresolvable message path. |
 | W-005 | An indicator targets a protocol with no matching actor in the execution profile. |
+| W-006 | A `synthesize` block is present. The `synthesize` feature is reserved for a future version; documents using it may not produce expected results. |
+| W-007 | An indicator uses the `semantic` detection method, which is experimental and model-dependent. Cross-tool reproducibility is not guaranteed. |
 
 Authors encountering these warnings should review the flagged fields. W-002 and W-003 in particular catch common typos in mode and protocol strings (e.g., `mpc_server` instead of `mcp_server`).
 

@@ -34,6 +34,8 @@ SDKs MUST produce warnings for the following conditions:
 | W-003 | A protocol passes pattern validation but is not in the set of protocols defined by included protocol bindings (v0.1: `mcp`, `a2a`, `ag_ui`). Likely typo. |
 | W-004 | Template interpolation references an undefined extractor or an unresolvable message path. Two sub-cases: (a) "unknown extractor reference", detectable at validate time by cross-referencing template expressions against declared extractor names; (b) "request/response path failed to resolve", detectable only at runtime when the actual message is available. |
 | W-005 | An indicator targets a protocol with no matching actor in the execution profile. |
+| W-006 | A `synthesize` block is present. The `synthesize` feature is reserved for a future version; documents using it may not produce expected results. |
+| W-007 | An indicator uses the `semantic` detection method, which is experimental and model-dependent. Cross-tool reproducibility is not guaranteed. |
 
 SDKs MAY define additional warning codes for tool-specific diagnostics.
 

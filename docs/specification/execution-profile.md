@@ -35,7 +35,7 @@ execution:
 
 The three forms are mutually exclusive. A document MUST NOT combine `execution.state` with `execution.phases` or `execution.actors`, nor `execution.phases` with `execution.actors`.
 
-All forms are syntactic sugar over the multi-actor form. Conformant tools MUST normalize documents internally:
+All forms are syntactic sugar over the multi-actor form. Conforming tools MUST normalize documents internally:
 
 - **Single-phase form** normalizes to: `actors: [{ name: "default", mode: <mode>, phases: [{ name: "phase-1", state: <state> }] }]` (see [§11.2](/specification/conformance/#112-tool-conformance-general) item 6).
 - **Multi-phase form** normalizes to: `actors: [{ name: "default", mode: <mode>, phases: <phases> }]` (see [§11.2](/specification/conformance/#112-tool-conformance-general) item 7).

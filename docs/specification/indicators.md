@@ -7,7 +7,17 @@ The `indicators` field is OPTIONAL. When absent, the document is valid for simul
 
 Indicators SHOULD examine only the agent's *response* to the attack, not the attack payload itself. An indicator that checked whether a tool description contains suspicious text would always fire in a closed-loop simulation: the execution profile placed that text there. Indicators should instead detect whether the agent *complied with* the malicious content: exfiltrating data, following injected instructions, or performing unauthorized actions.
 
-Evaluation tools evaluate each indicator against protocol traffic observed during the entire execution of the attack profile (all phases of all actors). An indicator matches if **any** applicable message in the observed trace satisfies its condition; the tool does not require a specific message position (first, last, or otherwise). The SDK specifies single-message evaluation via `evaluate_indicator(indicator, message)` ([§4.4](/sdk/evaluation/#44-evaluate_indicator)); the evaluation tool is responsible for selecting which trace messages are fed to this function based on the indicator's scoping fields (`protocol`, `surface`, `actor`, `direction`). A normative trace-filtering algorithm is planned for a future version. Tools MAY apply a configurable grace period after the terminal phase(s) complete, to capture delayed effects such as exfiltration or state changes that manifest after the attack simulation ends. When `attack.grace_period` is present, tools MUST use the specified duration as the post-terminal-phase observation window. When absent, tools MAY apply their own configurable default.
+Evaluation tools evaluate each indicator against protocol traffic observed during the entire execution of the attack profile (all phases of all actors). An indicator matches if **any** applicable message in the observed trace satisfies its condition.
+
+Conforming evaluation tools MUST apply the following trace-filtering procedure to select which observed messages are fed to `evaluate_indicator` for each indicator:
+
+1. Select all messages whose protocol matches `indicator.protocol`.
+2. If `indicator.surface` is present, retain only messages matching that operation.
+3. If `indicator.actor` is present, retain only messages observed on that actor's protocol connection.
+4. If `indicator.direction` is present, retain only messages matching that direction (`request` or `response`). When absent, both request and response messages are eligible.
+5. For each retained message, call `evaluate_indicator(indicator, message)`. The indicator matches if any call returns `matched`.
+
+The SDK specifies single-message evaluation via `evaluate_indicator(indicator, message)` ([§4.4](/sdk/evaluation/#44-evaluate_indicator)). Tools MAY apply a configurable grace period after the terminal phase(s) complete, to capture delayed effects such as exfiltration or state changes that manifest after the attack simulation ends. When `attack.grace_period` is present, tools MUST use the specified duration as the post-terminal-phase observation window. When absent, tools MAY apply their own configurable default.
 
 ## 6.1 Structure
 
@@ -54,7 +64,7 @@ References an actor by name. When present, this indicator evaluates only against
 
 ### `indicator.direction` (OPTIONAL)
 
-Restricts which side of the protocol exchange is examined: `request` or `response`. When omitted, the evaluation tool selects applicable messages using its own heuristics; v0.1 does not define a normative inference algorithm for direction. Authors SHOULD specify `direction` explicitly to ensure deterministic, tool-independent evaluation. The perspective is that of the actor's protocol role: for server-mode actors, `request` means the incoming message from the agent, and `response` means the outgoing reply. For client-mode actors, `request` means the outgoing message to the agent, and `response` means the incoming reply.
+Restricts which side of the protocol exchange is examined: `request` or `response`. When omitted, both request and response messages are eligible for evaluation (OR over both directions). The perspective is that of the actor's protocol role: for server-mode actors, `request` means the incoming message from the agent, and `response` means the outgoing reply. For client-mode actors, `request` means the outgoing message to the agent, and `response` means the incoming reply.
 
 ### `indicator.method` (OPTIONAL)
 

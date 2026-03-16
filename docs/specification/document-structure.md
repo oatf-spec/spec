@@ -137,7 +137,7 @@ The severity classification. These levels align with the CVSS 3.1 qualitative se
 
 ### `attack.severity.confidence` (OPTIONAL)
 
-How confident the author is in the assigned severity level, expressed as an integer from 0 (no confidence) to 100 (certain). This scale follows the STIX confidence model. Defaults to `50` (neutral) when omitted. A high-severity attack with confidence `30` means the author believes it could be high severity but has limited evidence. A high-severity attack with confidence `90` means the assessment is well-supported.
+How confident the author is in the assigned severity level, expressed as an integer from 0 (no confidence) to 100 (certain). This scale follows the STIX confidence model. STIX defines named confidence levels (None, Low, Medium, High) mapped to numeric ranges; OATF uses the same 0–100 integer scale without named levels, leaving interpretation to consuming tools. Defaults to `50` (neutral) when omitted. A high-severity attack with confidence `30` means the author believes it could be high severity but has limited evidence. A high-severity attack with confidence `90` means the assessment is well-supported.
 
 ## 4.4 Impact
 
@@ -262,7 +262,7 @@ mappings:
 
 ### `attack.classification.tags` (OPTIONAL)
 
-Free-form tags for filtering and discovery. Tags SHOULD be lowercase and hyphenated. Multiple words use hyphens, not underscores or spaces (for example, `rug-pull`, not `rug_pull` or `Rug Pull`).
+Free-form tags for filtering and discovery. Tags MUST be lowercase and hyphen-delimited. During normalization, tools MUST convert tags to lowercase and replace underscores and spaces with hyphens (e.g., `Rug_Pull` normalizes to `rug-pull`). Multiple words use hyphens, not underscores or spaces (for example, `rug-pull`, not `rug_pull` or `Rug Pull`).
 
 Recommended tags to seed consistency across documents:
 
@@ -298,5 +298,5 @@ How indicator verdicts combine to produce the attack-level verdict. Defaults to 
 - `any` (default): The attack is `exploited` if any indicator matches.
 - `all`: The attack is `exploited` only if every indicator matches.
 
-The `compute_verdict` function ([§4.5](/sdk/evaluation/#45-compute_verdict)) implements this logic. For cross-protocol attacks using multi-actor execution profiles, indicators targeting different protocols are evaluated independently and combined according to this setting. See [§8.3](/specification/cross-protocol-chains/#83-indicator-correlation) for details.
+The `compute_verdict` function ([SDK §4.5](/sdk/evaluation/#45-compute_verdict)) implements this logic. For cross-protocol attacks using multi-actor execution profiles, indicators targeting different protocols are evaluated independently and combined according to this setting. See [§8.3](/specification/cross-protocol-chains/#83-indicator-correlation) for details.
 

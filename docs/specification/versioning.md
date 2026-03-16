@@ -32,7 +32,7 @@ draft → experimental → stable → deprecated
 
 ## 10.3 Extension Mechanism
 
-The following object types support extension fields prefixed with `x-`: `attack`, `execution`, `actor`, `phase`, `action`, and `indicator`. Conforming tools MUST ignore `x-` prefixed fields they do not understand. Extension fields MUST NOT alter the semantics of standard fields. Other object types (triggers, extractors, match conditions, pattern/expression/semantic definitions, severity, correlation, synthesis blocks, references, classifications, framework mappings) do not support extension fields.
+The following object types support extension fields prefixed with `x-`: `attack`, `execution`, `actor`, `phase`, `action`, and `indicator`. Conforming tools MUST ignore `x-` prefixed fields they do not understand. Extension fields MUST NOT alter the semantics of standard fields. To avoid collisions between independent extension authors, organizations SHOULD use a unique prefix after `x-`, such as their organization name (e.g., `x-acme-scan-profile`, `x-thoughtgate-alert-severity`). Other object types (triggers, extractors, match conditions, pattern/expression/semantic definitions, severity, correlation, synthesis blocks, references, classifications, framework mappings) do not support extension fields.
 
 ```yaml
 attack:

@@ -1085,6 +1085,88 @@
       correlation:
         logic: any
 
+- name: "N-008 classification.tags normalized to lowercase hyphen-delimited"
+  id: NORM-008a
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      severity: high
+      classification:
+        tags:
+          - "Rug_Pull"
+          - "INJECTION"
+          - "multi phase"
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+  expected: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      version: 1
+      status: draft
+      severity:
+        level: high
+        confidence: 50
+      classification:
+        tags:
+          - "rug-pull"
+          - "injection"
+          - "multi-phase"
+      execution:
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
+
+- name: "N-008 already-normalized tags are unchanged (idempotency)"
+  id: NORM-008b
+  input: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      severity: high
+      classification:
+        tags:
+          - "rug-pull"
+          - "injection"
+          - "multi-phase"
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+  expected: |
+    oatf: "0.1"
+    attack:
+      id: OATF-TEST-001
+      name: "Test Attack"
+      version: 1
+      status: draft
+      severity:
+        level: high
+        confidence: 50
+      classification:
+        tags:
+          - "rug-pull"
+          - "injection"
+          - "multi-phase"
+      execution:
+        actors:
+          - name: default
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools: []
+
 - name: "N-001 trigger with event and explicit count: 3 is preserved"
   id: NORM-001j
   input: |
