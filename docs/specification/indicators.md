@@ -205,7 +205,7 @@ The class of malicious intent, used by classification-based inference engines. W
 
 ### `semantic.threshold` (OPTIONAL)
 
-The minimum confidence or similarity score for a positive match. When omitted, SDKs apply a default threshold of `0.7` at evaluation time. The threshold is not materialized during normalization, preserving the distinction between an author-specified threshold and the SDK default.
+The minimum confidence or similarity score for a positive match. When omitted, SDKs apply a default threshold of `0.7` at evaluation time. The threshold is a normalized score (0.0–1.0), not a percentage. It is independent of the 0–100 integer confidence scale used by `severity.confidence` and `indicator.confidence`. The threshold is not materialized during normalization, preserving the distinction between an author-specified threshold and the SDK default.
 
 Thresholds are tool-relative: the same value produces different match boundaries across different inference engines. Cross-tool interoperability relies on the `examples` field. Conforming tools SHOULD classify `examples.positive` strings as matches and `examples.negative` strings as non-matches under their configured threshold. If a tool fails to classify examples correctly, the tool operator adjusts the threshold.
 

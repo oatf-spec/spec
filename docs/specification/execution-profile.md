@@ -303,6 +303,8 @@ String fields within `phase.state` and `phase.on_enter` support template interpo
 
 Template expressions that reference undefined extractors or missing request or response fields MUST be replaced with an empty string. Tools SHOULD emit a warning when this occurs. To include a literal `{{` in a payload without triggering interpolation, escape it as `\{{`. For example, `\{{name}}` produces the literal string `{{name}}`. The escape applies only to the opening `\{{`; no escape chaining is defined.
 
+In multi-actor documents, actors execute concurrently. If a cross-actor reference targets an extractor whose value has not yet been captured, it resolves to an empty string. Authors MUST use phase triggers to enforce ordering when one actor depends on another's extractions. Tools SHOULD emit a W-004 warning when a cross-actor reference resolves to empty.
+
 ## 5.7 Expression Evaluation
 
 OATF documents use five expression systems across execution profiles and indicators: template interpolation ([§5.6](/specification/execution-profile/#56-response-templates)), match predicates ([§5.4](/specification/execution-profile/#54-match-predicates)), CEL expressions ([§6.3](/specification/indicators/#63-expression-evaluation)), JSONPath ([RFC 9535](https://www.rfc-editor.org/rfc/rfc9535), in extractors, [§5.5](/specification/execution-profile/#55-extractors)), and regular expressions (in extractors and pattern conditions). This section defines how these systems interact, how errors are handled, and what execution constraints tools MUST enforce.
@@ -343,7 +345,7 @@ Tools SHOULD log runtime evaluation errors at a diagnostic level to aid debuggin
 CEL expressions MUST be evaluated in a sandboxed environment. Specifically:
 
 - CEL evaluation MUST NOT produce side effects (no I/O, no mutation of state, no network access).
-- Tools SHOULD enforce an evaluation timeout on CEL expressions. The specific timeout value is a tool configuration concern, but 100 milliseconds per expression is a RECOMMENDED baseline for interactive use.
+- Tools SHOULD enforce an evaluation timeout on CEL expressions. The specific timeout value is a tool configuration concern, but 100 milliseconds per expression is a RECOMMENDED baseline for interactive use. This timeout applies per-expression. Tools SHOULD also enforce a per-document evaluation budget (RECOMMENDED: 30 seconds) to bound total evaluation time when documents contain many indicators or complex expressions.
 - Regular expressions MUST be evaluated with protections against catastrophic backtracking. Tools SHOULD use RE2-compatible engines or enforce match time limits. All regex patterns in OATF documents MUST conform to the RE2 syntax subset (no lookarounds, no backreferences, no possessive quantifiers) to guarantee linear-time evaluation and cross-language portability.
 - JSONPath evaluation MUST NOT follow recursive descent unboundedly. Tools SHOULD enforce a maximum traversal depth.
 

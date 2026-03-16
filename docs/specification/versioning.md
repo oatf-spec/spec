@@ -17,6 +17,8 @@ The `oatf` field in each document declares the specification version it conforms
 
 **Post-1.0 compatibility:** Once OATF reaches 1.0, the following forward-compatibility guarantee applies: tools MUST accept documents declaring a higher minor version within the same major version, ignoring unknown fields. For example, a tool supporting 1.0 MUST accept a document declaring 1.2, skipping any fields or surfaces it does not recognize.
 
+This forward-compatibility guarantee applies to unknown *fields*, not unknown *values* in closed enumerations. When a tool encounters an unrecognized value for a closed enumeration (e.g., a new `impact` category added in a higher minor version), the tool MUST reject the document with a validation error. Open enumerations (Protocol, Mode, Surface, Framework) accept any value matching their pattern constraints, regardless of version.
+
 ## 10.2 Document Lifecycle
 
 Documents progress through four lifecycle stages:

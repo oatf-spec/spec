@@ -41,7 +41,7 @@ YAML mappings are conceptually unordered, but the `oatf` field serves as a forma
 
 ### `$schema` (OPTIONAL)
 
-A URL pointing to the JSON Schema for this OATF version, enabling IDE validation, autocompletion, and inline documentation. Conforming tools MUST ignore this field during processing; it is tooling metadata, not document content. Example:
+A URL pointing to the JSON Schema for this OATF version, enabling IDE validation, autocompletion, and inline documentation. The `oatf` field identifies the format and specification version; `$schema` enables schema-aware tooling. Conforming tools MUST NOT require this field and MUST NOT fail when it is absent or specifies an unrecognized URL. Tools and IDEs MAY use it for schema validation when present. Example:
 
 ```yaml
 $schema: "https://oatf.io/schemas/v0.1.json"
@@ -103,6 +103,8 @@ A prose description of the attack: what it does, why it matters, and what condit
 The duration to continue observing protocol traffic after all terminal phases complete, before computing the final verdict. Format: shorthand (`30s`, `5m`) or ISO 8601 (`PT30S`, `PT5M`), parsed by `parse_duration`. When absent, the tool uses its own default observation window.
 
 This field enables attack authors to specify observation time for delayed effects such as exfiltration, state changes, or unauthorized actions that manifest after the attack simulation ends. For example, a prompt injection that causes the agent to exfiltrate data on its next autonomous action may need a 60-second observation window.
+
+In multi-actor documents, the grace period begins when the last actor completes its terminal phase. The observation window applies globally, not per-actor.
 
 ## 4.3 Severity
 
