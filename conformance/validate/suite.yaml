@@ -122,6 +122,21 @@
       - rule: "W-001"
         path: "oatf"
 
+- name: "V-002 valid: document valid even when oatf is not first key"
+  id: VAL-002c
+  input: |
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+    oatf: "0.1"
+  expected:
+    valid: true
+    warnings:
+      - rule: "W-001"
+        path: "oatf"
+
 # ---------------------------------------------------------------------------
 # V-003: Exactly one attack object is present
 # ---------------------------------------------------------------------------
@@ -3477,6 +3492,24 @@
     errors:
       - rule: "V-048"
         path: "attack.indicators[0].actor"
+
+- name: "V-048 valid: indicator.actor references default actor from single-phase normalization"
+  id: VAL-048c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - actor: default
+          surface: tools/list
+          target: "tools[*].description"
+          pattern:
+            contains: "test"
+  expected:
+    valid: true
 
 # ---------------------------------------------------------------------------
 # V-049: indicator.method matches detection key

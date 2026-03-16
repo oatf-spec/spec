@@ -17,6 +17,8 @@ The `oatf` field in each document declares the specification version it conforms
 
 **Post-1.0 compatibility:** Once OATF reaches 1.0, the following forward-compatibility guarantee applies: tools MUST accept documents declaring a higher minor version within the same major version, ignoring unknown fields. For example, a tool supporting 1.0 MUST accept a document declaring 1.2, skipping any fields or surfaces it does not recognize.
 
+This forward-compatibility guarantee applies to unknown *fields*, not unknown *values* in closed enumerations. When a tool encounters an unrecognized value for a closed enumeration (e.g., a new `impact` category added in a higher minor version), the tool MUST reject the document with a validation error. Open enumerations (Protocol, Mode, Surface, Framework) accept any value matching their pattern constraints, regardless of version.
+
 ## 10.2 Document Lifecycle
 
 Documents progress through four lifecycle stages:
@@ -32,7 +34,7 @@ draft → experimental → stable → deprecated
 
 ## 10.3 Extension Mechanism
 
-The following object types support extension fields prefixed with `x-`: `attack`, `execution`, `actor`, `phase`, `action`, and `indicator`. Conforming tools MUST ignore `x-` prefixed fields they do not understand. Extension fields MUST NOT alter the semantics of standard fields. Other object types (triggers, extractors, match conditions, pattern/expression/semantic definitions, severity, correlation, synthesis blocks, references, classifications, framework mappings) do not support extension fields.
+The following object types support extension fields prefixed with `x-`: `attack`, `execution`, `actor`, `phase`, `action`, and `indicator`. Conforming tools MUST ignore `x-` prefixed fields they do not understand. Extension fields MUST NOT alter the semantics of standard fields. To avoid collisions between independent extension authors, organizations SHOULD use a unique prefix after `x-`, such as their organization name (e.g., `x-acme-scan-profile`, `x-thoughtgate-alert-severity`). Other object types (triggers, extractors, match conditions, pattern/expression/semantic definitions, severity, correlation, synthesis blocks, references, classifications, framework mappings) do not support extension fields.
 
 ```yaml
 attack:

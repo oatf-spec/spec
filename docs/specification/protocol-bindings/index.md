@@ -73,7 +73,15 @@ Each binding carries a maturity level:
 - **Stable**: Complete coverage of the protocol's attack surface. All events, execution state structures, CEL context, and entry actions are defined. Suitable for production use.
 - **Provisional**: Structurally sound and usable, but incomplete. Core events are defined, and execution state covers the primary attack vectors. CEL context and entry actions may be absent or incomplete. Future OATF minor versions will expand provisional bindings toward stable.
 
-## 7.0.4 Included Bindings Summary
+### 7.0.4 Protocol Version Lifecycle
+
+Each binding pins a default protocol version to a specific upstream release (e.g., the MCP binding defaults `protocol_version` to `"2025-11-25"`). These defaults are fixed for the OATF minor version in which they are defined. When upstream protocols release new versions:
+
+- Documents MAY specify a newer `protocol_version` than the binding default. Pass-through content from newer protocol versions is preserved verbatim.
+- OATF minor versions MAY update binding defaults to reflect newer upstream releases.
+- Tools SHOULD accept documents specifying protocol versions newer than the binding default, serializing pass-through content to the wire without validation against any specific upstream version.
+
+## 7.0.5 Included Bindings Summary
 
 | Aspect | MCP ([§7.1](/specification/protocol-bindings/mcp/)) | A2A ([§7.2](/specification/protocol-bindings/a2a/)) | AG-UI ([§7.3](/specification/protocol-bindings/ag-ui/)) |
 |--------|-----------|-----------|-------------|

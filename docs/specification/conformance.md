@@ -5,7 +5,7 @@ description: "Document conformance rules, tool conformance requirements, and par
 
 ## 11.1 Document Conformance
 
-A conforming OATF document MUST satisfy all structural requirements in this section. The [SDK specification](/sdk/) ([§3.2](/sdk/entry-points/)) assigns stable rule identifiers (V-001 through V-049) to conformance requirements across this specification. Conformance test suites reference these identifiers. The numbered rules below define the structural requirements; additional V-rules cover field-level validation constraints defined in their respective sections ([§4](/specification/document-structure/) through [§7](/specification/protocol-bindings/)).
+A conforming OATF document MUST satisfy all structural requirements in this section. The [SDK specification](/sdk/) ([§3.2](/sdk/entry-points/)) assigns stable rule identifiers (V-001 through V-049) to conformance requirements across this specification and provides a complete mapping from rule identifiers to their normative section references. Conformance test suites reference these identifiers. The numbered rules below define the structural requirements; additional V-rules cover field-level validation constraints defined in their respective sections ([§4](/specification/document-structure/) through [§7](/specification/protocol-bindings/)).
 
 **Core structure**
 
@@ -17,13 +17,13 @@ A conforming OATF document MUST satisfy all structural requirements in this sect
 
 **Execution forms, phases, and actors**
 
-6. MUST have at least one entry in `indicators` when `indicators` is present.
-7. MUST specify exactly one of `execution.state` (single-phase form), `execution.phases` (multi-phase form), or `execution.actors` (multi-actor form); they are mutually exclusive. When `execution.state` is present, `execution.mode` MUST also be present.
-8. In multi-phase form: MUST have at least one entry in `execution.phases`. MUST have at most one terminal phase, and it MUST be the last phase. MUST include `state` on the first phase. Explicitly specified `phase.name` values MUST be unique. When `phase.extractors` is present, it MUST contain at least one entry.
-9. In multi-actor form: MUST have at least one entry in `execution.actors`. Each actor MUST declare `actor.name` (matching `[a-z][a-z0-9_]*`) and `actor.mode`. Actor names MUST be unique. Each actor MUST have at least one phase. Explicitly specified phase names MUST be unique within each actor. Terminal phase rules and first-phase `state` rules apply per-actor. When `phase.mode` is specified, it MUST match the actor's `actor.mode`; cross-protocol attacks use separate actors.
+6. MUST specify exactly one of `execution.state` (single-phase form), `execution.phases` (multi-phase form), or `execution.actors` (multi-actor form); they are mutually exclusive. When `execution.state` is present, `execution.mode` MUST also be present.
+7. In multi-phase form: MUST have at least one entry in `execution.phases`. MUST have at most one terminal phase, and it MUST be the last phase. MUST include `state` on the first phase. Explicitly specified `phase.name` values MUST be unique. When `phase.extractors` is present, it MUST contain at least one entry.
+8. In multi-actor form: MUST have at least one entry in `execution.actors`. Each actor MUST declare `actor.name` (matching `[a-z][a-z0-9_]*`) and `actor.mode`. Actor names MUST be unique. Each actor MUST have at least one phase. Explicitly specified phase names MUST be unique within each actor. Terminal phase rules and first-phase `state` rules apply per-actor. When `phase.mode` is specified, it MUST match the actor's `actor.mode`; cross-protocol attacks use separate actors.
 
 **Indicators and event validation**
 
+9. MUST have at least one entry in `indicators` when `indicators` is present.
 10. MUST use unique `indicator.id` values within the document when IDs are specified explicitly.
 11. Each indicator MUST contain exactly one detection key (`pattern`, `expression`, or `semantic`).
 12. When `execution.mode` is absent and `execution.actors` is absent (the mode-less multi-phase form), every phase MUST specify `phase.mode`, and all phase modes MUST be identical. Attacks requiring different modes (including role changes within the same protocol, e.g., `mcp_server` → `mcp_client`) require the multi-actor form. When `execution.mode` is absent, regardless of whether `execution.actors` is present, every indicator (when present) MUST specify `indicator.protocol`. In multi-actor form, `actor.mode` provides phase-level mode inheritance (so `phase.mode` is typically omitted), but indicators are document-level and not scoped to any actor, so `indicator.protocol` remains required.
@@ -62,7 +62,21 @@ All conforming tools (adversarial and evaluation):
 
 **Defaults and shorthand expansion**
 
-1. MUST apply default values for omitted optional fields as defined in this specification: `name` to `"Untitled"`, `version` to `1`, `status` to `"draft"`, `severity.confidence` to `50` (when `severity` is present), `phase.name` to `"phase-{N}"` (1-based index within actor), `phase.mode` to `execution.mode` (when present); in multi-actor form (including after normalization items 6-7) `phase.mode` to `actor.mode` (when `phase.mode` is still absent), `trigger.count` to `1` (when `trigger.event` is present and `trigger.count` is absent), `indicator.protocol` to protocol component of `execution.mode` (when both `indicators` and `execution.mode` are present), `correlation.logic` to `any` (when `indicators` is present), `mapping.relationship` to `"primary"`.
+1. MUST apply default values for omitted optional fields:
+
+| Field | Default | Condition |
+|---|---|---|
+| `attack.name` | `"Untitled"` | Always |
+| `attack.version` | `1` | Always |
+| `attack.status` | `"draft"` | Always |
+| `severity.confidence` | `50` | When `severity` is present |
+| `phase.name` | `"phase-{N}"` | 1-based index within actor |
+| `phase.mode` | `execution.mode` | When `execution.mode` is present |
+| `phase.mode` | `actor.mode` | In multi-actor form, when still absent after above |
+| `trigger.count` | `1` | When `trigger.event` is present |
+| `indicator.protocol` | Protocol from `execution.mode` | When both `indicators` and `execution.mode` are present |
+| `correlation.logic` | `"any"` | When `indicators` is present |
+| `mapping.relationship` | `"primary"` | Always |
 2. MUST expand severity scalar form (`severity: "high"`) to the object form (`{level: "high", confidence: 50}`) before processing, when `severity` is present.
 3. MUST auto-generate `indicator.id` values for indicators that omit `id`. When `attack.id` is present, the format is `{attack.id}-{NN}`. When `attack.id` is absent, the format is `indicator-{NN}`. `NN` is the 1-based, zero-padded position of the indicator in the `indicators` array.
 4. MUST resolve `pattern.target` and `semantic.target` from the indicator-level `target` when omitted on the pattern or semantic block. The indicator-level `target` is always required ([§6.1](/specification/indicators/#61-structure)).
@@ -72,6 +86,7 @@ All conforming tools (adversarial and evaluation):
 
 6. MUST normalize single-phase form to multi-actor form internally (N-006): when `execution.state` is present (and `execution.phases` and `execution.actors` are absent), wrap it in `actors: [{name: "default", mode: <execution.mode>, phases: [{name: "phase-1", state: <execution.state>}]}]`. All subsequent processing operates on the normalized `actors` array.
 7. MUST normalize multi-phase form to multi-actor form internally (N-007): when `execution.phases` is present (and `execution.actors` is absent), wrap it in `actors: [{name: "default", mode: <execution.mode>, phases: <execution.phases>}]`. When `execution.mode` is absent (the mode-less multi-phase form, where every phase declares its own mode), `actor.mode` is set from `phases[0].mode`. All subsequent processing operates on the normalized `actors` array.
+
 **Validation and output**
 
 8. MUST skip event type validation for unrecognized modes. For recognized modes, tools SHOULD emit warnings when trigger event types are not listed in the binding's Events section, and these warnings MUST NOT make the document non-conforming.
