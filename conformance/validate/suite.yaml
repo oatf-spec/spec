@@ -854,6 +854,24 @@
       - rule: "V-012"
         path: "attack.indicators[0]"
 
+- name: "V-012 invalid: empty pattern object has no condition or shorthand operator"
+  id: VAL-012e
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+      indicators:
+        - surface: tools/list
+          target: "tools[*].description"
+          pattern: {}
+  expected:
+    errors:
+      - rule: "V-012"
+        path: "attack.indicators[0].pattern"
+
 # ---------------------------------------------------------------------------
 # V-013: All regular expressions are syntactically valid RE2
 # ---------------------------------------------------------------------------
@@ -921,6 +939,27 @@
     errors:
       - rule: "V-013"
         path: "attack.execution.phases[0].trigger.match.arguments.command.regex"
+
+- name: "V-013 invalid: regex in AG-UI tool_responses when predicate"
+  id: VAL-013d
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: ag_ui_client
+        state:
+          run_agent_input:
+            threadId: "thread-1"
+            runId: "run-1"
+          tool_responses:
+            - when:
+                toolCallName:
+                  regex: "[unclosed"
+              content: "result"
+  expected:
+    errors:
+      - rule: "V-013"
+        path: "attack.execution.state.tool_responses[0].when.toolCallName.regex"
 
 # ---------------------------------------------------------------------------
 # V-014: All CEL expressions are syntactically valid
@@ -2318,6 +2357,37 @@
       - rule: "V-032"
         path: "attack.execution.actors[0].phases[0].state.tools[0].response.content[0].text"
 
+- name: "V-032 invalid: cross-actor template in on_enter references nonexistent actor"
+  id: VAL-032c
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        actors:
+          - name: actor_a
+            mode: mcp_server
+            phases:
+              - name: phase-1
+                state:
+                  tools:
+                    - name: "test"
+                      description: "A test tool"
+                      inputSchema:
+                        type: object
+                on_enter:
+                  - log:
+                      message: "Received: {{ghost_actor.captured}}"
+      indicators:
+        - protocol: mcp
+          surface: tools/list
+          target: "tools[*].description"
+          pattern:
+            contains: "test"
+  expected:
+    errors:
+      - rule: "V-032"
+        path: "attack.execution.actors[0].phases[0].on_enter[0].log.message"
+
 # ---------------------------------------------------------------------------
 # V-033: At most one catch-all response entry (omitting when)
 # ---------------------------------------------------------------------------
@@ -3394,6 +3464,46 @@
     errors:
       - rule: "V-033"
         path: "attack.execution.state.task_responses"
+
+- name: "V-034 invalid: AG-UI tool_responses with two entries both omitting when"
+  id: VAL-034e
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: ag_ui_client
+        state:
+          run_agent_input:
+            threadId: "thread-1"
+            runId: "run-1"
+          tool_responses:
+            - content: "first default"
+            - content: "second default"
+  expected:
+    errors:
+      - rule: "V-034"
+        path: "attack.execution.state.tool_responses"
+
+- name: "V-034 invalid: elicitation_responses with two entries both omitting when"
+  id: VAL-034f
+  input: |
+    oatf: "0.1"
+    attack:
+      execution:
+        mode: mcp_server
+        state:
+          tools: []
+          elicitation_responses:
+            - action: accept
+              content:
+                message: "first"
+            - action: decline
+              content:
+                message: "second"
+  expected:
+    errors:
+      - rule: "V-034"
+        path: "attack.execution.state.elicitation_responses"
 
 # ---------------------------------------------------------------------------
 # V-047: correlation requires indicators
